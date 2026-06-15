@@ -13,7 +13,7 @@ services:
     volumes:
       - dev_${ISC_DATA_DIRECTORY}_${IRIS_INSTANCE_NAME}:/${ISC_DATA_DIRECTORY}
       - ./iris/python/iris_python_demo:/usr/irissys/mgr/python/iris_python_demo
-      - ./iris/src:/code
+      - ./iris-dev/src:/code
       - ./data:/data
       - ./merge-dev.cpf:/merge.cpf
     restart: unless-stopped
@@ -75,7 +75,17 @@ services:
  
 volumes:
   dev_databases_iris-health-training:
+    external: true
+    name: ${IRIS_INSTANCE_NAME}_dev_databases_iris-health-training    
   databases_iris-health-training:
+    external: true
+    name: ${IRIS_INSTANCE_NAME}_databases_iris-health-training
   journal_iris-health-training:
+    external: true
+    name: ${IRIS_INSTANCE_NAME}_journal_iris-health-training
   journal2_iris-health-training:
+    external: true
+    name: ${IRIS_INSTANCE_NAME}_journal2_iris-health-training
   WIJ_iris-health-training:
+    external: true
+    name: ${IRIS_INSTANCE_NAME}_WIJ_iris-health-training

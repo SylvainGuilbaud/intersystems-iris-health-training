@@ -1,0 +1,28 @@
+### Add a document
+POST http://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com/api/training/demo/v1/documents
+Content-Type: application/json
+Authorization: Basic c3VwZXJ1c2VyOlNZUw==
+
+{
+    "text": "InterSystems IRIS supports native vector storage with HNSW indexing", 
+    "metadata": {
+        "source": "docs"
+        }
+}
+
+### Similarity search
+POST http://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com/api/training/demo/v1/search
+Content-Type: application/json
+Authorization: Basic c3VwZXJ1c2VyOlNZUw==
+
+{"query": "vector database features", "k": 5}
+
+### List all documents
+
+GET http://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com/api/training/demo/v1/documents
+Authorization: Basic c3VwZXJ1c2VyOlNZUw==
+
+### Delete a document (replace <uid> with actual uid from add response)
+
+DELETE http://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com/api/training/demo/v1/documents/<uid>
+Authorization: Basic c3VwZXJ1c2VyOlNZUw==

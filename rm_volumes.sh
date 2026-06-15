@@ -1,0 +1,1 @@
+docker volume ls -q | grep '^iris-health-training_' | xargs -r docker volume rm
