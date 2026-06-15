@@ -8,7 +8,7 @@ The IRIS instance is built from a custom Dockerfile that includes the necessary 
 It creates a TRAINING namespace using 2 databases (one for data and one for code) with interoperability enabled and configures a CSP application at `/csp/training` with the appropriate dispatch class.
 The application is enabled for DeepSee to allow for analytics capabilities.
 
-It installs the ZPM package manager and uses it to enable the `webterminal`, `swagger-ui`, and `classexplorer` packages.
+It installs the ZPM package manager and uses it to install the `swagger-ui` package.
 
 The Web Gateway is set up to route requests to this application, allowing for secure access to the REST API.
 

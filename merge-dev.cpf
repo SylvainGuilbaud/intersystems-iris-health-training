@@ -1,0 +1,7 @@
+[Startup]
+SystemMode=TRAINING-DEV
+TerminalPrompt=1,2,8
+
+[config]
+globals=0,0,8192,0,0,0
+routines=0

@@ -1,5 +1,30 @@
 services:
 
+  iris-dev:
+    build:
+      args:
+        IMAGE: containers.intersystems.com/intersystems/irishealth-community:latest-em
+      context: iris-dev
+    container_name: ${IRIS_INSTANCE_NAME}-dev
+    hostname: ${IRIS_INSTANCE_NAME}-dev
+    ports:
+      - ${IRIS_PORT_DEV}:1972
+      - ${IRIS_WEBSERVER_PORT}:52773 # *Only* used for Community Edition for VS Code ObjectScript extension to connect to /api/atelier and for IRIS Administration Portal
+    volumes:
+      - dev_${ISC_DATA_DIRECTORY}_${IRIS_INSTANCE_NAME}:/${ISC_DATA_DIRECTORY}
+      - ./iris/python/iris_python_demo:/usr/irissys/mgr/python/iris_python_demo
+      - ./iris/src:/code
+      - ./data:/data
+      - ./merge-dev.cpf:/merge.cpf
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Paris
+      - ISC_DATA_DIRECTORY=/${ISC_DATA_DIRECTORY}
+      - ISC_CPF_MERGE_FILE=/merge.cpf
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+      - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION}
+      - AZURE_OPENAI_EMBEDDING_DEPLOYMENT=${AZURE_OPENAI_EMBEDDING_DEPLOYMENT}
   iris:
     build:
       args:
@@ -30,9 +55,8 @@ services:
       - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION}
       - AZURE_OPENAI_EMBEDDING_DEPLOYMENT=${AZURE_OPENAI_EMBEDDING_DEPLOYMENT}
  
-  webgateway:
+  webgateway: # Used for VS Code ObjectScript extension to connect to /api/atelier and for IRIS Administration Portal and Web Services
     image: containers.intersystems.com/intersystems/webgateway:latest-em
-
     depends_on:
       - iris
     ports:
@@ -50,6 +74,7 @@ services:
       - default
  
 volumes:
+  dev_databases_iris-health-training:
   databases_iris-health-training:
   journal_iris-health-training:
   journal2_iris-health-training:

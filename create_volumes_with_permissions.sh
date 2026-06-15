@@ -17,6 +17,7 @@ set_permissions() {
 }
 
 # Set permissions for the persistent volumes
+set_permissions "dev_databases_"$instance_name
 set_permissions "databases_"$instance_name
 set_permissions "journal_"$instance_name
 set_permissions "journal2_"$instance_name
