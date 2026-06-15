@@ -3,26 +3,28 @@ services:
   iris:
     build:
       args:
-        IMAGE: containers.intersystems.com/intersystems/iris:latest-em
+        IMAGE: containers.intersystems.com/intersystems/iris-health:latest-em
       context: iris
-    container_name: ${DEFAULT_INSTANCE_NAME}
-    hostname: ${DEFAULT_INSTANCE_NAME}
+    container_name: ${IRIS_INSTANCE_NAME}
+    hostname: ${IRIS_INSTANCE_NAME}
     ports:
       - ${IRIS_PORT}:1972
     volumes:
-      - ${ISC_DATA_DIRECTORY}_${DEFAULT_INSTANCE_NAME}:/${ISC_DATA_DIRECTORY}
-      - journal_${DEFAULT_INSTANCE_NAME}:/journal
-      - journal2_${DEFAULT_INSTANCE_NAME}:/journal2
-      - WIJ_${DEFAULT_INSTANCE_NAME}:/WIJ
+      - ${ISC_DATA_DIRECTORY}_${IRIS_INSTANCE_NAME}:/${ISC_DATA_DIRECTORY}
+      - journal_${IRIS_INSTANCE_NAME}:/journal
+      - journal2_${IRIS_INSTANCE_NAME}:/journal2
+      - WIJ_${IRIS_INSTANCE_NAME}:/WIJ
       - ./iris/key/iris.key:/tmp/iris.key:ro
       - ./iris/python/iris_python_demo:/usr/irissys/mgr/python/iris_python_demo
       - ./iris/src:/code
       - ./data:/data
+      - ./merge.cpf:/merge.cpf
     command: --key /tmp/iris.key
     restart: unless-stopped
     environment:
       - TZ=Europe/Paris
       - ISC_DATA_DIRECTORY=/${ISC_DATA_DIRECTORY}
+      - ISC_CPF_MERGE_FILE=/merge.cpf
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_ENDPOINT=${OPENAI_ENDPOINT}
       - OPENAI_API_VERSION=${OPENAI_API_VERSION}

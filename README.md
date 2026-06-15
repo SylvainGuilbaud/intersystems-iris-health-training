@@ -24,6 +24,7 @@ The `docker-compose.yml` defines two services:
 - Mounts `WIJ_iris-health-training` for the Write-Image Journaling (WIJ) directory.
 - Mounts `/iris/python/iris_python_demo` for Python code.
 - Mounts `/iris/src` in `/code` for ObjectScript code and `/data` for any additional data files.
+- Mounts `merge.cpf` to `/merge.cpf` to apply custom CPF settings on startup.
 - Timezone is set to `Europe/Paris`.
 - Restarts automatically unless manually stopped.
 
