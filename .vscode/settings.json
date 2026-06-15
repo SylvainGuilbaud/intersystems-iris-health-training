@@ -1,0 +1,30 @@
+{
+    "objectscript.conn": {
+        "active": false,
+        "server": "iris-prod",
+        "ns": "SC"
+    },
+    "intersystems.servers": {
+        "iris-prod": {
+            "webServer": {
+                "scheme": "http",
+                "host": "localhost",
+                // "host": "host.docker.internal",
+                "port": 881
+            },
+            "username": "superuser"
+        },
+    },
+    "objectscript.export": {
+        "folder": "iris/src",
+        "addCategory": false,
+        "map": {},
+        "atelier": true,
+        "generated": false,
+        "filter": "",
+        "exactFilter": "",
+        "category": "*",
+        "maxConcurrentConnections": 0,
+        "mapped": true
+    }   
+}

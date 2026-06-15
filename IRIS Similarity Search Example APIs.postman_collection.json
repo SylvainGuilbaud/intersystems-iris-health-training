@@ -1,0 +1,208 @@
+{
+  "info": {
+    "_postman_id": "632daa37-5d9d-48fc-b757-ac514124cd19",
+    "name": "IRIS Similarity Search Example APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "33459972"
+  },
+  "item": [
+    {
+      "name": "Create document",
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "SYS",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "superuser",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"text\": \"hello\",\n    \"metadata\": \"\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:881/api/sc/demo/v1/documents",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "881",
+          "path": [
+            "api",
+            "sc",
+            "demo",
+            "v1",
+            "documents"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get all documents",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "SYS",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "superuser",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:881/api/sc/demo/v1/documents",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "881",
+          "path": [
+            "api",
+            "sc",
+            "demo",
+            "v1",
+            "documents"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete document by id",
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "SYS",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "superuser",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"text\": \"hello1\",\n    \"metadata\": \"metadata\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:881/api/sc/demo/v1/documents/:uid",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "881",
+          "path": [
+            "api",
+            "sc",
+            "demo",
+            "v1",
+            "documents",
+            ":uid"
+          ],
+          "variable": [
+            {
+              "key": "uid",
+              "value": "e74fa0a1-4d10-4533-91d3-80233417b25f"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Search documents",
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "SYS",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "superuser",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"query\": \"hello\",\n    \"k\": 5\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:881/api/sc/demo/v1/search",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "881",
+          "path": [
+            "api",
+            "sc",
+            "demo",
+            "v1",
+            "search"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

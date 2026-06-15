@@ -1,0 +1,28 @@
+### Add a document
+POST http://localhost:2080/api/sc/demo/v1/documents
+Content-Type: application/json
+Authorization: Basic c3VwZXJ1c2VyOlNZUw==
+
+{
+    "text": "InterSystems IRIS supports native vector storage with HNSW indexing", 
+    "metadata": {
+        "source": "docs"
+        }
+}
+
+### Similarity search
+POST http://localhost:2080/api/sc/demo/v1/search
+Content-Type: application/json
+Authorization: Basic c3VwZXJ1c2VyOlNZUw==
+
+{"query": "vector database features", "k": 5}
+
+### List all documents
+
+GET http://localhost:2080/api/sc/demo/v1/documents
+Authorization: Basic c3VwZXJ1c2VyOlNZUw==
+
+### Delete a document (replace <uid> with actual uid from add response)
+
+DELETE http://localhost:2080/api/sc/demo/v1/documents/<uid>
+Authorization: Basic c3VwZXJ1c2VyOlNZUw==

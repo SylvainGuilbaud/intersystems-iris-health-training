@@ -1,0 +1,3 @@
+export ACCESS_KEY_FILENAME=./iris/key/IRIS1_key.pem
+export PUBLIC_DNS=98.66.138.68
+export CLOUD_USERNAME=irisuser

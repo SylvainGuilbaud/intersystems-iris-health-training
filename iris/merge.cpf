@@ -1,0 +1,25 @@
+[Startup]
+SystemMode=TRAINING
+TerminalPrompt=1,2,8
+
+[config]
+globals=0,0,8192,0,0,0
+routines=0
+wijdir=/WIJ
+
+[Journal]    
+CurrentDirectory=/journal
+AlternateDirectory=/journal2
+
+[Actions]
+
+Execute:Namespace="%SYS",ClassName="Security.Users",MethodName="UnExpireUserPasswords",Arg1="*"
+Execute:Namespace="%SYS",ClassName="%SYSTEM.CSP",MethodName="SetConfig",Arg1="CSPConfigName",Arg2="iris-health-training"
+
+CreateResource:Name=%DB_TRAINING_DATA,Description="TRAINING_DATA database"
+CreateDatabase:Name=TRAINING_DATA,Directory=/usr/irissys/mgr/TRAINING_DATA,Resource=%DB_TRAINING_DATA
+CreateResource:Name=%DB_TRAINING_CODE,Description="TRAINING_CODE database"
+CreateDatabase:Name=TRAINING_CODE,Directory=/usr/irissys/mgr/TRAINING_CODE,Resource=%DB_TRAINING_CODE
+CreateNamespace:Name=SC,Globals=TRAINING_DATA,Routines=TRAINING_CODE,Interop=1
+
+ModifyService:Name=%Service_CallIn,Enabled=1,AutheEnabled=48
