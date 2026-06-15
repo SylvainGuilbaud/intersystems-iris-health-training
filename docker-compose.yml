@@ -3,7 +3,7 @@ services:
   iris:
     build:
       args:
-        IMAGE: containers.intersystems.com/intersystems/iris-health:latest-em
+        IMAGE: containers.intersystems.com/intersystems/irishealth:latest-em
       context: iris
     container_name: ${IRIS_INSTANCE_NAME}
     hostname: ${IRIS_INSTANCE_NAME}

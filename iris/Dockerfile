@@ -1,5 +1,5 @@
 # ========= Base IRIS =========
-ARG IMAGE=containers.intersystems.com/intersystems/iris:latest-em
+ARG IMAGE=containers.intersystems.com/intersystems/irishealth:latest-em
 FROM $IMAGE
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
