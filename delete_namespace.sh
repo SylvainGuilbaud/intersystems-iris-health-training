@@ -15,7 +15,7 @@ case "$TARGET" in
         CONTAINER="iris-health-training-dev"
         ;;
     prod-aws)
-        CONTAINER="iris-health-training"
+        CONTAINER="iris-health-training-prod"
         ;;
     dev)
         CONTAINER="iris-health-training-dev"

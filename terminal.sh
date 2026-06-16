@@ -9,13 +9,13 @@ case "$TARGET" in
         CONTAINER="iris-health-training-dev"
         ;;
     prod-aws)
-        CONTAINER="iris-health-training"
+        CONTAINER="iris-health-training-prod"
         ;;
     dev)
         CONTAINER="iris-health-training-dev"
         ;;
     prod)
-        CONTAINER="iris-health-training"
+        CONTAINER="iris-health-training-prod"
         ;;    
     *)
         echo "Usage: $0 [training|user|%sys|<your_namespace>] [dev-aws|prod-aws|dev|prod]"
