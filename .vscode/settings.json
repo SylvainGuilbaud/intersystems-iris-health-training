@@ -56,14 +56,6 @@
     },
     "sqltools.connections": [
         {
-            "connectionMethod": "Server Definition",
-            "showSystem": false,
-            "previewLimit": 50,
-            "driver": "InterSystems IRIS",
-            "name": "IRIS Health TRANING DEV AWS",
-            "connectString": "iris-health-training-dev-aws:TRAINING"
-        },
-        {
             "namespace": "TRAINING",
             "connectionMethod": "Server and Port",
             "showSystem": false,
@@ -88,7 +80,7 @@
             "https": false,
             "askForPassword": true,
             "driver": "InterSystems IRIS",
-            "name": "IRIS Health TRAINING AWS",
+            "name": "IRIS Health TRAINING PROD AWS",
             "username": "_SYSTEM"
         }
     ]
