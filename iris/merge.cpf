@@ -1,8 +1,4 @@
 [Actions]
-
-Execute:Namespace="%SYS",ClassName="Security.Users",MethodName="UnExpireUserPasswords",Arg1="*"
-Execute:Namespace="%SYS",ClassName="%SYSTEM.CSP",MethodName="SetConfig",Arg1="CSPConfigName",Arg2="iris-health-training"
-
 CreateResource:Name=%DB_TRAINING_DATA,Description="TRAINING_DATA database"
 CreateDatabase:Name=TRAINING_DATA,Directory=/usr/irissys/mgr/TRAINING_DATA,Resource=%DB_TRAINING_DATA
 CreateResource:Name=%DB_TRAINING_CODE,Description="TRAINING_CODE database"

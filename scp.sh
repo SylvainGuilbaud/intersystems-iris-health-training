@@ -1,5 +1,6 @@
 # if only one argument, copy to home directory
 # if two arguments, copy to second argument directory
+source cloudenv
 if [ "$#" -eq 1 ]; then
     set -- "$1" "$1"
 fi

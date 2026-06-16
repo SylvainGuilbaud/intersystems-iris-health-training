@@ -47,7 +47,7 @@ services:
       - ./iris/python/iris_python_demo:/usr/irissys/mgr/python/iris_python_demo
       - ./iris/src:/code
       - ./data:/data
-      - ./merge.cpf:/merge.cpf
+      - ./merge-prod.cpf:/merge.cpf
     command: --key /tmp/iris.key
     restart: unless-stopped
     environment:
