@@ -82,6 +82,34 @@
             "driver": "InterSystems IRIS",
             "name": "IRIS Health TRAINING PROD AWS",
             "username": "_SYSTEM"
+        },
+        {
+            "namespace": "TRAINING",
+            "connectionMethod": "Server and Port",
+            "showSystem": false,
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 80,
+            "pathPrefix": "/iris-health-training-dev",
+            "https": false,
+            "askForPassword": true,
+            "driver": "InterSystems IRIS",
+            "name": "IRIS Health TRAINING DEV LOCAL",
+            "username": "_SYSTEM"
+        },
+        {
+            "namespace": "TRAINING",
+            "connectionMethod": "Server and Port",
+            "showSystem": false,
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 80,
+            "pathPrefix": "/iris-health-training-prod",
+            "https": false,
+            "askForPassword": true,
+            "driver": "InterSystems IRIS",
+            "name": "IRIS Health TRAINING PROD LOCAL",
+            "username": "_SYSTEM"
         }
     ]
 }
