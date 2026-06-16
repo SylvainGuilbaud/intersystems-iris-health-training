@@ -3,23 +3,19 @@ services:
   iris-dev:
     build:
       args:
-        IMAGE: containers.intersystems.com/intersystems/irishealth:latest-em
-      context: iris
+        IMAGE: containers.intersystems.com/intersystems/irishealth-community:latest-em
+      context: iris-dev
     container_name: ${IRIS_INSTANCE_NAME}-dev
     hostname: ${IRIS_INSTANCE_NAME}-dev
     ports:
       - ${IRIS_PORT_DEV}:1972
+      - ${IRIS_WEBSERVER_PORT}:52773 # *Only* used for Community Edition for VS Code ObjectScript extension to connect to /api/atelier and for IRIS Administration Portal
     volumes:
       - dev_${ISC_DATA_DIRECTORY}_${IRIS_INSTANCE_NAME}:/${ISC_DATA_DIRECTORY}
-      - dev_journal_${IRIS_INSTANCE_NAME}:/journal
-      - dev_journal2_${IRIS_INSTANCE_NAME}:/journal2
-      - dev_WIJ_${IRIS_INSTANCE_NAME}:/WIJ
-      - ./iris/key/iris.key:/tmp/iris.key:ro
       - ./iris/python/iris_python_demo:/usr/irissys/mgr/python/iris_python_demo
-      - ./iris/src:/code
+      - ./iris-dev/src:/code
       - ./data:/data
       - ./merge-dev.cpf:/merge.cpf
-    command: --key /tmp/iris.key
     restart: unless-stopped
     environment:
       - TZ=Europe/Paris
@@ -29,20 +25,20 @@ services:
       - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
       - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION}
       - AZURE_OPENAI_EMBEDDING_DEPLOYMENT=${AZURE_OPENAI_EMBEDDING_DEPLOYMENT}
-  iris-prod:
+  iris:
     build:
       args:
         IMAGE: containers.intersystems.com/intersystems/irishealth:latest-em
       context: iris
-    container_name: ${IRIS_INSTANCE_NAME}-prod
-    hostname: ${IRIS_INSTANCE_NAME}-prod
+    container_name: ${IRIS_INSTANCE_NAME}
+    hostname: ${IRIS_INSTANCE_NAME}
     ports:
-      - ${IRIS_PORT_PROD}:1972
+      - ${IRIS_PORT}:1972
     volumes:
-      - prod_${ISC_DATA_DIRECTORY}_${IRIS_INSTANCE_NAME}:/${ISC_DATA_DIRECTORY}
-      - prod_journal_${IRIS_INSTANCE_NAME}:/journal
-      - prod_journal2_${IRIS_INSTANCE_NAME}:/journal2
-      - prod_WIJ_${IRIS_INSTANCE_NAME}:/WIJ
+      - ${ISC_DATA_DIRECTORY}_${IRIS_INSTANCE_NAME}:/${ISC_DATA_DIRECTORY}
+      - journal_${IRIS_INSTANCE_NAME}:/journal
+      - journal2_${IRIS_INSTANCE_NAME}:/journal2
+      - WIJ_${IRIS_INSTANCE_NAME}:/WIJ
       - ./iris/key/iris.key:/tmp/iris.key:ro
       - ./iris/python/iris_python_demo:/usr/irissys/mgr/python/iris_python_demo
       - ./iris/src:/code
@@ -62,8 +58,7 @@ services:
   webgateway: # Used for VS Code ObjectScript extension to connect to /api/atelier and for IRIS Administration Portal and Web Services
     image: containers.intersystems.com/intersystems/webgateway:latest-em
     depends_on:
-      - iris-dev
-      - iris-prod
+      - iris
     ports:
       - ${WEBGATEWAY_PORT_HTTP}:80
       - ${WEBGATEWAY_PORT_HTTPS}:443
@@ -81,25 +76,16 @@ services:
 volumes:
   dev_databases_iris-health-training:
     external: true
-    name: ${IRIS_INSTANCE_NAME}_dev_databases  
-  dev_journal_iris-health-training:
+    name: ${IRIS_INSTANCE_NAME}_dev_databases_iris-health-training    
+  databases_iris-health-training:
     external: true
-    name: ${IRIS_INSTANCE_NAME}_dev_journal
-  dev_journal2_iris-health-training:
+    name: ${IRIS_INSTANCE_NAME}_databases_iris-health-training
+  journal_iris-health-training:
     external: true
-    name: ${IRIS_INSTANCE_NAME}_dev_journal2
-  dev_WIJ_iris-health-training:
+    name: ${IRIS_INSTANCE_NAME}_journal_iris-health-training
+  journal2_iris-health-training:
     external: true
-    name: ${IRIS_INSTANCE_NAME}_dev_WIJ
-  prod_databases_iris-health-training:
+    name: ${IRIS_INSTANCE_NAME}_journal2_iris-health-training
+  WIJ_iris-health-training:
     external: true
-    name: ${IRIS_INSTANCE_NAME}_prod_databases
-  prod_journal_iris-health-training:
-    external: true
-    name: ${IRIS_INSTANCE_NAME}_prod_journal
-  prod_journal2_iris-health-training:
-    external: true
-    name: ${IRIS_INSTANCE_NAME}_prod_journal2
-  prod_WIJ_iris-health-training:
-    external: true
-    name: ${IRIS_INSTANCE_NAME}_prod_WIJ
+    name: ${IRIS_INSTANCE_NAME}_WIJ_iris-health-training

@@ -67,26 +67,26 @@
             "showSystem": false,
             "previewLimit": 50,
             "server": "ec2-63-177-72-122.eu-central-1.compute.amazonaws.com",
-            "port": 52773,
-            "pathPrefix": "",
-            "https": false,
-            "askForPassword": true,
-            "driver": "InterSystems IRIS",
-            "name": "IRIS Health TRAINING DEV AWS",
-            "username": "_SYSTEM"
-        },
-        {
-            "namespace": "TRAINING",
-            "connectionMethod": "Server and Port",
-            "showSystem": false,
-            "previewLimit": 50,
-            "server": "ec2-63-177-72-122.eu-central-1.compute.amazonaws.com",
             "port": 80,
             "pathPrefix": "",
             "https": false,
             "askForPassword": true,
             "driver": "InterSystems IRIS",
             "name": "IRIS Health TRAINING AWS",
+            "username": "_SYSTEM"
+        },
+        {
+            "namespace": "%SYS",
+            "connectionMethod": "Server and Port",
+            "showSystem": false,
+            "previewLimit": 50,
+            "server": "ec2-63-177-72-122.eu-central-1.compute.amazonaws.com",
+            "port": 52773,
+            "pathPrefix": "",
+            "https": false,
+            "askForPassword": true,
+            "driver": "InterSystems IRIS",
+            "name": "IRIS Health TRAINING DEV AWS",
             "username": "_SYSTEM"
         }
     ]

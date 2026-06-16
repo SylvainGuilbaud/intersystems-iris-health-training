@@ -15,8 +15,11 @@ set_permissions() {
 }
 
 # Set permissions for the persistent volumes
-set_permissions "dev_databases_"$IRIS_INSTANCE_NAME
-set_permissions "databases_"$IRIS_INSTANCE_NAME
-set_permissions "journal_"$IRIS_INSTANCE_NAME
-set_permissions "journal2_"$IRIS_INSTANCE_NAME
-set_permissions "WIJ_"$IRIS_INSTANCE_NAME    
+set_permissions "dev_databases"
+set_permissions "dev_journal"
+set_permissions "dev_journal2"
+set_permissions "dev_WIJ"
+set_permissions "prod_databases"
+set_permissions "prod_journal"
+set_permissions "prod_journal2"
+set_permissions "prod_WIJ"    

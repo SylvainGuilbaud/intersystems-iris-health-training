@@ -1,21 +1,30 @@
 #!/bin/bash
+source cloudenv
 
-TARGET=${1:-iris}
+NAMESPACE=${1:-training}
+TARGET=${2:-dev-aws}
 
 case "$TARGET" in
-    iris)
+    dev-aws)
+        CONTAINER="iris-health-training-dev"
+        ;;
+    prod-aws)
         CONTAINER="iris-health-training"
         ;;
-    prod1)
-        CONTAINER="iris-prod-1"
+    dev)
+        CONTAINER="iris-health-training-dev"
         ;;
-    prod2)
-        CONTAINER="iris-prod-2"
-        ;;
+    prod)
+        CONTAINER="iris-health-training"
+        ;;    
     *)
-        echo "Usage: $0 [iris|prod1|prod2]"
+        echo "Usage: $0 [training|user|%sys|<your_namespace>] [dev-aws|prod-aws|dev|prod]"
         exit 1
         ;;
 esac
 
-docker exec -it "$CONTAINER" iris session iris -U SC
+if [[ "$TARGET" == *"aws"* ]]; then
+    ssh -t -i $ACCESS_KEY_FILENAME $CLOUD_USERNAME@$PUBLIC_DNS "docker exec -ti $CONTAINER iris session iris -U $NAMESPACE"
+else
+    docker exec -ti $CONTAINER iris session iris -U $NAMESPACE
+fi

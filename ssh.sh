@@ -1,2 +1,3 @@
+source cloudenv
 ssh -i $ACCESS_KEY_FILENAME $CLOUD_USERNAME@$PUBLIC_DNS
 
