@@ -1,7 +1,7 @@
 ### Add a document
-POST http://localhost:2773/api/TRAINING/demo/v1/documents
+POST http://localhost/iris-health-training-dev/api/TRAINING/demo/v1/documents
 Content-Type: application/json
-Authorization: Basic c3VwZXJ1c2VyOlNZUw==
+Authorization: Basic c3VwZXJ1c2VyOklSSVM=
 
 {
     "text": "InterSystems IRIS supports native vector storage with HNSW indexing", 
@@ -11,18 +11,18 @@ Authorization: Basic c3VwZXJ1c2VyOlNZUw==
 }
 
 ### Similarity search
-POST http://localhost:2773/api/TRAINING/demo/v1/search
+POST http://localhost/iris-health-training-dev/api/TRAINING/demo/v1/search
 Content-Type: application/json
-Authorization: Basic c3VwZXJ1c2VyOlNZUw==
+Authorization: Basic c3VwZXJ1c2VyOklSSVM=
 
 {"query": "vector database features", "k": 5}
 
 ### List all documents
 
-GET http://localhost:2773/api/TRAINING/demo/v1/documents
-Authorization: Basic c3VwZXJ1c2VyOlNZUw==
+GET http://localhost/iris-health-training-dev/api/TRAINING/demo/v1/documents
+Authorization: Basic c3VwZXJ1c2VyOklSSVM=
 
 ### Delete a document (replace <uid> with actual uid from add response)
 
-DELETE http://localhost:2773/api/TRAINING/demo/v1/documents/<uid>
-Authorization: Basic c3VwZXJ1c2VyOlNZUw==
+DELETE http://localhost/iris-health-training-dev/api/TRAINING/demo/v1/documents/<uid>
+Authorization: Basic c3VwZXJ1c2VyOklSSVM=
