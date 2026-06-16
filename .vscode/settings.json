@@ -1,7 +1,7 @@
 {
     "objectscript.conn": {
-        "active": true,
-        "server": "iris-training-dev",
+        "active": false,
+        "server": "iris-training-aws",
         "ns": "TRAINING"
     },
     "intersystems.servers": {
@@ -23,6 +23,22 @@
             },
             "username": "superuser"
         },
+        "iris-training-dev-aws": {
+            "webServer": {
+                "scheme": "http",
+                "host": "ec2-63-177-72-122.eu-central-1.compute.amazonaws.com",
+                "port": 52773
+            },
+            "username": "superuser"
+        },
+        "iris-training-aws": {
+            "webServer": {
+                "scheme": "http",
+                "host": "ec2-63-177-72-122.eu-central-1.compute.amazonaws.com",
+                "port": 80
+            },
+            "username": "superuser"
+        }
     },
     "objectscript.export": {
         "folder": "iris/src",
@@ -35,5 +51,43 @@
         "category": "*",
         "maxConcurrentConnections": 0,
         "mapped": true
-    }   
+    },
+    "sqltools.connections": [
+        {
+            "connectionMethod": "Server Definition",
+            "showSystem": false,
+            "previewLimit": 50,
+            "driver": "InterSystems IRIS",
+            "name": "IRIS Health TRANING DEV AWS",
+            "connectString": "iris-health-training-dev-aws:TRAINING"
+        },
+        {
+            "namespace": "TRAINING",
+            "connectionMethod": "Server and Port",
+            "showSystem": false,
+            "previewLimit": 50,
+            "server": "ec2-63-177-72-122.eu-central-1.compute.amazonaws.com",
+            "port": 52773,
+            "pathPrefix": "",
+            "https": false,
+            "askForPassword": true,
+            "driver": "InterSystems IRIS",
+            "name": "IRIS Health TRAINING DEV AWS",
+            "username": "_SYSTEM"
+        },
+        {
+            "namespace": "TRAINING",
+            "connectionMethod": "Server and Port",
+            "showSystem": false,
+            "previewLimit": 50,
+            "server": "ec2-63-177-72-122.eu-central-1.compute.amazonaws.com",
+            "port": 80,
+            "pathPrefix": "",
+            "https": false,
+            "askForPassword": true,
+            "driver": "InterSystems IRIS",
+            "name": "IRIS Health TRAINING AWS",
+            "username": "_SYSTEM"
+        }
+    ]
 }
