@@ -16,7 +16,7 @@ The Web Gateway is set up to route requests to this application, allowing for se
 This configuration uses Docker volumes for persistent storage of IRIS data and journals, allowing you to stop and start the containers without losing your data.
 
 This script can be used to start the local development environment using the `docker-compose-local.yml` file.
-## STARTING THE SERVICES LOCALLY
+## STARTING THE SERVICES LOCALLY WITH IRIS for Health Community Edition images
 Run the following command in the root of the project to start both the IRIS and Web Gateway services:
 ```bash
 ./start-local.sh
@@ -47,7 +47,7 @@ The `docker-compose.yml` defines two services:
 
 Both services share the default Docker network. Port values are configured via environment variables (e.g. in a `.env` file).
 
-## BEFORE YOU START
+## BEFORE YOU START WITH THE SERVICE BASED ON PRODUCTION IRIS images
 - Ensure you have Docker and Docker Compose installed on your machine.
 - Create a [`.env`](.env) file in the root of the project with the necessary environment variables (e.g. `IRIS_PORT`, `WEBGATEWAY_PORT_HTTP`, `WEBGATEWAY_PORT_HTTPS`).
 - Place your IRIS license key in `iris/key/iris.key`
