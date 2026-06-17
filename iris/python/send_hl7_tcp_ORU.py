@@ -56,7 +56,8 @@ ORC|SC|||6100130|IP||||20260610144322|||3|||{timestamp}
 OBR|1|||296^S-Sodium^L|||{timestamp}|20260610141505||||||||3|||||||||F
 OBX|1|TX|296^S-Sodium^L|1|{sodium}||||||F||
 OBR|2||6100130|PDFREPORT^LABORATORY REPORT^L|||{timestamp}|||||||||||||||20260610144322|||P
-OBX|1|RP|PDFREPORT^LABORATORY REPORT^L|1|file:///E:/TD_DGLAB/Datas/Interface/ArchivageE/2/Report_131724791_3_6100130_001_110.pdf^DGLab^AP^PDF|||N|||P|||||||DOC"""
+OBX|1|RP|PDFREPORT^LABORATORY REPORT^L|1|file:////data/pdf/Report_131724791_3_6100130_001_110.pdf^DGLab^AP^PDF|||N|||P|||||||DOC
+"""
     
     return hl7_message
 
@@ -282,7 +283,7 @@ current_language = "fr"
 
 translations = {
     "fr": {
-        "title": "Formulaire Dossier Patient",
+        "title": "DGLAB - résultats de laboratoire",
         "first_name": "Prénom",
         "last_name": "Nom",
         "dob": "Date de naissance (JJ/MM/AAAA)",
@@ -300,7 +301,7 @@ translations = {
 
     },
     "en": {
-        "title": "Patient Record Form",
+        "title": "DGLAB - lab results",
         "first_name": "First Name",
         "last_name": "Last Name",
         "dob": "Date of Birth (DD/MM/YYYY)",
@@ -318,7 +319,7 @@ translations = {
 
     },
     "es": {
-        "title": "Formulario de Registro de Paciente",
+        "title": "DGLAB - resultados de laboratorio",
         "first_name": "Nombre",
         "last_name": "Apellido",
         "dob": "Fecha de nacimiento (DD/MM/AAAA)",
@@ -377,27 +378,6 @@ def send_hl7_message():
     log_response.delete("1.0", tk.END)
     log_response.configure(state="disabled")
             
-#     # Exemple de message HL7        
-#     hl7_message = f"""MSH|^~\\&|REGADT|MCM|IFENG||{timestamp}||ADT^A01|000001|P|2.5.1|1||
-# EVN|A01|199601061000|199601101400|1
-# PID|||{patient_id}^^^HOPITAL^MRN~FR123456^^^DLNUM^DL|253763|{last_name}^{first_name}||{dob_formatted}|{gender}|||77 Rue de Varenne^^PARIS^75^75007^||(01)554437765|(06)098866543|FRENCH|S|C|10199925|1641202898334566
-# NK1|1|DUPONT^MARIE^|EPOUSE||||ERSONNE A PREVENIR||
-# PV1|1|H|CARDIO^CHAMBRE201^LIT1||||004777^MARTIN^SOPHIE^DR|||CARDIO|||||ADM|A0|
-# PV2|||^Chirurgie Programmée||||||||||||||||||||||||||||||||||||||20240712
-# OBX|1|NM|21612-7^weight CORPOREL||52|kg|||||F
-# OBX|2|NM|8302-2^height||163|cm|||||F
-# OBX|3|NM|8480-6^PRESSION ARTERIELLE SYSTOLIQUE||154|mm[Hg]|||||F
-# OBX|4|NM|8462-4^PRESSION ARTERIELLE DIASTOLIQUE||87|mm[Hg]|||||F
-# OBX|5|NM|2339-0^GLUCOSE SANGUIN||6.2|mmol/L|3.5-5.7|H|||F
-# AL1|1||^AMOXICILLINE||URTICAIRE|
-# AL1|2||^ASPIRINE||OEDEME DE QUINCKE|
-# AL1|3||^ARACHIDES||CHOC ANAPHYLACTIQUE|
-# DG1|1|CIM10|I21.0^Infarctus transmural aigu du myocarde, de la paroi antérieure|Infarctus du myocarde||A
-# DG1|2|CIM10|I10^Hypertension essentielle (primitive)|Hypertension artérielle||C
-# DG1|3|CIM10|E11.9^Diabète sucré de type 2 sans complication|Diabète de type 2||C
-# PR1|1|CCAM|DDQH001^Coronarographie|Coronarographie||20240710103015
-# GT1|1|8291|DUPONT^JEAN^MARC^JR^M||123 RUE PRINCIPALE^^PARIS^^75001^FRA|(01)23456789||19610615|M|P/F|SLF|1234567890123||||
-# IN1|1|SECURITE SOCIALE|1|CPAM|||||||||||||||||||||||||||||||||||||||||||"""
     server_ip = get_server_ip()
     server_port = get_server_port()
     hl7_message = generate_random_hl7_message()
@@ -482,7 +462,7 @@ logo_photo = ImageTk.PhotoImage(logo_image)
 # Ajout fond
 canvas.create_image(928, 0, image=bg_photo, anchor="nw")
 
-canvas.create_image(1525, 736, image=logo_photo, anchor="nw")
+canvas.create_image(1525, 883, image=logo_photo, anchor="nw")
 
 # Widgets sur canvas
 entry = tk.Entry(window, font=("Avenir", 23))
@@ -494,18 +474,18 @@ btn_generate_data = tk.Button(window, text="🎲", font=("Avenir", 15), bg="#030
 
 label_first_name = tk.Label(window, bg="#70B8EA", font=("Avenir", 23))
 entry_first_name = tk.Entry(window, bg="#03045C", font=("Avenir", 23))
-entry_first_name.insert(0, "Alice")
+entry_first_name.insert(0, "Anne")
 
 label_last_name = tk.Label(window, bg="#70B8EA", font=("Avenir", 23))
 entry_last_name = tk.Entry(window,bg="#03045C", font=("Avenir", 23))
-entry_last_name.insert(0,"SUMMER")
+entry_last_name.insert(0,"VERSAIRE")
 
 label_dob = tk.Label(window, bg="#70B8EA", font=("Avenir", 23))
 
 # entry_dob = tk.Entry(window,bg="#03045C", font=("Avenir", 23))
 
 entry_dob = DateEntry(window, date_pattern='dd/mm/yyyy', locale='fr_FR', font=("Avenir", 23), width=12)
-entry_dob.set_date(date(1931, 7, 10))
+entry_dob.set_date(date(1985, 1, 24))
 entry_dob.configure(showweeknumbers=False, state="normal")
 entry_dob._top_cal.overrideredirect(True)  # empêche l'ouverture du calendrier (non documenté)
 
