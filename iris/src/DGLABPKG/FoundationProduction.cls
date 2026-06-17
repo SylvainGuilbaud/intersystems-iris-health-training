@@ -18,17 +18,18 @@ XData ProductionDefinition
     <Setting Target="Adapter" Name="Port">9002</Setting>
     <Setting Target="Adapter" Name="JobPerConnection">1</Setting>
     <Setting Target="Host" Name="TargetConfigNames">HL7</Setting>
+    <Setting Target="Host" Name="MessageSchemaCategory">HL7v25IHE:ADT_AXX</Setting>
   </Item>
-  <Item Name="from DGLAB - MLLP" Category="" ClassName="EnsLib.HL7.Service.TCPService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="true" Schedule="">
+  <Item Name="to DGLAB - MLLP" Category="" ClassName="EnsLib.HL7.Operation.TCPOperation" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+    <Setting Target="Adapter" Name="IPAddress">iris-health-training-dev</Setting>
+    <Setting Target="Adapter" Name="Port">9003</Setting>
+  </Item>
+  <Item Name="LAB RESULT from DGLAB - MLLP" Category="" ClassName="EnsLib.HL7.Service.TCPService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="true" Schedule="">
     <Setting Target="Host" Name="MessageSchemaCategory">2.3</Setting>
     <Setting Target="Adapter" Name="Port">9001</Setting>
     <Setting Target="Host" Name="TargetConfigNames">HL7</Setting>
     <Setting Target="Host" Name="ArchiveIO">1</Setting>
     <Setting Target="Adapter" Name="JobPerConnection">1</Setting>
-  </Item>
-  <Item Name="to DGLAB - MLLP" Category="" ClassName="EnsLib.HL7.Operation.TCPOperation" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
-    <Setting Target="Adapter" Name="IPAddress">iris-health-training-dev</Setting>
-    <Setting Target="Adapter" Name="Port">9003</Setting>
   </Item>
 </Production>
 }
