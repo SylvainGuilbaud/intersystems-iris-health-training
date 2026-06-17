@@ -14,8 +14,13 @@ XData RuleDefinition [ XMLNamespace = "http://www.intersystems.com/rule" ]
 <constraint name="docName" value="ORU_R01"></constraint>
 <when condition="hasEncapsulatedData(HL7)" comment="ED">
 <send transform="" target="to EMR - FILE"></send>
-<trace value="&quot;Encapsulated document&quot;"></trace>
+<trace value="&quot;Encapsulated Data&quot;"></trace>
 </when>
+<otherwise>
+<comment text="RP"></comment>
+<send transform="" target="to EMR - FILE"></send>
+<trace value="&quot;Reference Pointer&quot;"></trace>
+</otherwise>
 </rule>
 </ruleSet>
 </ruleDefinition>
