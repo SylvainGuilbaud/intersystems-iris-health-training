@@ -16,9 +16,15 @@ case "$TARGET" in
         ;;
     prod)
         CONTAINER="iris-health-training-prod"
-        ;;    
+        ;;   
+    dev-ce)
+        CONTAINER="iris-health-training-dev-local"
+        ;;
+    prod-ce)
+        CONTAINER="iris-health-training-prod-local"
+        ;;   
     *)
-        echo "Usage: $0 [training|user|%sys|<your_namespace>] [dev-aws|prod-aws|dev|prod]"
+        echo "Usage: $0 [training|user|%sys|<your_namespace>] [dev-aws|prod-aws|dev|prod|dev-ce|prod-ce]"
         exit 1
         ;;
 esac

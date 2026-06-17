@@ -1,6 +1,6 @@
 [Startup]
 SystemMode=TRAINING-DEV-LOCAL
-TerminalPrompt=1,2,8
+TerminalPrompt=1,2,7,8
 
 [config]
 globals=0,0,8192,0,0,0
