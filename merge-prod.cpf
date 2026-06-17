@@ -13,5 +13,4 @@ CurrentDirectory=/journal
 AlternateDirectory=/journal2
 
 [Actions]
-Execute:Namespace="%SYS",ClassName="Security.Users",MethodName="UnExpireUserPasswords",Arg1="*"
 Execute:Namespace="%SYS",ClassName="%SYSTEM.CSP",MethodName="SetConfig",Arg1="CSPConfigName",Arg2="iris-health-training-prod"
