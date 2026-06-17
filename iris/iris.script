@@ -12,10 +12,10 @@
     set app = "/csp/training"
     set appProperties("DeepSeeEnabled")=1
     set sc = ##class(Security.Applications).Modify(app,.appProperties)
-    
-    zn "TRAINING"
 
-    // Load the Python demo module (compiles classes, copies Python, installs pip deps)
-    zpm "load -nodev /home/irisowner/dev -v"
+    zn "DGLAB"
+
+    set sc = $SYSTEM.OBJ.Import("/home/irisowner/dev/src","ck")
+    do ##class(EnsLib.HL7.SchemaXML).Import("/home/irisowner/dev/src/HL7v2/HL7v25IHE.HL7")
 
     halt

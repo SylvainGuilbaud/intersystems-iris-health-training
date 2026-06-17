@@ -9,6 +9,7 @@ services:
     hostname: ${IRIS_INSTANCE_NAME}-dev
     ports:
       - ${IRIS_PORT_DEV}:1972
+      - 9000-9200:9000-9200
     volumes:
       - dev_${ISC_DATA_DIRECTORY}_${IRIS_INSTANCE_NAME}:/${ISC_DATA_DIRECTORY}
       - dev_journal_${IRIS_INSTANCE_NAME}:/journal
@@ -38,6 +39,7 @@ services:
     hostname: ${IRIS_INSTANCE_NAME}-prod
     ports:
       - ${IRIS_PORT_PROD}:1972
+      - 9500-9700:9500-9700
     volumes:
       - prod_${ISC_DATA_DIRECTORY}_${IRIS_INSTANCE_NAME}:/${ISC_DATA_DIRECTORY}
       - prod_journal_${IRIS_INSTANCE_NAME}:/journal

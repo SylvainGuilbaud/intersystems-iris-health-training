@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+
+<Category name="HL7v25IHE" base="2.5">
+
+<MessageType name='ADT_AXX' structure='ADT_AXX'/>
+<MessageType name='QBP_ZV1' structure='QBP_ZV1' returntype='RSP_ZV2'/>
+<MessageType name='RSP_ZV2' structure='RSP_ZV2'/>
+<MessageType name='SIU_SXX' structure='SIU_SXX'/>
+
+<MessageStructure name='ADT_AXX' definition='base:MSH~[~base:EVN~]~base:PID~[~base:PD1~]~[~base:MRG~]~[~{~base:ROL~}~]~[~{~base:NK1~}~]~[~base:PV1~]~[~base:PV2~]~[~ZBE~]~[~ZFA~]~[~ZFP~]~[~ZFV~]~[~ZFM~]~[~ZFD~]~[~{~ZFS~}~]~[~base:OBX~]~[~{~base:IN1~[~base:IN2~]~[~{~base:IN3~}~]~[~{~base:ROL~}~]~}~]~[~base:ACC~]' description='ADT message'/>
+<MessageStructure name='QBP_ZV1' definition='base:MSH~[~{~base:SFT~}~]~QPD~base:RCP~[~base:DSC~]'/>
+<MessageStructure name='RSP_ZV2' definition='base:MSH~[~{~base:SFT~}~]~base:MSA~[~base:ERR~]~base:QAK~QPD~[~{~base:PID~[~base:PD1~]~[~{~base:NK1~}~]~[~{~base:PV1~}~]~[~base:QRI~]~}~]~[~base:DSC~]'/>
+<MessageStructure name='SIU_SXX' definition='base:MSH~base:SCH~[~{~base:TQ1~}~]~[~{~base:NTE~}~]~base:PID~[~base:PD1~]~[~base:PV1~]~[~base:PV2~]~[~{~base:OBX~}~]~[~{~base:DG1~}~]~{~base:RGS~[~{~base:AIS~[~{~base:NTE~}~]~}~]~[~{~base:AIG~[~{~base:NTE~}~]~}~]~[~{~base:AIL~[~{~base:NTE~}~]~}~]~[~{~base:AIP~[~{~base:NTE~}~]~}~]~}'/>
+
+<SegmentStructure name='QPD' description='Query Parameter Definition'>
+    <SegmentSubStructure piece='1' description='Message Query Name' datatype='base:CE' symbol='!' max_length='250' required='R' ifrepeating='0' codetable='base:471'/>
+    <SegmentSubStructure piece='2' description='Query Tag' datatype='base:ST' symbol='?' max_length='32' required='C' ifrepeating='0'/>
+    <SegmentSubStructure piece='3' description='User Parameters (in successive fields)' symbol='*' max_length='256' required='O' ifrepeating='1'/>
+</SegmentStructure>
+<SegmentStructure name='ZBE' description='Movement Action segment'>
+    <SegmentSubStructure piece='1' description='Movement ID' datatype='base:EI' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='2' description='Start Movement Date/Time' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='3' description='End Movement Date/Time' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='4' description='Movement Action' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='5' description='Historical Movement Indicator' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='6' description='Original trigger event code' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='7' description='Responsible Ward' datatype='base:XON' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='8' description='Responsible Care' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='9' description='Nature Mouvement' max_length='0' required='O' ifrepeating='0'/>
+</SegmentStructure>
+<SegmentStructure name='ZFA' description='DMP'>
+    <SegmentSubStructure piece='1' description='Statut DMP' max_length='20' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='2' description='Date Recueil Statut DMP' max_length='26' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='3' description='Date Fermeture DMP' max_length='26' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='4' description='Autorisation Acces Valide' max_length='1' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='5' description='Date Recueil Etat Autorisation' max_length='26' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='6' description='Opposition Bris Glace' max_length='1' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='7' description='Opposition Centre Regulation' max_length='1' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='8' description='Date Recueil Oppositions' max_length='26' required='O' ifrepeating='0'/>
+</SegmentStructure>
+<SegmentStructure name='ZFD' description='Complement demographique'>
+    <SegmentSubStructure piece='1' description='Date Lunaire' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='2' description='Nombre de semaines de gestation' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='3' description='Consentement SMS' max_length='1' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='4' description='Indicateur de DDN corrige' max_length='1' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='5' description='Mode obtention identite' max_length='8' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='6' description='Date interrogation teleservice INSi' max_length='26' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='7' description='Type justificatif identite' max_length='16' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='8' description='Date fin validite du document' max_length='26' required='O' ifrepeating='0'/>
+</SegmentStructure>
+<SegmentStructure name='ZFM' description='Mouvement PMSI'>
+    <SegmentSubStructure piece='1' description='Mode Entree PMSI' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='2' description='Mode Sortie PMSI' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='3' description='Mode Provenance PMSI' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='4' description='Mode Destination PMSI' max_length='60' required='O' ifrepeating='0'/>
+</SegmentStructure>
+<SegmentStructure name='ZFP' description='Situation professionnelle'>
+    <SegmentSubStructure piece='1' description='Activite sociopro' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='2' description='Categorie sociopro' max_length='60' required='O' ifrepeating='0'/>
+</SegmentStructure>
+<SegmentStructure name='ZFS' description='Mode legal de soins en psychiatrie'>
+    <SegmentSubStructure piece='1' description='Set ID ZFS' max_length='4' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='2' description='Identifiant' datatype='base:EI' max_length='427' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='3' description='Date Heure Debut Mode Legal' datatype='base:TS' max_length='26' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='4' description='Date Heure Fin Mode Legal' datatype='base:TS' max_length='26' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='5' description='Action' max_length='6' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='6' description='Mode Legal' datatype='base:CWE' max_length='250' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='7' description='Code RIMP-P Mode Legal' datatype='base:CNE' max_length='2' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='8' description='Commentaires' max_length='65536' required='O' ifrepeating='0'/>
+</SegmentStructure>
+<SegmentStructure name='ZFV' description='Complements sur la rencontre'>
+    <SegmentSubStructure piece='1' description='Etb provenance' datatype='base:DLD' max_length='47' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='2' description='Mode de transport de sortie' datatype='base:CE' max_length='250' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='3' description='Type de preadmission' max_length='2' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='4' description='Date debut placement psy' datatype='base:TS' max_length='26' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='5' description='Date fin placement psy' datatype='base:TS' max_length='26' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='6' description='Adresse etb provenance ou destination' datatype='base:XAD' max_length='250' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='7' description='NDA etb provenance' datatype='base:CX' max_length='250' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='8' description='Numero archives' datatype='base:CX' max_length='250' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='9' description='Mode sortie personnalise' max_length='6' required='O' ifrepeating='0'/>
+</SegmentStructure>
+
+<DataType name='ISC_VERSION' description='$Id: //legacy/fr_products/CCOMTCC/MAIN/schema/hl7/HL7v25IHE.xml#18 $'>
+</DataType>
+
+</Category>

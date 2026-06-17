@@ -5,4 +5,12 @@ CreateResource:Name=%DB_TRAINING_CODE,Description="TRAINING_CODE database"
 CreateDatabase:Name=TRAINING_CODE,Directory=/usr/irissys/mgr/TRAINING_CODE,Resource=%DB_TRAINING_CODE
 CreateNamespace:Name=TRAINING,Globals=TRAINING_DATA,Routines=TRAINING_CODE,Interop=1
 
+CreateResource:Name=%DB_DGLAB_DATA,Description="DGLAB_DATA database"
+CreateDatabase:Name=DGLAB_DATA,Directory=/usr/irissys/mgr/DGLAB_DATA,Resource=%DB_DGLAB_DATA
+CreateResource:Name=%DB_DGLAB_CODE,Description="DGLAB_CODE database"
+CreateDatabase:Name=DGLAB_CODE,Directory=/usr/irissys/mgr/DGLAB_CODE,Resource=%DB_DGLAB_CODE
+CreateNamespace:Name=DGLAB,Globals=DGLAB_DATA,Routines=DGLAB_CODE,Interop=1
+CreateRole:Name=${NAMESPACE}_ROLE,Description="Role for ${NAMESPACE} namespace",Resources=%DB_${NAMESPACE}_DATA,%DB_${NAMESPACE}_CODE
+CreateUser:Name=${NAMESPACE},NameSpace=${NAMESPACE},FullName=${NAMESPACE} at TECHNIDATA,AccountNeverExpires=1,PasswordNeverExpires=1,Roles=%All,${NAMESPACE}_ROLE,PasswordHash=4c458bac977abcc5c5537edca92bd3789eab4c8bc3af70874966c35a0947f0d358591e85f176d2c6d06b7e41ba439cdd91f0b6f42c541f906656852d1e4456a1,b0da7a46afc5af0d44da87452b85e5cefb9fe02aa01706cf501f1a168babaab78fef063c5a577e8228d6fcc0f3961363c9906d39cc689e5a264c447a0fff3692,10000,SHA512
+
 ModifyService:Name=%Service_CallIn,Enabled=1,AutheEnabled=48

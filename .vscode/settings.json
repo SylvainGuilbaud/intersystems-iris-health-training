@@ -1,8 +1,8 @@
 {
     "objectscript.conn": {
         "active": true,
-        "server": "iris-health-training-prod-aws",
-        "ns": "TRAINING"
+        "server": "iris-health-training-dev-aws",
+        "ns": "DGLAB"
     },
     "intersystems.servers": {
         "iris-health-training-dev-local": {
