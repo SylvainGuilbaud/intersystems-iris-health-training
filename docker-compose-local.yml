@@ -5,11 +5,11 @@ services:
       args:
         IMAGE: containers.intersystems.com/intersystems/irishealth-community:latest-em
       context: iris
-    container_name: ${IRIS_INSTANCE_NAME}-dev
+    container_name: ${IRIS_INSTANCE_NAME}-dev-local
     hostname: ${IRIS_INSTANCE_NAME}-dev
     ports:
-      - ${IRIS_PORT_DEV}:1972
-      - 9000-9200:9000-9200
+      - ${IRIS_PORT_DEV_LOCAL}:1972
+      - 39000-39200:9000-9200
     volumes:
       - dev_${ISC_DATA_DIRECTORY}:/${ISC_DATA_DIRECTORY}
       - dev_journal:/journal
@@ -28,11 +28,11 @@ services:
       args:
         IMAGE: containers.intersystems.com/intersystems/irishealth-community:latest-em
       context: iris
-    container_name: ${IRIS_INSTANCE_NAME}-prod
+    container_name: ${IRIS_INSTANCE_NAME}-prod-local
     hostname: ${IRIS_INSTANCE_NAME}-prod
     ports:
-      - ${IRIS_PORT_PROD}:1972
-      - 9500-9700:9500-9700
+      - ${IRIS_PORT_PROD_LOCAL}:1972
+      - 39500-39700:9500-9700
     volumes:
       - prod_${ISC_DATA_DIRECTORY}:/${ISC_DATA_DIRECTORY}
       - prod_journal:/journal
@@ -49,12 +49,13 @@ services:
  
   webgateway: # Used for VS Code ObjectScript extension to connect to /api/atelier and for IRIS Administration Portal and Web Services
     image: containers.intersystems.com/intersystems/webgateway:latest-em
+    container_name: ${IRIS_INSTANCE_NAME}-webgateway-local
     depends_on:
       - iris-dev
       - iris-prod
     ports:
-      - 881:80
-      - 884:443
+      - ${WEBGATEWAY_PORT_HTTP_LOCAL}:80
+      - ${WEBGATEWAY_PORT_HTTPS_LOCAL}:443
     restart: unless-stopped
     environment:
     - ISC_CSP_CONF_FILE=/webgateway/CSP.conf
@@ -69,25 +70,25 @@ services:
 volumes:
   dev_databases:
     external: true
-    name: ${IRIS_INSTANCE_NAME}_dev_databases  
+    name: ${IRIS_INSTANCE_NAME}-local_dev_databases  
   dev_journal:
     external: true
-    name: ${IRIS_INSTANCE_NAME}_dev_journal
+    name: ${IRIS_INSTANCE_NAME}-local_dev_journal
   dev_journal2:
     external: true
-    name: ${IRIS_INSTANCE_NAME}_dev_journal2
+    name: ${IRIS_INSTANCE_NAME}-local_dev_journal2
   dev_WIJ:
     external: true
-    name: ${IRIS_INSTANCE_NAME}_dev_WIJ
+    name: ${IRIS_INSTANCE_NAME}-local_dev_WIJ
   prod_databases:
     external: true
-    name: ${IRIS_INSTANCE_NAME}_prod_databases
+    name: ${IRIS_INSTANCE_NAME}-local_prod_databases
   prod_journal:
     external: true
-    name: ${IRIS_INSTANCE_NAME}_prod_journal
+    name: ${IRIS_INSTANCE_NAME}-local_prod_journal
   prod_journal2:
     external: true
-    name: ${IRIS_INSTANCE_NAME}_prod_journal2
+    name: ${IRIS_INSTANCE_NAME}-local_prod_journal2
   prod_WIJ:
     external: true
-    name: ${IRIS_INSTANCE_NAME}_prod_WIJ
+    name: ${IRIS_INSTANCE_NAME}-local_prod_WIJ

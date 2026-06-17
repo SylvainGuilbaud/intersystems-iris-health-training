@@ -53,6 +53,7 @@ services:
  
   webgateway: # Used for VS Code ObjectScript extension to connect to /api/atelier and for IRIS Administration Portal and Web Services
     image: containers.intersystems.com/intersystems/webgateway:latest-em
+    container_name: ${IRIS_INSTANCE_NAME}-webgateway
     depends_on:
       - iris-dev
       - iris-prod
