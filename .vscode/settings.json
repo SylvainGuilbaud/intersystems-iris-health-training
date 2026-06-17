@@ -1,29 +1,31 @@
 {
     "objectscript.conn": {
-        "active": false,
-        "server": "iris-training-aws",
+        "active": true,
+        "server": "iris-health-training-prod-aws",
         "ns": "TRAINING"
     },
     "intersystems.servers": {
-        "iris-training-dev": {
+        "iris-health-training-dev-local": {
             "webServer": {
                 "scheme": "http",
                 "host": "localhost",
                 // "host": "host.docker.internal",
-                "port": 2773
+                "port": 80,
+                "pathPrefix": "/iris-health-training-dev"
             },
             "username": "superuser"
         },
-        "iris-training": {
+        "iris-health-training-prod-local": {
             "webServer": {
                 "scheme": "http",
                 "host": "localhost",
                 // "host": "host.docker.internal",
-                "port": 881
+                "port": 80,
+                "pathPrefix": "/iris-health-training-prod"
             },
             "username": "superuser"
         },
-        "iris-training-dev-aws": {
+        "iris-health-training-dev-aws": {
             "webServer": {
                 "scheme": "http",
                 "host": "ec2-63-177-72-122.eu-central-1.compute.amazonaws.com",
@@ -32,7 +34,7 @@
             },
             "username": "superuser"
         },
-        "iris-training-prod-aws": {
+        "iris-health-training-prod-aws": {
             "webServer": {
                 "scheme": "http",
                 "host": "ec2-63-177-72-122.eu-central-1.compute.amazonaws.com",

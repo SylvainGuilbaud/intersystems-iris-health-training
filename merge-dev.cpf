@@ -1,7 +1,7 @@
 [Startup]
 SystemMode=TRAINING-DEV
 TerminalPrompt=1,2,8
-PasswordHash=94e79f647f6c0e83caae3243d40173c7182ccb5905336b3572e003f0f3270b2df52d51e4a7f1427f183bec4e00fb2d9f0d889e8a2c220e6d73156d495a5b1604,a1579e9dfa0b13f79b0bbd0f6df531f9c6fd464482a65adcd3d1816385a065e5d78c285c79b71e3e3137861efeceb585a6b7165233bf3544756449f8dd84678b,10000,SHA512
+PasswordHash=a2068662bf4741e391d6dee698538d3d72dba8913b1bbaca4c71511259b139263326f635b63f2628faa8fdd1816494d14fc70a70655c9969a26a7d5edd84538b,c99a23d7bc4e421e8ced5f407e520f1be539ff87a7763f0828d1fd5b3537bffccf8abff1f6c88bd845ef4ede8ee89a246a6ea9f00bdcad82b7bfb6ef02e208fe,10000,SHA512
 
 [config]
 globals=0,0,8192,0,0,0
@@ -13,4 +13,5 @@ CurrentDirectory=/journal
 AlternateDirectory=/journal2
 
 [Actions]
+Execute:Namespace="%SYS",ClassName="Security.Users",MethodName="UnExpireUserPasswords",Arg1="*"
 Execute:Namespace="%SYS",ClassName="%SYSTEM.CSP",MethodName="SetConfig",Arg1="CSPConfigName",Arg2="iris-health-training-dev"
