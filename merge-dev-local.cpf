@@ -1,0 +1,16 @@
+[Startup]
+SystemMode=TRAINING-DEV
+TerminalPrompt=1,2,8
+
+[config]
+globals=0,0,8192,0,0,0
+routines=0
+wijdir=/WIJ
+
+[Journal]    
+CurrentDirectory=/journal
+AlternateDirectory=/journal2
+
+[Actions]
+Execute:Namespace="%SYS",ClassName="Security.Users",MethodName="UnExpireUserPasswords",Arg1="*"
+Execute:Namespace="%SYS",ClassName="%SYSTEM.CSP",MethodName="SetConfig",Arg1="CSPConfigName",Arg2="iris-health-training-dev"
