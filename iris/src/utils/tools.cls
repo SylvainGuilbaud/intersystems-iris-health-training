@@ -1,5 +1,20 @@
-Class utils.tools Extends %RegisteredObject
+Class utils.tools Extends Ens.Rule.FunctionSet
 {
+classmethod hasEncapsulatedData(pHL7 As EnsLib.HL7.Message) As %Boolean
+{
+    set hasED = 0
+    for i=1:1:pHL7.SegCount {
+        set seg = pHL7.GetSegmentAt(i)
+        continue:'$isobject(seg)
+        continue:(seg.Name '= "OBX")
+        set vt = $zcvt(seg.GetValueAt("2"), "U")
+        if vt = "ED" {
+            set hasED = 1
+            quit
+        }
+    }
+    quit hasED
+}
 ClassMethod DecodeOBX5Document(
     pHL7 As EnsLib.HL7.Message,
     pOBXIndex As %Integer = 1,

@@ -12,7 +12,7 @@ XData RuleDefinition [ XMLNamespace = "http://www.intersystems.com/rule" ]
 <constraint name="source" value="LAB RESULT from DGLAB - MLLP"></constraint>
 <constraint name="docCategory" value="2.3"></constraint>
 <constraint name="docName" value="ORU_R01"></constraint>
-<when condition="1" comment="">
+<when condition="hasEncapsulatedData(HL7)" comment="ED">
 <send transform="" target="to EMR - FILE"></send>
 </when>
 </rule>
