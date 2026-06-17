@@ -7,11 +7,11 @@ source .env
 
 # Set permissions on the persistent volumes
 echo "Setting permissions on persistent volumes..."
-create_volumes_with_permissions.sh
+create_volumes_with_permissions.sh $IRIS_INSTANCE_NAME-local
 
 # Start the containers
 echo "Starting the containers..."
-docker compose -p "${IRIS_INSTANCE_NAME}" up -d
+docker compose -f docker-compose-local.yml -p "${IRIS_INSTANCE_NAME}-local" up -d
 if [ $? -ne 0 ]; then
     echo "ERROR: Failed to start the containers."
     exit 1

@@ -1,5 +1,5 @@
 [Startup]
-SystemMode=TRAINING-PROD
+SystemMode=TRAINING-PROD-LOCAL
 TerminalPrompt=1,2,8
 
 [config]

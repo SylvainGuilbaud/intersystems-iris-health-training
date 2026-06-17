@@ -12,6 +12,16 @@ It installs the ZPM package manager and uses it to install the `swagger-ui` pack
 
 The Web Gateway is set up to route requests to this application, allowing for secure access to the REST API.
 
+## You can use the `docker-compose-local.yml` file to run the services in a local development environment. 
+This configuration uses Docker volumes for persistent storage of IRIS data and journals, allowing you to stop and start the containers without losing your data.
+
+This script can be used to start the local development environment using the `docker-compose-local.yml` file.
+## STARTING THE SERVICES LOCALLY
+Run the following command in the root of the project to start both the IRIS and Web Gateway services:
+```bash
+./start-local.sh
+```
+
 ## Docker Compose
 
 The `docker-compose.yml` defines two services:
