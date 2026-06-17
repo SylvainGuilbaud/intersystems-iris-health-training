@@ -9,7 +9,7 @@ XData RuleDefinition [ XMLNamespace = "http://www.intersystems.com/rule" ]
 <ruleDefinition alias="" context="EnsLib.HL7.MsgRouter.RoutingEngine" production="DGLABPKG.FoundationProduction">
 <ruleSet name="" effectiveBegin="" effectiveEnd="">
 <rule name="ORU">
-<constraint name="source" value="from DGLAB"></constraint>
+<constraint name="source" value="from DGLAB - MLLP"></constraint>
 <constraint name="docCategory" value="2.3"></constraint>
 <constraint name="docName" value="ORU_R01"></constraint>
 <when condition="1" comment="">

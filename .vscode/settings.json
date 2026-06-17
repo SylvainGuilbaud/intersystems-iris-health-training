@@ -1,10 +1,28 @@
 {
     "objectscript.conn": {
         "active": true,
-        "server": "iris-health-training-dev-aws",
+        "server": "iris-health-training-dev-local-community",
         "ns": "DGLAB"
     },
     "intersystems.servers": {
+        "iris-health-training-dev-aws": {
+            "webServer": {
+                "scheme": "http",
+                "host": "ec2-63-177-72-122.eu-central-1.compute.amazonaws.com",
+                "port": 80,
+                "pathPrefix": "/iris-health-training-dev"
+            },
+            "username": "superuser"
+        },
+        "iris-health-training-prod-aws": {
+            "webServer": {
+                "scheme": "http",
+                "host": "ec2-63-177-72-122.eu-central-1.compute.amazonaws.com",
+                "port": 80,
+                "pathPrefix": "/iris-health-training-prod"
+            },
+            "username": "superuser"
+        },
         "iris-health-training-dev-local": {
             "webServer": {
                 "scheme": "http",
@@ -25,20 +43,22 @@
             },
             "username": "superuser"
         },
-        "iris-health-training-dev-aws": {
-            "webServer": {
+        "iris-health-training-dev-local-community": {
+             "webServer": {
                 "scheme": "http",
-                "host": "ec2-63-177-72-122.eu-central-1.compute.amazonaws.com",
-                "port": 80,
+                "host": "localhost",
+                // "host": "host.docker.internal",
+                "port": 881,
                 "pathPrefix": "/iris-health-training-dev"
             },
             "username": "superuser"
         },
-        "iris-health-training-prod-aws": {
-            "webServer": {
+        "iris-health-training-prod-local-community": {
+             "webServer": {
                 "scheme": "http",
-                "host": "ec2-63-177-72-122.eu-central-1.compute.amazonaws.com",
-                "port": 80,
+                "host": "localhost",
+                // "host": "host.docker.internal",
+                "port": 881,
                 "pathPrefix": "/iris-health-training-prod"
             },
             "username": "superuser"
