@@ -1,7 +1,6 @@
 **/*.key
-iris-data/
-**/ipm.json
+**/*.log
 **/*.pem
-.env.test
 .DS_Store
 **/.DS_Store
+**/*out
