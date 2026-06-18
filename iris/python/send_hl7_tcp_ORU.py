@@ -13,6 +13,18 @@ import string
 import threading
 import time
 
+# ── Modern dark theme palette ─────────────────────────────────────────────────
+_BG        = "#0b0b25"   # window / canvas background – matches IS_logo.jpg
+_INPUT_BG  = "#0f2336"   # entry field background
+_INPUT_FG  = "#e2e8f0"   # entry / input text (near white)
+_LABEL_FG  = "#94a3b8"   # label text (cool blue-gray)
+_ACCENT    = "#38bdf8"   # primary accent – sky blue
+_BTN_BG    = "#0369a1"   # button background – ocean blue
+_BTN_FG    = "#f0f9ff"   # button text
+_LOG_BG    = "#020917"   # log console background – near black
+_LOG_FG    = "#4ade80"   # log text – bright green
+_RESP_FG   = "#22d3ee"   # response text – cyan
+
 # --- TCP client configuration (defaults, can be overridden from UI) ---
 DEFAULT_SERVER_IP = 'ec2-63-177-72-122.eu-central-1.compute.amazonaws.com'
 DEFAULT_SERVER_PORT = 9001
@@ -278,21 +290,31 @@ def append_to_log_console(text):
 def append_to_response_console(text):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_response.configure(state="normal")
-    log_response.delete("1.0", tk.END)
     log_response.insert(tk.END, f"{timestamp} - {text}\n")
+    # Trim oldest lines to keep the widget from growing unbounded
+    while int(log_response.index("end").split(".")[0]) - 1 > 200:
+        log_response.delete("1.0", "2.0")
     log_response.see(tk.END)
-    log_response.configure(state="disabled")
-    # Highlight ACK
-    log_response.configure(state="normal")
-    start = "1.0"
+    # Highlight ACK only in the newly inserted lines
+    n_new = text.count("\n") + 1
+    end_line = int(log_response.index("end").split(".")[0]) - 1
+    start = f"{max(1, end_line - n_new)}.0"
     while True:
         pos = log_response.search("ACK", start, stopindex=tk.END)
         if not pos:
             break
-        end = f"{pos} lineend"
-        log_response.tag_add("ack", pos, end)
-        start = end
+        line_end = f"{pos} lineend"
+        log_response.tag_add("ack", pos, line_end)
+        start = line_end
     log_response.configure(state="disabled")
+
+def _fmt_bytes(n):
+    """Return a human-readable byte size (KB, MB, GB)."""
+    for unit in ("bytes","KB", "MB", "GB", "TB"):
+        if n < 1024:
+            return f"{n:.1f} {unit}" if unit != "bytes" else f"{n} {unit}"
+        n /= 1024
+    return f"{n:.1f} PB"
 
 def check_port_open(host, port, timeout=1):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -319,7 +341,12 @@ translations = {
         "send_error":"Erreur lors de l'envoi HL7 :",
         "response_received": "réponse reçue:",
         "patient_id": "Identifiant du patient",
-        "sodium": "Sodium (mmol/L)"
+        "sodium": "Sodium (mmol/L)",
+        "bytes_sent": "envoyés",
+        "load_test_done": "Test de charge terminé",
+        "load_test_failed": "échoué(s)",
+        "load_test_start": "Test de charge : envoi de {nb} messages ({threads})...",
+        "bytes_total": "total envoyés"
 
     },
     "en": {
@@ -337,7 +364,12 @@ translations = {
         "send_error":"Error sending HL7 :",
         "response_received": "response received:",
         "patient_id": "Patient ID",
-        "sodium": "Sodium (mmol/L)"
+        "sodium": "Sodium (mmol/L)",
+        "bytes_sent": "sent",
+        "load_test_done": "Load test done",
+        "load_test_failed": "failed",
+        "load_test_start": "Load test: sending {nb} messages ({threads})...",
+        "bytes_total": "total bytes"
 
     },
     "es": {
@@ -355,7 +387,12 @@ translations = {
         "send_error":"Error al enviar HL7 :",
         "response_received": "respuesta recibida:",
         "patient_id": "Identificador del paciente",
-        "sodium": "Sodio (mmol/L)"
+        "sodium": "Sodio (mmol/L)",
+        "bytes_sent": "enviados",
+        "load_test_done": "Prueba de carga completada",
+        "load_test_failed": "fallido(s)",
+        "load_test_start": "Prueba de carga: enviando {nb} mensajes ({threads})...",
+        "bytes_total": "total enviado"
     }
 }
 
@@ -440,14 +477,17 @@ def send_hl7_message():
     logging.info("%s:\n%s", translations[current_language]["hl7_generated"], truncate_ed_base64(messages[0]))
     append_to_log_console(translations[current_language]["hl7_generated"] + truncate_ed_base64(messages[0]))
     if nb > 1:
-        threads_info = f"{nb_threads} thread(s)" if nb_threads > 1 else "1 thread"
-        window.after(0, lambda: append_to_response_console(f"Load test: sending {nb} messages with {threads_info}..."))
+        threads_info = f"{nb_threads} thread(s)"
+        t = translations[current_language]
+        start_msg = t["load_test_start"].format(nb=nb, threads=threads_info)
+        window.after(0, lambda m=start_msg: append_to_response_console(m))
 
     # Shared counters (protected by lock)
     ok_count = [0]
     fail_count = [0]
     sent_count = [0]
     done_threads = [0]
+    bytes_total = [0]
     lock = threading.Lock()
     start_time = time.time()
 
@@ -474,14 +514,17 @@ def send_hl7_message():
                         with lock:
                             ok_count[0] += 1
                             sent_count[0] += 1
+                            bytes_total[0] += len(hl7_wrapped)
                             n_sent = sent_count[0]
                         if nb == 1:
+                            msg_size = len(hl7_wrapped)
                             logging.info("%s:\n%s", translations[current_language]["response_received"], response_clean.replace("\r", "\n"))
-                            window.after(0, lambda rc=response_clean: append_to_response_console(
-                                translations[current_language]["response_received"] + rc.replace("\r", "\n")))
+                            window.after(0, lambda rc=response_clean, sz=msg_size: append_to_response_console(
+                                translations[current_language]["response_received"] + rc.replace("\r", "\n") + f"\n[{_fmt_bytes(sz)} {translations[current_language]['bytes_sent']}]"))
                         else:
+                            msg_size = len(hl7_wrapped)
                             elapsed = time.time() - start_time
-                            status = f"[{n_sent}/{nb}] OK ({elapsed:.1f}s) - {response_clean[:60].strip()}"
+                            status = f"[{n_sent}/{nb}] OK ({elapsed:.1f}s) - {_fmt_bytes(msg_size)} - {response_clean[:60].strip()}"
                             logging.info(status)
                             window.after(0, lambda m=status: append_to_response_console(m))
                         break  # success
@@ -505,15 +548,23 @@ def send_hl7_message():
 
         with lock:
             done_threads[0] += 1
-            if done_threads[0] == nb_threads and nb > 1:
+            if done_threads[0] == actual_threads and nb > 1:
                 elapsed = time.time() - start_time
                 rate = ok_count[0] / elapsed if elapsed > 0 else 0
-                threads_label = f"{nb_threads} thread(s)"
+                threads_label = f"{actual_threads} thread(s)"
                 prefix = "✅ " if fail_count[0] == 0 else "❌ "
-                summary = f"{prefix}Load test done: {ok_count[0]}/{nb} OK, {fail_count[0]} failed \u2014 {elapsed:.2f}s ({rate:.1f} msg/s) [{threads_label}]"
+                t = translations[current_language]
+                total_b = _fmt_bytes(bytes_total[0])
+                summary = (
+                    f"{prefix}{t['load_test_done']}: {ok_count[0]}/{nb} OK, "
+                    f"{fail_count[0]} {t['load_test_failed']} — {elapsed:.2f}s ({rate:.1f} msg/s) "
+                    f"[{threads_label}] — {total_b} {t['bytes_total']}"
+                )
                 logging.info(summary)
-                window.after(0, lambda: append_to_response_console(summary))
+                window.after(0, lambda: append_to_response_console("=" * 80))
+                window.after(0, lambda s=summary: append_to_response_console(s))
 
+    actual_threads = sum(1 for chunk in chunks if chunk)
     for chunk in chunks:
         if chunk:
             threading.Thread(target=_worker, args=(chunk,), daemon=True).start()
@@ -547,14 +598,37 @@ def update_labels():
 window = tk.Tk()
 window.geometry("1728x1000")
 window.title(translations[current_language]["title"])
+window.configure(bg=_BG)
 include_pdf_var = tk.BooleanVar()
 
+# ttk dark theme
+style = ttk.Style()
+style.theme_use("clam")
+style.configure("TCombobox",
+    fieldbackground=_INPUT_BG, background=_INPUT_BG, foreground=_INPUT_FG,
+    arrowcolor=_ACCENT, bordercolor=_INPUT_BG,
+    selectbackground=_ACCENT, selectforeground=_BG,
+    insertcolor=_ACCENT)
+style.map("TCombobox",
+    fieldbackground=[("readonly", _INPUT_BG), ("focus", _INPUT_BG)],
+    foreground=[("readonly", _INPUT_FG), ("disabled", _LABEL_FG)],
+    selectbackground=[("readonly", _INPUT_BG)],
+    selectforeground=[("readonly", _INPUT_FG)],
+    background=[("active", _INPUT_BG), ("readonly", _INPUT_BG)])
+style.configure("DateEntry",
+    fieldbackground=_INPUT_BG, foreground=_INPUT_FG, background=_INPUT_BG,
+    arrowcolor=_ACCENT, bordercolor=_INPUT_BG)
+style.configure("TCheckbutton", background=_BG, foreground=_LABEL_FG, indicatorcolor=_INPUT_BG)
+style.map("TCheckbutton",
+    background=[("active", _BG)],
+    foreground=[("active", _ACCENT)])
+
 # Canvas pour le fond
-canvas = tk.Canvas(window, width=1728, height=1000, bg="#70B8EA")
+canvas = tk.Canvas(window, width=1728, height=1000, bg=_BG, highlightthickness=0)
 canvas.pack(fill="both", expand=True)
 
 # Chargement images
-bg_image = Image.open("TECHNIDATA.jpg").resize((800, 209))
+bg_image = Image.open("TECHNIDATA.jpg").resize((600, 157))
 bg_photo = ImageTk.PhotoImage(bg_image)
 
 logo_image = Image.open("IS_logo.jpg").resize((200, 64))
@@ -562,27 +636,36 @@ logo_image = Image.open("IS_logo.jpg").resize((200, 64))
 logo_photo = ImageTk.PhotoImage(logo_image)
 
 # Ajout fond
-canvas.create_image(928, 0, image=bg_photo, anchor="nw")
+canvas.create_image(1728, 0, image=bg_photo, anchor="ne")
 
 canvas.create_image(1525, 883, image=logo_photo, anchor="nw")
+
+# ── Canvas UI decorations ──────────────────────────────────────────────────────
+canvas.create_rectangle(0, 0, 1728, 3, fill=_ACCENT, outline="")           # top accent bar
+canvas.create_rectangle(0, 997, 1728, 1000, fill=_ACCENT, outline="")      # bottom accent bar
+canvas.create_rectangle(0, 3, 927, 30, fill="#0b0b25", outline="")          # header strip (left)
+canvas.create_text(464, 16, text="IRIS HEALTH  ·  HL7 ORU^R01  ·  MLLP TEST TOOL",
+                   fill=_ACCENT, font=("Avenir", 11, "bold"), anchor="center")
+canvas.create_line(10, 482, 1718, 482, fill="#1a3a5c", width=1)             # divider above HL7 log
+canvas.create_line(10, 815, 1718, 815, fill="#1a3a5c", width=1)             # divider above response
 
 # Widgets sur canvas
 entry = tk.Entry(window, font=("Avenir", 23))
 
-label_patient_id = tk.Label(window, bg="#70B8EA", font=("Avenir", 23), text=translations[current_language]["patient_id"])
-entry_patient_id = tk.Entry(window, bg="#03045C", font=("Avenir", 23))
+label_patient_id = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23), text=translations[current_language]["patient_id"])
+entry_patient_id = tk.Entry(window, bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT, selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 23))
 entry_patient_id.insert(0, "24445670")
-btn_generate_data = tk.Button(window, text="🎲", font=("Avenir", 15), bg="#03045C", command=on_generate_data)
+btn_generate_data = tk.Button(window, text="🎲", font=("Avenir", 15), bg=_BTN_BG, fg=_BTN_FG, activebackground=_ACCENT, activeforeground=_BG, relief="flat", cursor="hand2", command=on_generate_data)
 
-label_first_name = tk.Label(window, bg="#70B8EA", font=("Avenir", 23))
-entry_first_name = tk.Entry(window, bg="#03045C", font=("Avenir", 23))
+label_first_name = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23))
+entry_first_name = tk.Entry(window, bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT, selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 23))
 entry_first_name.insert(0, "Anne")
 
-label_last_name = tk.Label(window, bg="#70B8EA", font=("Avenir", 23))
-entry_last_name = tk.Entry(window,bg="#03045C", font=("Avenir", 23))
+label_last_name = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23))
+entry_last_name = tk.Entry(window, bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT, selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 23))
 entry_last_name.insert(0,"VERSAIRE")
 
-label_dob = tk.Label(window, bg="#70B8EA", font=("Avenir", 23))
+label_dob = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23))
 
 # entry_dob = tk.Entry(window,bg="#03045C", font=("Avenir", 23))
 
@@ -591,23 +674,23 @@ entry_dob.set_date(date(1985, 1, 24))
 entry_dob.configure(showweeknumbers=False, state="normal")
 entry_dob._top_cal.overrideredirect(True)  # empêche l'ouverture du calendrier (non documenté)
 
-label_gender = tk.Label(window, bg="#70B8EA", font=("Avenir", 23))
+label_gender = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23))
 
 gender_var = tk.StringVar()
 entry_gender = ttk.Combobox(window, textvariable=gender_var, state="readonly", font=("Avenir", 23))
 entry_gender.set(gender_options_dict[current_language][1]) 
 
-label_sodium = tk.Label(window, bg="#70B8EA", font=("Avenir", 23))
-entry_sodium = tk.Entry(window, bg="#03045C", font=("Avenir", 23))
+label_sodium = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23))
+entry_sodium = tk.Entry(window, bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT, selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 23))
 entry_sodium.insert(0, random.randint(135, 145))
 
-chk_include_pdf = tk.Checkbutton(window, bg="#70B8EA", font=("Avenir", 23), variable=include_pdf_var, text="include PDF", fg="#03045C", activebackground="#70B8EA")
+chk_include_pdf = tk.Checkbutton(window, bg=_BG, fg=_ACCENT, font=("Avenir", 23), variable=include_pdf_var, text="include PDF", activebackground=_BG, activeforeground=_ACCENT, selectcolor=_INPUT_BG)
 
-label_nb_messages = tk.Label(window, bg="#70B8EA", font=("Avenir", 15), text="Nb messages")
+label_nb_messages = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 15), text="Nb messages")
 entry_nb_messages = ttk.Combobox(window, font=("Avenir", 15), values=["1", "5", "10", "20", "50", "100", "200", "500", "1000"])
 entry_nb_messages.set("1")
 
-label_nb_threads = tk.Label(window, bg="#70B8EA", font=("Avenir", 15), text="Nb threads")
+label_nb_threads = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 15), text="Nb threads")
 entry_nb_threads = ttk.Combobox(window, font=("Avenir", 15), values=["1", "2", "4", "5", "10", "20"])
 entry_nb_threads.set("1")
 
@@ -620,17 +703,17 @@ _ENV_MAP = {
     "prod-local":           ("localhost",        "9002"),
 }
 
-label_environment = tk.Label(window, bg="#70B8EA", font=("Avenir", 15), text="Environment")
+label_environment = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 15), text="Environment")
 entry_environment = ttk.Combobox(window, font=("Avenir", 15), state="readonly",
                                  values=list(_ENV_MAP.keys()))
 entry_environment.set("dev-aws")
 
-label_server_ip = tk.Label(window, bg="#70B8EA", font=("Avenir", 15), text="Server IP")
+label_server_ip = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 15), text="Server IP")
 server_ip_var = tk.StringVar(value=DEFAULT_SERVER_IP)
 entry_server_ip = tk.Entry(window, textvariable=server_ip_var, state="readonly",
-                           font=("Avenir", 15), readonlybackground="#03045C", fg="white")
+                           font=("Avenir", 15), readonlybackground=_INPUT_BG, fg=_INPUT_FG)
 
-label_server_port = tk.Label(window, bg="#70B8EA", font=("Avenir", 15), text="Port")
+label_server_port = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 15), text="Port")
 entry_server_port = ttk.Combobox(window, font=("Avenir", 15), values=["9001", "9002", "9500", "39001", "39501", "6661", "2575"])
 entry_server_port.set(str(DEFAULT_SERVER_PORT))
 
@@ -643,8 +726,8 @@ def _on_env_selected(event):
 
 entry_environment.bind("<<ComboboxSelected>>", _on_env_selected)
 
-btn_send = tk.Button(window, bg="#03045C", text="", command=send_hl7_message, font=("Avenir", 15))
-btn_lang = tk.Button(window, bg="#03045C",text="🇬🇧", command=switch_language, font=("Avenir", 23))
+btn_send = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_hl7_message, font=("Avenir", 15, "bold"), activebackground=_ACCENT, activeforeground=_BG, cursor="hand2")
+btn_lang = tk.Button(window, bg=_BG, fg=_BTN_FG, text="🇬🇧", command=switch_language, font=("Avenir", 23), activebackground=_BG, cursor="hand2")
 
 label_patient_id.place(x=50, y=50)
 entry_patient_id.place(x=550, y=50, width=200)
@@ -682,31 +765,35 @@ label_server_port.place(x=1020, y=450)
 entry_server_port.place(x=1075, y=448, width=100)
 
 # Zone de log affichée dans l'interface
-log_text = tk.Text(window, height=18, width=212, bg="#190554", font=("Monaco", 11))
+log_text = tk.Text(window, height=18, width=212, bg=_LOG_BG, fg=_LOG_FG,
+                   insertbackground=_ACCENT, selectbackground=_ACCENT,
+                   selectforeground=_BG, font=("Monaco", 11))
 
 # Style pour le segment PID
 log_text.tag_config(
     "pid_segment",
-    background="#f8f4e6",               # beige clair
-    foreground="#003366",               # bleu foncé
-    font=("Avenir", 12, "bold")         # police fixe + gras
+    background="#0f2336",
+    foreground=_ACCENT,
+    font=("Monaco", 11, "bold")
 )
 
 # Style pour les champs importants (nom, prénom, etc.)
-log_text.tag_config("important_value", underline=True, foreground="red", background="white")
+log_text.tag_config("important_value", underline=True, foreground="#f472b6", background="#1e1b4b")
 
 # Définir des styles de surlignage
-log_text.tag_config("error", background="misty rose", foreground="red")
-log_text.tag_config("ack", background="light green", foreground="dark green")
+log_text.tag_config("error", background="#450a0a", foreground="#f87171")
+log_text.tag_config("ack", background="#052e16", foreground="#4ade80")
 
 log_text.place(x=20, y=500)
 # log_text.configure(state="disabled")  # lecture seule
 
-log_text.tag_config("highlight", background="yellow", foreground="black")
+log_text.tag_config("highlight", background="#1e293b", foreground=_ACCENT)
 
 # Zone de réponse reçue
-log_response = tk.Text(window, height=8, width=212, bg="#0a1a0a", font=("Monaco", 11))
-log_response.tag_config("ack", background="light green", foreground="dark green")
+log_response = tk.Text(window, height=8, width=212, bg=_LOG_BG, fg=_RESP_FG,
+                       insertbackground=_ACCENT, selectbackground=_ACCENT,
+                       selectforeground=_BG, font=("Monaco", 11))
+log_response.tag_config("ack", background="#052e16", foreground="#4ade80")
 log_response.place(x=20, y=820)
 
 # log_text.tag_add("highlight", "1.0", "1.20")  # surligne les 20 premiers caractères de la ligne 3
