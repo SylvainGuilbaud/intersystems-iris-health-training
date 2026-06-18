@@ -461,6 +461,8 @@ def send_hl7_message():
 
             for attempt in range(1, MAX_RETRIES + 1):
                 try:
+                    pending = f"⏳ Sending to {server_ip}:{server_port} (attempt {attempt}/{MAX_RETRIES})..."
+                    window.after(0, lambda m=pending: append_to_response_console(m))
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         s.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
                         s.settimeout(5)
@@ -496,6 +498,10 @@ def send_hl7_message():
                         err = f"[{n_sent}/{nb}] FAILED: {e}"
                         logging.error(err)
                         window.after(0, lambda m=err: append_to_response_console(m))
+                        if "timed out" in str(e).lower():
+                            warn = "⚠ Timeout — message may have been received by IRIS but ACK was not returned in time."
+                            logging.warning(warn)
+                            window.after(0, lambda w=warn: append_to_response_console(w))
 
         with lock:
             done_threads[0] += 1
@@ -503,7 +509,8 @@ def send_hl7_message():
                 elapsed = time.time() - start_time
                 rate = ok_count[0] / elapsed if elapsed > 0 else 0
                 threads_label = f"{nb_threads} thread(s)"
-                summary = f"Load test done: {ok_count[0]}/{nb} OK, {fail_count[0]} failed \u2014 {elapsed:.2f}s ({rate:.1f} msg/s) [{threads_label}]"
+                prefix = "✅ " if fail_count[0] == 0 else "❌ "
+                summary = f"{prefix}Load test done: {ok_count[0]}/{nb} OK, {fail_count[0]} failed \u2014 {elapsed:.2f}s ({rate:.1f} msg/s) [{threads_label}]"
                 logging.info(summary)
                 window.after(0, lambda: append_to_response_console(summary))
 
@@ -597,20 +604,44 @@ entry_sodium.insert(0, random.randint(135, 145))
 chk_include_pdf = tk.Checkbutton(window, bg="#70B8EA", font=("Avenir", 23), variable=include_pdf_var, text="include PDF", fg="#03045C", activebackground="#70B8EA")
 
 label_nb_messages = tk.Label(window, bg="#70B8EA", font=("Avenir", 15), text="Nb messages")
-entry_nb_messages = tk.Entry(window, bg="#03045C", font=("Avenir", 15))
-entry_nb_messages.insert(0, "1")
+entry_nb_messages = ttk.Combobox(window, font=("Avenir", 15), values=["1", "5", "10", "20", "50", "100", "200", "500", "1000"])
+entry_nb_messages.set("1")
 
 label_nb_threads = tk.Label(window, bg="#70B8EA", font=("Avenir", 15), text="Nb threads")
-entry_nb_threads = tk.Entry(window, bg="#03045C", font=("Avenir", 15))
-entry_nb_threads.insert(0, "1")
+entry_nb_threads = ttk.Combobox(window, font=("Avenir", 15), values=["1", "2", "4", "5", "10", "20"])
+entry_nb_threads.set("1")
+
+_ENV_MAP = {
+    "dev-aws":              (DEFAULT_SERVER_IP, "9001"),
+    "prod-aws":             (DEFAULT_SERVER_IP, "9500"),
+    "dev-local-community":  ("localhost",        "39001"),
+    "prod-local-community": ("localhost",        "39501"),
+    "dev-local":            ("localhost",        "9001"),
+    "prod-local":           ("localhost",        "9002"),
+}
+
+label_environment = tk.Label(window, bg="#70B8EA", font=("Avenir", 15), text="Environment")
+entry_environment = ttk.Combobox(window, font=("Avenir", 15), state="readonly",
+                                 values=list(_ENV_MAP.keys()))
+entry_environment.set("dev-aws")
 
 label_server_ip = tk.Label(window, bg="#70B8EA", font=("Avenir", 15), text="Server IP")
-entry_server_ip = tk.Entry(window, bg="#03045C", font=("Avenir", 15))
-entry_server_ip.insert(0, DEFAULT_SERVER_IP)
+server_ip_var = tk.StringVar(value=DEFAULT_SERVER_IP)
+entry_server_ip = tk.Entry(window, textvariable=server_ip_var, state="readonly",
+                           font=("Avenir", 15), readonlybackground="#03045C", fg="white")
 
 label_server_port = tk.Label(window, bg="#70B8EA", font=("Avenir", 15), text="Port")
-entry_server_port = tk.Entry(window, bg="#03045C", font=("Avenir", 15))
-entry_server_port.insert(0, str(DEFAULT_SERVER_PORT))
+entry_server_port = ttk.Combobox(window, font=("Avenir", 15), values=["9001", "9002", "9500", "39001", "39501", "6661", "2575"])
+entry_server_port.set(str(DEFAULT_SERVER_PORT))
+
+def _on_env_selected(event):
+    env = entry_environment.get()
+    if env in _ENV_MAP:
+        ip, port = _ENV_MAP[env]
+        server_ip_var.set(ip)
+        entry_server_port.set(port)
+
+entry_environment.bind("<<ComboboxSelected>>", _on_env_selected)
 
 btn_send = tk.Button(window, bg="#03045C", text="", command=send_hl7_message, font=("Avenir", 15))
 btn_lang = tk.Button(window, bg="#03045C",text="🇬🇧", command=switch_language, font=("Avenir", 23))
@@ -643,10 +674,12 @@ entry_nb_threads.place(x=1080, y=352, width=50)
 btn_send.place(x=550, y=400, width=200)
 btn_lang.place(x=0, y=0, width=50)
 
-label_server_ip.place(x=50, y=450)
-entry_server_ip.place(x=200, y=450, width=500)
-label_server_port.place(x=710, y=450)
-entry_server_port.place(x=760, y=450, width=100)
+label_environment.place(x=50, y=450)
+entry_environment.place(x=200, y=448, width=220)
+label_server_ip.place(x=440, y=450)
+entry_server_ip.place(x=540, y=448, width=420)
+label_server_port.place(x=1020, y=450)
+entry_server_port.place(x=1075, y=448, width=100)
 
 # Zone de log affichée dans l'interface
 log_text = tk.Text(window, height=18, width=212, bg="#190554", font=("Monaco", 11))

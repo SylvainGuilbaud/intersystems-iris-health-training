@@ -1,0 +1,5 @@
+Pillow
+tkcalendar
+# tkinter is not a pip package — install via system package manager:
+# Ubuntu/Debian: sudo apt-get install python3-tk
+# macOS (Homebrew): brew install python-tk

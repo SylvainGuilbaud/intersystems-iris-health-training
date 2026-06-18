@@ -392,6 +392,20 @@ def get_server_port():
     except ValueError:
         return DEFAULT_SERVER_PORT
 
+def get_nb_messages():
+    try:
+        n = int(entry_nb_messages.get().strip())
+        return max(1, n)
+    except ValueError:
+        return 1
+
+def get_nb_threads():
+    try:
+        n = int(entry_nb_threads.get().strip())
+        return max(1, min(n, 20))  # cap at 20
+    except ValueError:
+        return 1
+
 def send_hl7_message():
     log_text.configure(state="normal")
     log_text.delete("1.0", tk.END)
@@ -402,46 +416,107 @@ def send_hl7_message():
 
     server_ip = get_server_ip()
     server_port = get_server_port()
-    hl7_message = generate_random_hl7_message()
-    if hl7_message is None:
-        return
+    nb = get_nb_messages()
+    nb_threads = get_nb_threads()
 
-    # Log the generated message on the main thread before sending
-    logging.info("%s:\n%s", translations[current_language]["hl7_generated"], hl7_message)
-    append_to_log_console(translations[current_language]["hl7_generated"] + hl7_message)
+    # Truncate Base64 content in OBX|ED segments for display/logging only
+    def truncate_ed_base64(msg, max_chars=200):
+        def _truncate(m):
+            prefix, b64, suffix = m.group(1), m.group(2), m.group(3)
+            if len(b64) > max_chars:
+                return f"{prefix}{b64[:max_chars]}...[truncated {len(b64)} chars]{suffix}"
+            return m.group(0)
+        return re.sub(r'(OBX\|[^\|]*\|ED\|[^\r\n]*\^Base64\^)([A-Za-z0-9+/=]+)(\|[^\r\n]*)', _truncate, msg)
 
-    hl7_message_mllp = hl7_message.replace("\n", "\r")
-    hl7_message_wrapped = START_BLOCK.encode('utf-8') + hl7_message_mllp.encode('utf-8') + END_BLOCK.encode('utf-8') + CARRIAGE_RETURN.encode('utf-8')
+    # Pre-generate all messages on the main thread
+    messages = []
+    for _ in range(nb):
+        msg = generate_random_hl7_message()
+        if msg is None:
+            return
+        messages.append(msg)
 
-    def _do_send():
-        for attempt in range(1, MAX_RETRIES + 1):
-            try:
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                    s.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
-                    s.settimeout(5)
-                    s.connect((server_ip, server_port))
-                    s.settimeout(None)
-                    s.sendall(hl7_message_wrapped)
-                    response = s.recv(1024).decode()
-                    response_clean = re.sub(r'[^\x20-\x7E\r\n\t]', '\n', response)
+    # Log first message preview
+    logging.info("%s:\n%s", translations[current_language]["hl7_generated"], truncate_ed_base64(messages[0]))
+    append_to_log_console(translations[current_language]["hl7_generated"] + truncate_ed_base64(messages[0]))
+    if nb > 1:
+        threads_info = f"{nb_threads} thread(s)" if nb_threads > 1 else "1 thread"
+        window.after(0, lambda: append_to_response_console(f"Load test: sending {nb} messages with {threads_info}..."))
 
-                    logging.info("%s:\n%s", translations[current_language]["response_received"], response_clean.replace("\r", "\n"))
-                    window.after(0, lambda rc=response_clean: append_to_response_console(
-                        translations[current_language]["response_received"] + rc.replace("\r", "\n")))
-                    return  # success
+    # Shared counters (protected by lock)
+    ok_count = [0]
+    fail_count = [0]
+    sent_count = [0]
+    done_threads = [0]
+    lock = threading.Lock()
+    start_time = time.time()
 
-            except Exception as e:
-                if attempt < MAX_RETRIES:
-                    msg = f"Attempt {attempt}/{MAX_RETRIES} failed ({e}). Retrying in {RETRY_DELAY}s..."
-                    logging.warning(msg)
-                    window.after(0, lambda m=msg: append_to_response_console(m))
-                    time.sleep(RETRY_DELAY)
-                else:
-                    logging.error("%s:\n%s", translations[current_language]["send_error"], str(e))
-                    window.after(0, lambda err=str(e): append_to_response_console(
-                        translations[current_language]["send_error"] + err))
+    # Distribute messages round-robin across threads
+    chunks = [messages[i::nb_threads] for i in range(nb_threads)]
 
-    threading.Thread(target=_do_send, daemon=True).start()
+    def _worker(chunk):
+        for hl7_message in chunk:
+            hl7_mllp = hl7_message.replace("\n", "\r")
+            hl7_wrapped = START_BLOCK.encode('utf-8') + hl7_mllp.encode('utf-8') + END_BLOCK.encode('utf-8') + CARRIAGE_RETURN.encode('utf-8')
+
+            for attempt in range(1, MAX_RETRIES + 1):
+                try:
+                    pending = f"⏳ Sending to {server_ip}:{server_port} (attempt {attempt}/{MAX_RETRIES})..."
+                    window.after(0, lambda m=pending: append_to_response_console(m))
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                        s.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+                        s.settimeout(5)
+                        s.connect((server_ip, server_port))
+                        s.settimeout(None)
+                        s.sendall(hl7_wrapped)
+                        response = s.recv(1024).decode()
+                        response_clean = re.sub(r'[^\x20-\x7E\r\n\t]', '\n', response)
+                        with lock:
+                            ok_count[0] += 1
+                            sent_count[0] += 1
+                            n_sent = sent_count[0]
+                        if nb == 1:
+                            logging.info("%s:\n%s", translations[current_language]["response_received"], response_clean.replace("\r", "\n"))
+                            window.after(0, lambda rc=response_clean: append_to_response_console(
+                                translations[current_language]["response_received"] + rc.replace("\r", "\n")))
+                        else:
+                            elapsed = time.time() - start_time
+                            status = f"[{n_sent}/{nb}] OK ({elapsed:.1f}s) - {response_clean[:60].strip()}"
+                            logging.info(status)
+                            window.after(0, lambda m=status: append_to_response_console(m))
+                        break  # success
+
+                except Exception as e:
+                    if attempt < MAX_RETRIES:
+                        time.sleep(RETRY_DELAY)
+                    else:
+                        with lock:
+                            fail_count[0] += 1
+                            sent_count[0] += 1
+                            n_sent = sent_count[0]
+                        elapsed = time.time() - start_time
+                        err = f"[{n_sent}/{nb}] FAILED: {e}"
+                        logging.error(err)
+                        window.after(0, lambda m=err: append_to_response_console(m))
+                        if "timed out" in str(e).lower():
+                            warn = "⚠ Timeout — message may have been received by IRIS but ACK was not returned in time."
+                            logging.warning(warn)
+                            window.after(0, lambda w=warn: append_to_response_console(w))
+
+        with lock:
+            done_threads[0] += 1
+            if done_threads[0] == nb_threads and nb > 1:
+                elapsed = time.time() - start_time
+                rate = ok_count[0] / elapsed if elapsed > 0 else 0
+                threads_label = f"{nb_threads} thread(s)"
+                prefix = "✅ " if fail_count[0] == 0 else "❌ "
+                summary = f"{prefix}Load test done: {ok_count[0]}/{nb} OK, {fail_count[0]} failed \u2014 {elapsed:.2f}s ({rate:.1f} msg/s) [{threads_label}]"
+                logging.info(summary)
+                window.after(0, lambda: append_to_response_console(summary))
+
+    for chunk in chunks:
+        if chunk:
+            threading.Thread(target=_worker, args=(chunk,), daemon=True).start()
 
 languages = ["fr", "en", "es"]    
 def switch_language():
@@ -528,13 +603,45 @@ entry_sodium.insert(0, random.randint(135, 145))
 
 chk_include_pdf = tk.Checkbutton(window, bg="#70B8EA", font=("Avenir", 23), variable=include_pdf_var, text="include PDF", fg="#03045C", activebackground="#70B8EA")
 
+label_nb_messages = tk.Label(window, bg="#70B8EA", font=("Avenir", 15), text="Nb messages")
+entry_nb_messages = ttk.Combobox(window, font=("Avenir", 15), values=["1", "5", "10", "20", "50", "100", "200", "500", "1000"])
+entry_nb_messages.set("1")
+
+label_nb_threads = tk.Label(window, bg="#70B8EA", font=("Avenir", 15), text="Nb threads")
+entry_nb_threads = ttk.Combobox(window, font=("Avenir", 15), values=["1", "2", "4", "5", "10", "20"])
+entry_nb_threads.set("1")
+
+_ENV_MAP = {
+    "dev-aws":              (DEFAULT_SERVER_IP, "9001"),
+    "prod-aws":             (DEFAULT_SERVER_IP, "9500"),
+    "dev-local-community":  ("localhost",        "39001"),
+    "prod-local-community": ("localhost",        "39501"),
+    "dev-local":            ("localhost",        "9001"),
+    "prod-local":           ("localhost",        "9002"),
+}
+
+label_environment = tk.Label(window, bg="#70B8EA", font=("Avenir", 15), text="Environment")
+entry_environment = ttk.Combobox(window, font=("Avenir", 15), state="readonly",
+                                 values=list(_ENV_MAP.keys()))
+entry_environment.set("dev-aws")
+
 label_server_ip = tk.Label(window, bg="#70B8EA", font=("Avenir", 15), text="Server IP")
-entry_server_ip = tk.Entry(window, bg="#03045C", font=("Avenir", 15))
-entry_server_ip.insert(0, DEFAULT_SERVER_IP)
+server_ip_var = tk.StringVar(value=DEFAULT_SERVER_IP)
+entry_server_ip = tk.Entry(window, textvariable=server_ip_var, state="readonly",
+                           font=("Avenir", 15), readonlybackground="#03045C", fg="white")
 
 label_server_port = tk.Label(window, bg="#70B8EA", font=("Avenir", 15), text="Port")
-entry_server_port = tk.Entry(window, bg="#03045C", font=("Avenir", 15))
-entry_server_port.insert(0, str(DEFAULT_SERVER_PORT))
+entry_server_port = ttk.Combobox(window, font=("Avenir", 15), values=["9001", "9002", "9500", "39001", "39501", "6661", "2575"])
+entry_server_port.set(str(DEFAULT_SERVER_PORT))
+
+def _on_env_selected(event):
+    env = entry_environment.get()
+    if env in _ENV_MAP:
+        ip, port = _ENV_MAP[env]
+        server_ip_var.set(ip)
+        entry_server_port.set(port)
+
+entry_environment.bind("<<ComboboxSelected>>", _on_env_selected)
 
 btn_send = tk.Button(window, bg="#03045C", text="", command=send_hl7_message, font=("Avenir", 15))
 btn_lang = tk.Button(window, bg="#03045C",text="🇬🇧", command=switch_language, font=("Avenir", 23))
@@ -559,14 +666,20 @@ label_sodium.place(x=50, y=300)
 entry_sodium.place(x=550, y=300, width=200)
 
 chk_include_pdf.place(x=550, y=350)
+label_nb_messages.place(x=760, y=355)
+entry_nb_messages.place(x=880, y=352, width=70)
+label_nb_threads.place(x=970, y=355)
+entry_nb_threads.place(x=1080, y=352, width=50)
 
 btn_send.place(x=550, y=400, width=200)
 btn_lang.place(x=0, y=0, width=50)
 
-label_server_ip.place(x=50, y=450)
-entry_server_ip.place(x=200, y=450, width=500)
-label_server_port.place(x=710, y=450)
-entry_server_port.place(x=760, y=450, width=100)
+label_environment.place(x=50, y=450)
+entry_environment.place(x=200, y=448, width=220)
+label_server_ip.place(x=440, y=450)
+entry_server_ip.place(x=540, y=448, width=420)
+label_server_port.place(x=1020, y=450)
+entry_server_port.place(x=1075, y=448, width=100)
 
 # Zone de log affichée dans l'interface
 log_text = tk.Text(window, height=18, width=212, bg="#190554", font=("Monaco", 11))
