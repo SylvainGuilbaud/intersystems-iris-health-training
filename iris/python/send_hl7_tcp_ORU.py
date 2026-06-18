@@ -392,6 +392,20 @@ def get_server_port():
     except ValueError:
         return DEFAULT_SERVER_PORT
 
+def get_nb_messages():
+    try:
+        n = int(entry_nb_messages.get().strip())
+        return max(1, n)
+    except ValueError:
+        return 1
+
+def get_nb_threads():
+    try:
+        n = int(entry_nb_threads.get().strip())
+        return max(1, min(n, 20))  # cap at 20
+    except ValueError:
+        return 1
+
 def send_hl7_message():
     log_text.configure(state="normal")
     log_text.delete("1.0", tk.END)
@@ -402,60 +416,100 @@ def send_hl7_message():
 
     server_ip = get_server_ip()
     server_port = get_server_port()
-    hl7_message = generate_random_hl7_message()
-    if hl7_message is None:
-        return
+    nb = get_nb_messages()
+    nb_threads = get_nb_threads()
 
     # Truncate Base64 content in OBX|ED segments for display/logging only
     def truncate_ed_base64(msg, max_chars=200):
-        import re as _re
         def _truncate(m):
-            prefix = m.group(1)
-            b64 = m.group(2)
-            suffix = m.group(3)
+            prefix, b64, suffix = m.group(1), m.group(2), m.group(3)
             if len(b64) > max_chars:
                 return f"{prefix}{b64[:max_chars]}...[truncated {len(b64)} chars]{suffix}"
             return m.group(0)
-        return _re.sub(r'(OBX\|[^\|]*\|ED\|[^\r\n]*\^Base64\^)([A-Za-z0-9+/=]+)(\|[^\r\n]*)', _truncate, msg)
+        return re.sub(r'(OBX\|[^\|]*\|ED\|[^\r\n]*\^Base64\^)([A-Za-z0-9+/=]+)(\|[^\r\n]*)', _truncate, msg)
 
-    hl7_message_display = truncate_ed_base64(hl7_message)
+    # Pre-generate all messages on the main thread
+    messages = []
+    for _ in range(nb):
+        msg = generate_random_hl7_message()
+        if msg is None:
+            return
+        messages.append(msg)
 
-    # Log the generated message on the main thread before sending
-    logging.info("%s:\n%s", translations[current_language]["hl7_generated"], hl7_message_display)
-    append_to_log_console(translations[current_language]["hl7_generated"] + hl7_message_display)
+    # Log first message preview
+    logging.info("%s:\n%s", translations[current_language]["hl7_generated"], truncate_ed_base64(messages[0]))
+    append_to_log_console(translations[current_language]["hl7_generated"] + truncate_ed_base64(messages[0]))
+    if nb > 1:
+        threads_info = f"{nb_threads} thread(s)" if nb_threads > 1 else "1 thread"
+        window.after(0, lambda: append_to_response_console(f"Load test: sending {nb} messages with {threads_info}..."))
 
-    hl7_message_mllp = hl7_message.replace("\n", "\r")
-    hl7_message_wrapped = START_BLOCK.encode('utf-8') + hl7_message_mllp.encode('utf-8') + END_BLOCK.encode('utf-8') + CARRIAGE_RETURN.encode('utf-8')
+    # Shared counters (protected by lock)
+    ok_count = [0]
+    fail_count = [0]
+    sent_count = [0]
+    done_threads = [0]
+    lock = threading.Lock()
+    start_time = time.time()
 
-    def _do_send():
-        for attempt in range(1, MAX_RETRIES + 1):
-            try:
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                    s.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
-                    s.settimeout(5)
-                    s.connect((server_ip, server_port))
-                    s.settimeout(None)
-                    s.sendall(hl7_message_wrapped)
-                    response = s.recv(1024).decode()
-                    response_clean = re.sub(r'[^\x20-\x7E\r\n\t]', '\n', response)
+    # Distribute messages round-robin across threads
+    chunks = [messages[i::nb_threads] for i in range(nb_threads)]
 
-                    logging.info("%s:\n%s", translations[current_language]["response_received"], response_clean.replace("\r", "\n"))
-                    window.after(0, lambda rc=response_clean: append_to_response_console(
-                        translations[current_language]["response_received"] + rc.replace("\r", "\n")))
-                    return  # success
+    def _worker(chunk):
+        for hl7_message in chunk:
+            hl7_mllp = hl7_message.replace("\n", "\r")
+            hl7_wrapped = START_BLOCK.encode('utf-8') + hl7_mllp.encode('utf-8') + END_BLOCK.encode('utf-8') + CARRIAGE_RETURN.encode('utf-8')
 
-            except Exception as e:
-                if attempt < MAX_RETRIES:
-                    msg = f"Attempt {attempt}/{MAX_RETRIES} failed ({e}). Retrying in {RETRY_DELAY}s..."
-                    logging.warning(msg)
-                    window.after(0, lambda m=msg: append_to_response_console(m))
-                    time.sleep(RETRY_DELAY)
-                else:
-                    logging.error("%s:\n%s", translations[current_language]["send_error"], str(e))
-                    window.after(0, lambda err=str(e): append_to_response_console(
-                        translations[current_language]["send_error"] + err))
+            for attempt in range(1, MAX_RETRIES + 1):
+                try:
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                        s.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+                        s.settimeout(5)
+                        s.connect((server_ip, server_port))
+                        s.settimeout(None)
+                        s.sendall(hl7_wrapped)
+                        response = s.recv(1024).decode()
+                        response_clean = re.sub(r'[^\x20-\x7E\r\n\t]', '\n', response)
+                        with lock:
+                            ok_count[0] += 1
+                            sent_count[0] += 1
+                            n_sent = sent_count[0]
+                        if nb == 1:
+                            logging.info("%s:\n%s", translations[current_language]["response_received"], response_clean.replace("\r", "\n"))
+                            window.after(0, lambda rc=response_clean: append_to_response_console(
+                                translations[current_language]["response_received"] + rc.replace("\r", "\n")))
+                        else:
+                            elapsed = time.time() - start_time
+                            status = f"[{n_sent}/{nb}] OK ({elapsed:.1f}s) - {response_clean[:60].strip()}"
+                            logging.info(status)
+                            window.after(0, lambda m=status: append_to_response_console(m))
+                        break  # success
 
-    threading.Thread(target=_do_send, daemon=True).start()
+                except Exception as e:
+                    if attempt < MAX_RETRIES:
+                        time.sleep(RETRY_DELAY)
+                    else:
+                        with lock:
+                            fail_count[0] += 1
+                            sent_count[0] += 1
+                            n_sent = sent_count[0]
+                        elapsed = time.time() - start_time
+                        err = f"[{n_sent}/{nb}] FAILED: {e}"
+                        logging.error(err)
+                        window.after(0, lambda m=err: append_to_response_console(m))
+
+        with lock:
+            done_threads[0] += 1
+            if done_threads[0] == nb_threads and nb > 1:
+                elapsed = time.time() - start_time
+                rate = ok_count[0] / elapsed if elapsed > 0 else 0
+                threads_label = f"{nb_threads} thread(s)"
+                summary = f"Load test done: {ok_count[0]}/{nb} OK, {fail_count[0]} failed \u2014 {elapsed:.2f}s ({rate:.1f} msg/s) [{threads_label}]"
+                logging.info(summary)
+                window.after(0, lambda: append_to_response_console(summary))
+
+    for chunk in chunks:
+        if chunk:
+            threading.Thread(target=_worker, args=(chunk,), daemon=True).start()
 
 languages = ["fr", "en", "es"]    
 def switch_language():
@@ -542,6 +596,14 @@ entry_sodium.insert(0, random.randint(135, 145))
 
 chk_include_pdf = tk.Checkbutton(window, bg="#70B8EA", font=("Avenir", 23), variable=include_pdf_var, text="include PDF", fg="#03045C", activebackground="#70B8EA")
 
+label_nb_messages = tk.Label(window, bg="#70B8EA", font=("Avenir", 15), text="Nb messages")
+entry_nb_messages = tk.Entry(window, bg="#03045C", font=("Avenir", 15))
+entry_nb_messages.insert(0, "1")
+
+label_nb_threads = tk.Label(window, bg="#70B8EA", font=("Avenir", 15), text="Nb threads")
+entry_nb_threads = tk.Entry(window, bg="#03045C", font=("Avenir", 15))
+entry_nb_threads.insert(0, "1")
+
 label_server_ip = tk.Label(window, bg="#70B8EA", font=("Avenir", 15), text="Server IP")
 entry_server_ip = tk.Entry(window, bg="#03045C", font=("Avenir", 15))
 entry_server_ip.insert(0, DEFAULT_SERVER_IP)
@@ -573,6 +635,10 @@ label_sodium.place(x=50, y=300)
 entry_sodium.place(x=550, y=300, width=200)
 
 chk_include_pdf.place(x=550, y=350)
+label_nb_messages.place(x=760, y=355)
+entry_nb_messages.place(x=880, y=352, width=70)
+label_nb_threads.place(x=970, y=355)
+entry_nb_threads.place(x=1080, y=352, width=50)
 
 btn_send.place(x=550, y=400, width=200)
 btn_lang.place(x=0, y=0, width=50)
