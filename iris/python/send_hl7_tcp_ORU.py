@@ -96,6 +96,41 @@ OBR|2||6100130|PDFREPORT^LABORATORY REPORT^L|||{timestamp}|||||||||||||||2026061
     return hl7_message
 
 
+def generate_adt_message():
+    patient_id = entry_patient_id.get()
+    first_name = entry_first_name.get()
+    last_name = entry_last_name.get()
+    dob = entry_dob.get()
+    selected_label = gender_var.get()
+    gender = gender_code_dict[current_language][selected_label]
+
+    if not all([patient_id, first_name, last_name, dob, gender]):
+        messagebox.showwarning("", translations[current_language]["error_fields"])
+        return None
+
+    try:
+        dob_formatted = datetime.strptime(dob, "%d/%m/%Y").strftime("%Y%m%d")
+    except ValueError:
+        messagebox.showerror("", translations[current_language]["error_date"])
+        return None
+
+    global message_control_id
+    message_control_id += 1
+    msg_id = f"MSG-{message_control_id:03d}"
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+
+    hl7_message = (
+        f"MSH|^~\\&|EMETTEUR|ETABLISSEMENT|DATAMED|LAB|{timestamp}||ADT^A08^ADT_A08|{msg_id}|P|2.5|||NE|AL|FRA|8859/1\n"
+        f"EVN|A08|{timestamp}\n"
+        f"PID|1||{patient_id}^^^ETABLISSEMENT&1.2.250.1.99.1&ISO^PI~285031512345678^^^INS-NIR&1.2.250.1.213.1.4.8&ISO^INS-NIR"
+        f"||{last_name}^{first_name}^^^^^D~{last_name}^{first_name}^^^^^L||{dob_formatted}|{gender}"
+        f"|||15 RUE DE LA PAIX^^PARIS^^75001^FRA^H||||||||||||||||||||75056\n"
+        f"PV1|1|N\n"
+        f"ZBE|MVT-003^ETABLISSEMENT^1.2.250.1.99.1^ISO|{timestamp}||INSERT|N|A08\n"
+    )
+    return hl7_message
+
+
 # Logger configuration
 logging.basicConfig(
     filename='send_hl7_tcp.log',
@@ -278,7 +313,7 @@ def highlight_obx_1_segment():
     log_text.configure(state="disabled")
     
 def append_to_log_console(text):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
     log_text.configure(state="normal")
     log_text.insert(tk.END, f"{timestamp} - {text}\n")
     log_text.see(tk.END)
@@ -288,7 +323,7 @@ def append_to_log_console(text):
     highlight_obx_1_segment()
 
 def append_to_response_console(text):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
     log_response.configure(state="normal")
     log_response.insert(tk.END, f"{timestamp} - {text}\n")
     # Trim oldest lines to keep the widget from growing unbounded
@@ -332,7 +367,8 @@ translations = {
         "last_name": "Nom",
         "dob": "Date de naissance (JJ/MM/AAAA)",
         "gender": "Sexe",
-        "send": "Envoyer Message HL7",
+        "send_oru": "Envoyer ORU",
+        "send_adt": "Envoyer ADT",
         "error_fields": "Veuillez remplir tous les champs.",
         "error_date": "Format de date invalide. Utilisez JJ/MM/AAAA.",
         "success": "Message HL7 envoyé avec succès.",
@@ -355,7 +391,8 @@ translations = {
         "last_name": "Last Name",
         "dob": "Date of Birth (DD/MM/YYYY)",
         "gender": "Gender",
-        "send": "Send HL7 Message",
+        "send_oru": "Send ORU",
+        "send_adt": "Send ADT",
         "error_fields": "Please fill in all fields.",
         "error_date": "Invalid date format. Use DD/MM/YYYY.",
         "success": "HL7 message sent successfully.",
@@ -378,7 +415,8 @@ translations = {
         "last_name": "Apellido",
         "dob": "Fecha de nacimiento (DD/MM/AAAA)",
         "gender": "Género",
-        "send": "Enviar mensaje HL7",
+        "send_oru": "Enviar ORU",
+        "send_adt": "Enviar ADT",
         "error_fields": "Por favor complete todos los campos.",
         "error_date": "Formato de fecha inválido. Use DD/MM/AAAA.",
         "success": "Mensaje HL7 enviado con éxito.",
@@ -443,7 +481,9 @@ def get_nb_threads():
     except ValueError:
         return 1
 
-def send_hl7_message():
+def send_hl7_message(message_generator=None, port_offset=0):
+    if message_generator is None:
+        message_generator = generate_random_hl7_message
     log_text.configure(state="normal")
     log_text.delete("1.0", tk.END)
     log_text.configure(state="disabled")
@@ -452,9 +492,12 @@ def send_hl7_message():
     log_response.configure(state="disabled")
 
     server_ip = get_server_ip()
-    server_port = get_server_port()
+    server_port = get_server_port() + port_offset
     nb = get_nb_messages()
     nb_threads = get_nb_threads()
+
+    msg_type = "ADT" if message_generator is generate_adt_message else "ORU"
+    append_to_response_console(f"▶ {msg_type} → {server_ip}:{server_port}")
 
     # Truncate Base64 content in OBX|ED segments for display/logging only
     def truncate_ed_base64(msg, max_chars=200):
@@ -468,14 +511,14 @@ def send_hl7_message():
     # Pre-generate all messages on the main thread
     messages = []
     for _ in range(nb):
-        msg = generate_random_hl7_message()
+        msg = message_generator()
         if msg is None:
             return
         messages.append(msg)
 
     # Log first message preview
     logging.info("%s:\n%s", translations[current_language]["hl7_generated"], truncate_ed_base64(messages[0]))
-    append_to_log_console(translations[current_language]["hl7_generated"] + truncate_ed_base64(messages[0]))
+    append_to_log_console(translations[current_language]["hl7_generated"] + "\n" + truncate_ed_base64(messages[0]))
     if nb > 1:
         threads_info = f"{nb_threads} thread(s)"
         t = translations[current_language]
@@ -555,19 +598,27 @@ def send_hl7_message():
                 prefix = "✅ " if fail_count[0] == 0 else "❌ "
                 t = translations[current_language]
                 total_b = _fmt_bytes(bytes_total[0])
+                failed_part = f"{fail_count[0]} {t['load_test_failed']} — " if fail_count[0] > 0 else ""
                 summary = (
-                    f"{prefix}{t['load_test_done']}: {ok_count[0]}/{nb} OK, "
-                    f"{fail_count[0]} {t['load_test_failed']} — {elapsed:.2f}s ({rate:.1f} msg/s) "
+                    f"{prefix}{t['load_test_done']}: {ok_count[0]}/{nb} OK "
+                    f"{failed_part}{elapsed:.2f}s ({rate:.1f} msg/s) "
                     f"[{threads_label}] — {total_b} {t['bytes_total']}"
                 )
                 logging.info(summary)
-                window.after(0, lambda: append_to_response_console("=" * 80))
+                window.after(0, lambda: append_to_response_console("-" * 120))
                 window.after(0, lambda s=summary: append_to_response_console(s))
+                window.after(0, lambda: append_to_response_console("-" * 120))
 
     actual_threads = sum(1 for chunk in chunks if chunk)
     for chunk in chunks:
         if chunk:
             threading.Thread(target=_worker, args=(chunk,), daemon=True).start()
+
+def send_oru_message():
+    send_hl7_message(generate_random_hl7_message)
+
+def send_adt_message():
+    send_hl7_message(generate_adt_message, port_offset=1)
 
 languages = ["fr", "en", "es"]    
 def switch_language():
@@ -584,7 +635,8 @@ def update_labels():
     label_dob.config(text=translations[current_language]["dob"])
     label_gender.config(text=translations[current_language]["gender"])
     label_sodium.config(text=translations[current_language]["sodium"])
-    btn_send.config(text=translations[current_language]["send"])
+    btn_send.config(text=translations[current_language]["send_oru"])
+    btn_send_adt.config(text=translations[current_language]["send_adt"])
 
     # Mettre à jour le drapeau 🇫🇷 / 🇬🇧 / 🇪🇸
     flag_map = {"fr": "🇫🇷", "en": "🇬🇧", "es": "🇪🇸"}
@@ -726,7 +778,8 @@ def _on_env_selected(event):
 
 entry_environment.bind("<<ComboboxSelected>>", _on_env_selected)
 
-btn_send = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_hl7_message, font=("Avenir", 15, "bold"), activebackground=_ACCENT, activeforeground=_BG, cursor="hand2")
+btn_send = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_oru_message, font=("Avenir", 15, "bold"), activebackground=_ACCENT, activeforeground=_BG, cursor="hand2")
+btn_send_adt = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_adt_message, font=("Avenir", 15, "bold"), activebackground=_ACCENT, activeforeground=_BG, cursor="hand2")
 btn_lang = tk.Button(window, bg=_BG, fg=_BTN_FG, text="🇬🇧", command=switch_language, font=("Avenir", 23), activebackground=_BG, cursor="hand2")
 
 label_patient_id.place(x=50, y=50)
@@ -754,7 +807,8 @@ entry_nb_messages.place(x=880, y=352, width=70)
 label_nb_threads.place(x=970, y=355)
 entry_nb_threads.place(x=1080, y=352, width=50)
 
-btn_send.place(x=550, y=400, width=200)
+btn_send.place(x=550, y=400, width=185)
+btn_send_adt.place(x=745, y=400, width=185)
 btn_lang.place(x=0, y=0, width=50)
 
 label_environment.place(x=50, y=450)
