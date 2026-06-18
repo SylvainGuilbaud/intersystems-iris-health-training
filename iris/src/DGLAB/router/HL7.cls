@@ -12,15 +12,18 @@ XData RuleDefinition [ XMLNamespace = "http://www.intersystems.com/rule" ]
 <constraint name="source" value="LAB RESULT from DGLAB - MLLP"></constraint>
 <constraint name="docCategory" value="2.3"></constraint>
 <constraint name="docName" value="ORU_R01"></constraint>
-<when condition="hasEncapsulatedData(HL7)" comment="ED">
+<when condition="1" comment="">
+<foreach propertypath="HL7.{PIDgrpgrp().ORCgrp().OBXgrp().OBX}">
+<when condition="(Segment.{ObservationIdentifier.identifier}=&quot;PDFREPORT&quot;)&amp;&amp;(Segment.{ValueType}=&quot;ED&quot;)" comment="">
 <send transform="" target="to EMR - FILE"></send>
-<trace value="&quot;Encapsulated Data&quot;"></trace>
+<trace value="&quot;Encapsulted Data&quot;"></trace>
 </when>
-<otherwise>
-<comment text="RP"></comment>
+<when condition="(Segment.{ObservationIdentifier.identifier}=&quot;PDFREPORT&quot;)&amp;&amp;(Segment.{ValueType}=&quot;RP&quot;)" comment="">
 <send transform="" target="to EMR - FILE"></send>
 <trace value="&quot;Reference Pointer&quot;"></trace>
-</otherwise>
+</when>
+</foreach>
+</when>
 </rule>
 </ruleSet>
 </ruleDefinition>

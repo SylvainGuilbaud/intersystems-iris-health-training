@@ -406,23 +406,9 @@ def send_hl7_message():
     if hl7_message is None:
         return
 
-    # Truncate Base64 content in OBX|ED segments for display/logging only
-    def truncate_ed_base64(msg, max_chars=200):
-        import re as _re
-        def _truncate(m):
-            prefix = m.group(1)
-            b64 = m.group(2)
-            suffix = m.group(3)
-            if len(b64) > max_chars:
-                return f"{prefix}{b64[:max_chars]}...[truncated {len(b64)} chars]{suffix}"
-            return m.group(0)
-        return _re.sub(r'(OBX\|[^\|]*\|ED\|[^\r\n]*\^Base64\^)([A-Za-z0-9+/=]+)(\|[^\r\n]*)', _truncate, msg)
-
-    hl7_message_display = truncate_ed_base64(hl7_message)
-
     # Log the generated message on the main thread before sending
-    logging.info("%s:\n%s", translations[current_language]["hl7_generated"], hl7_message_display)
-    append_to_log_console(translations[current_language]["hl7_generated"] + hl7_message_display)
+    logging.info("%s:\n%s", translations[current_language]["hl7_generated"], hl7_message)
+    append_to_log_console(translations[current_language]["hl7_generated"] + hl7_message)
 
     hl7_message_mllp = hl7_message.replace("\n", "\r")
     hl7_message_wrapped = START_BLOCK.encode('utf-8') + hl7_message_mllp.encode('utf-8') + END_BLOCK.encode('utf-8') + CARRIAGE_RETURN.encode('utf-8')
