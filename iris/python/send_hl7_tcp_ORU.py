@@ -12,6 +12,7 @@ import random
 import string
 import threading
 import time
+import os
 
 # ── Modern dark theme palette ─────────────────────────────────────────────────
 _BG        = "#0b0b25"   # window / canvas background – matches IS_logo.jpg
@@ -362,7 +363,7 @@ current_language = "fr"
 
 translations = {
     "fr": {
-        "title": "DGLAB - résultats de laboratoire",
+        "title": "DGLAB - Interopérabilité avec Dossier Patient Informatisé et Gestion Administrative des Patients",
         "first_name": "Prénom",
         "last_name": "Nom",
         "dob": "Date de naissance (JJ/MM/AAAA)",
@@ -386,7 +387,7 @@ translations = {
 
     },
     "en": {
-        "title": "DGLAB - lab results",
+        "title": "DGLAB - Interoperability with Electronic Health Record and Patient Administration Management",
         "first_name": "First Name",
         "last_name": "Last Name",
         "dob": "Date of Birth (DD/MM/YYYY)",
@@ -410,7 +411,7 @@ translations = {
 
     },
     "es": {
-        "title": "DGLAB - resultados de laboratorio",
+        "title": "DGLAB - Interoperabilidad con Historia Clínica Electrónica y Gestión Administrativa de Pacientes",
         "first_name": "Nombre",
         "last_name": "Apellido",
         "dob": "Fecha de nacimiento (DD/MM/AAAA)",
@@ -467,6 +468,12 @@ def get_server_port():
     except ValueError:
         return DEFAULT_SERVER_PORT
 
+def get_adt_port():
+    try:
+        return int(entry_adt_port.get().strip())
+    except ValueError:
+        return DEFAULT_SERVER_PORT + 1
+
 def get_nb_messages():
     try:
         n = int(entry_nb_messages.get().strip())
@@ -481,7 +488,7 @@ def get_nb_threads():
     except ValueError:
         return 1
 
-def send_hl7_message(message_generator=None, port_offset=0):
+def send_hl7_message(message_generator=None, port_getter=None):
     if message_generator is None:
         message_generator = generate_random_hl7_message
     log_text.configure(state="normal")
@@ -492,7 +499,7 @@ def send_hl7_message(message_generator=None, port_offset=0):
     log_response.configure(state="disabled")
 
     server_ip = get_server_ip()
-    server_port = get_server_port() + port_offset
+    server_port = (port_getter or get_server_port)()
     nb = get_nb_messages()
     nb_threads = get_nb_threads()
 
@@ -618,7 +625,7 @@ def send_oru_message():
     send_hl7_message(generate_random_hl7_message)
 
 def send_adt_message():
-    send_hl7_message(generate_adt_message, port_offset=1)
+    send_hl7_message(generate_adt_message, port_getter=get_adt_port)
 
 languages = ["fr", "en", "es"]    
 def switch_language():
@@ -652,6 +659,7 @@ window.geometry("1728x1000")
 window.title(translations[current_language]["title"])
 window.configure(bg=_BG)
 include_pdf_var = tk.BooleanVar()
+forward_to_file_var = tk.BooleanVar()
 
 # ttk dark theme
 style = ttk.Style()
@@ -696,9 +704,9 @@ canvas.create_image(1525, 883, image=logo_photo, anchor="nw")
 canvas.create_rectangle(0, 0, 1728, 3, fill=_ACCENT, outline="")           # top accent bar
 canvas.create_rectangle(0, 997, 1728, 1000, fill=_ACCENT, outline="")      # bottom accent bar
 canvas.create_rectangle(0, 3, 927, 30, fill="#0b0b25", outline="")          # header strip (left)
-canvas.create_text(464, 16, text="IRIS HEALTH  ·  HL7 ORU^R01  ·  MLLP TEST TOOL",
+canvas.create_text(464, 16, text="InterSystems IRIS for Health  ·  HL7 ORU/ADT  ·  MLLP/FILE TESTS",
                    fill=_ACCENT, font=("Avenir", 11, "bold"), anchor="center")
-canvas.create_line(10, 482, 1718, 482, fill="#1a3a5c", width=1)             # divider above HL7 log
+canvas.create_line(10, 510, 1718, 510, fill="#1a3a5c", width=1)             # divider above HL7 log
 canvas.create_line(10, 815, 1718, 815, fill="#1a3a5c", width=1)             # divider above response
 
 # Widgets sur canvas
@@ -707,7 +715,7 @@ entry = tk.Entry(window, font=("Avenir", 23))
 label_patient_id = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23), text=translations[current_language]["patient_id"])
 entry_patient_id = tk.Entry(window, bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT, selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 23))
 entry_patient_id.insert(0, "24445670")
-btn_generate_data = tk.Button(window, text="🎲", font=("Avenir", 15), bg=_BTN_BG, fg=_BTN_FG, activebackground=_ACCENT, activeforeground=_BG, relief="flat", cursor="hand2", command=on_generate_data)
+btn_generate_data = tk.Button(window, text="🎲", font=("Avenir", 13), bg=_BTN_BG, fg=_BTN_FG, activebackground=_ACCENT, activeforeground=_BG, relief="flat", cursor="hand2", command=on_generate_data)
 
 label_first_name = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23))
 entry_first_name = tk.Entry(window, bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT, selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 23))
@@ -736,14 +744,19 @@ label_sodium = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23))
 entry_sodium = tk.Entry(window, bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT, selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 23))
 entry_sodium.insert(0, random.randint(135, 145))
 
-chk_include_pdf = tk.Checkbutton(window, bg=_BG, fg=_ACCENT, font=("Avenir", 23), variable=include_pdf_var, text="include PDF", activebackground=_BG, activeforeground=_ACCENT, selectcolor=_INPUT_BG)
+chk_include_pdf = tk.Checkbutton(window, bg=_BG, fg=_ACCENT, font=("Avenir", 13), variable=include_pdf_var, text="include PDF", activebackground=_BG, activeforeground=_ACCENT, selectcolor=_INPUT_BG)
 
-label_nb_messages = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 15), text="Nb messages")
-entry_nb_messages = ttk.Combobox(window, font=("Avenir", 15), values=["1", "5", "10", "20", "50", "100", "200", "500", "1000"])
+chk_forward_to_file = tk.Checkbutton(window, bg=_BG, fg=_ACCENT, font=("Avenir", 13), variable=forward_to_file_var, text="forward to file repository", activebackground=_BG, activeforeground=_ACCENT, selectcolor=_INPUT_BG)
+label_file_dest = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="File destination")
+entry_file_dest = ttk.Combobox(window, font=("Avenir", 13), values=["/dev/data/HL7/ORU/in"])
+entry_file_dest.set("/dev/data/HL7/ORU/in")
+
+label_nb_messages = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Nb messages")
+entry_nb_messages = ttk.Combobox(window, font=("Avenir", 13), values=["1", "5", "10", "20", "50", "100", "200", "500", "1000"])
 entry_nb_messages.set("1")
 
-label_nb_threads = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 15), text="Nb threads")
-entry_nb_threads = ttk.Combobox(window, font=("Avenir", 15), values=["1", "2", "4", "5", "10", "20"])
+label_nb_threads = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Nb threads")
+entry_nb_threads = ttk.Combobox(window, font=("Avenir", 13), values=["1", "2", "4", "5", "10", "20"])
 entry_nb_threads.set("1")
 
 _ENV_MAP = {
@@ -755,19 +768,23 @@ _ENV_MAP = {
     "prod-local":           ("localhost",        "9002"),
 }
 
-label_environment = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 15), text="Environment")
-entry_environment = ttk.Combobox(window, font=("Avenir", 15), state="readonly",
+label_environment = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Environment")
+entry_environment = ttk.Combobox(window, font=("Avenir", 13), state="readonly",
                                  values=list(_ENV_MAP.keys()))
 entry_environment.set("dev-aws")
 
-label_server_ip = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 15), text="Server IP")
+label_server_ip = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Server IP")
 server_ip_var = tk.StringVar(value=DEFAULT_SERVER_IP)
 entry_server_ip = tk.Entry(window, textvariable=server_ip_var, state="readonly",
-                           font=("Avenir", 15), readonlybackground=_INPUT_BG, fg=_INPUT_FG)
+                           font=("Avenir", 13), readonlybackground=_INPUT_BG, fg=_INPUT_FG)
 
-label_server_port = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 15), text="Port")
-entry_server_port = ttk.Combobox(window, font=("Avenir", 15), values=["9001", "9002", "9500", "39001", "39501", "6661", "2575"])
+label_server_port = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="ORU Port")
+entry_server_port = ttk.Combobox(window, font=("Avenir", 13), values=["9001", "9002", "9500", "39001", "39501", "6661", "2575"])
 entry_server_port.set(str(DEFAULT_SERVER_PORT))
+
+label_adt_port = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="ADT Port")
+entry_adt_port = ttk.Combobox(window, font=("Avenir", 13), values=["9002", "9003", "9501", "39002", "39502", "6662", "2576"])
+entry_adt_port.set(str(DEFAULT_SERVER_PORT + 1))
 
 def _on_env_selected(event):
     env = entry_environment.get()
@@ -775,11 +792,15 @@ def _on_env_selected(event):
         ip, port = _ENV_MAP[env]
         server_ip_var.set(ip)
         entry_server_port.set(port)
+        entry_adt_port.set(str(int(port) + 1))
+        tier = "prod" if env.startswith("prod") else "dev"
+        new_dest = re.sub(r'^/(dev|prod)/', f'/{tier}/', entry_file_dest.get())
+        entry_file_dest.set(new_dest)
 
 entry_environment.bind("<<ComboboxSelected>>", _on_env_selected)
 
-btn_send = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_oru_message, font=("Avenir", 15, "bold"), activebackground=_ACCENT, activeforeground=_BG, cursor="hand2")
-btn_send_adt = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_adt_message, font=("Avenir", 15, "bold"), activebackground=_ACCENT, activeforeground=_BG, cursor="hand2")
+btn_send = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_oru_message, font=("Avenir", 13, "bold"), activebackground=_ACCENT, activeforeground=_BG, cursor="hand2")
+btn_send_adt = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_adt_message, font=("Avenir", 13, "bold"), activebackground=_ACCENT, activeforeground=_BG, cursor="hand2")
 btn_lang = tk.Button(window, bg=_BG, fg=_BTN_FG, text="🇬🇧", command=switch_language, font=("Avenir", 23), activebackground=_BG, cursor="hand2")
 
 label_patient_id.place(x=50, y=50)
@@ -802,21 +823,27 @@ label_sodium.place(x=50, y=300)
 entry_sodium.place(x=550, y=300, width=200)
 
 chk_include_pdf.place(x=550, y=350)
-label_nb_messages.place(x=760, y=355)
-entry_nb_messages.place(x=880, y=352, width=70)
-label_nb_threads.place(x=970, y=355)
-entry_nb_threads.place(x=1080, y=352, width=50)
 
-btn_send.place(x=550, y=400, width=185)
-btn_send_adt.place(x=745, y=400, width=185)
+chk_forward_to_file.place(x=550, y=388)
+label_file_dest.place(x=760, y=391)
+entry_file_dest.place(x=880, y=388, width=300)
+
+label_environment.place(x=50, y=428)
+entry_environment.place(x=175, y=426, width=180)
+label_server_ip.place(x=370, y=428)
+entry_server_ip.place(x=450, y=426, width=420)
+label_server_port.place(x=885, y=428)
+entry_server_port.place(x=965, y=426, width=70)
+label_adt_port.place(x=1050, y=428)
+entry_adt_port.place(x=1130, y=426, width=70)
+
+label_nb_messages.place(x=50, y=468)
+entry_nb_messages.place(x=170, y=465, width=70)
+label_nb_threads.place(x=260, y=468)
+entry_nb_threads.place(x=370, y=465, width=50)
+btn_send.place(x=550, y=465, width=185)
+btn_send_adt.place(x=745, y=465, width=185)
 btn_lang.place(x=0, y=0, width=50)
-
-label_environment.place(x=50, y=450)
-entry_environment.place(x=200, y=448, width=220)
-label_server_ip.place(x=440, y=450)
-entry_server_ip.place(x=540, y=448, width=420)
-label_server_port.place(x=1020, y=450)
-entry_server_port.place(x=1075, y=448, width=100)
 
 # Zone de log affichée dans l'interface
 log_text = tk.Text(window, height=18, width=212, bg=_LOG_BG, fg=_LOG_FG,
@@ -838,7 +865,7 @@ log_text.tag_config("important_value", underline=True, foreground="#f472b6", bac
 log_text.tag_config("error", background="#450a0a", foreground="#f87171")
 log_text.tag_config("ack", background="#052e16", foreground="#4ade80")
 
-log_text.place(x=20, y=500)
+log_text.place(x=20, y=525)
 # log_text.configure(state="disabled")  # lecture seule
 
 log_text.tag_config("highlight", background="#1e293b", foreground=_ACCENT)
