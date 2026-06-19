@@ -1,0 +1,1 @@
+cd iris/angular && npx ng serve

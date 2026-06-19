@@ -9,7 +9,7 @@ XData RuleDefinition [ XMLNamespace = "http://www.intersystems.com/rule" ]
 <ruleDefinition alias="" context="EnsLib.HL7.MsgRouter.RoutingEngine" production="DGLABPKG.FoundationProduction">
 <ruleSet name="" effectiveBegin="" effectiveEnd="">
 <rule name="ORU">
-<constraint name="source" value="LAB RESULT from DGLAB - MLLP"></constraint>
+<constraint name="source" value=""></constraint>
 <constraint name="docCategory" value="2.3"></constraint>
 <constraint name="docName" value="ORU_R01"></constraint>
 <when condition="1" comment="">
@@ -22,6 +22,9 @@ XData RuleDefinition [ XMLNamespace = "http://www.intersystems.com/rule" ]
 <send transform="" target="to EMR - FILE"></send>
 <trace value="&quot;Reference Pointer&quot;"></trace>
 </when>
+<otherwise>
+<trace value="&quot;no action&quot;"></trace>
+</otherwise>
 </foreach>
 </when>
 </rule>

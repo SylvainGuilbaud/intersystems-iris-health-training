@@ -13,6 +13,10 @@ import string
 import threading
 import time
 import os
+import urllib.request
+import urllib.error
+import urllib.parse
+import base64
 
 # ── Modern dark theme palette ─────────────────────────────────────────────────
 _BG        = "#0b0b25"   # window / canvas background – matches IS_logo.jpg
@@ -39,8 +43,10 @@ CARRIAGE_RETURN = '\x0d'
 message_control_id = 0
 
 # Retry configuration
-MAX_RETRIES = 3
-RETRY_DELAY = 2  # seconds between retries
+MAX_RETRIES = 5
+RETRY_DELAY = 3          # seconds between retries
+CONNECT_TIMEOUT = 5      # seconds for connect + recv
+HTTP_INTER_MSG_DELAY = 2.0  # seconds between consecutive HTTP POSTs (avoids 503)
 
 def generate_random_hl7_message():
     patient_id = entry_patient_id.get()
@@ -370,6 +376,8 @@ translations = {
         "gender": "Sexe",
         "send_oru": "Envoyer ORU MLLP",
         "send_adt": "Recevoir ADT MLLP",
+        "send_oru_http": "Envoyer ORU HTTP",
+        "send_adt_http": "Recevoir ADT HTTP",
         "error_fields": "Veuillez remplir tous les champs.",
         "error_date": "Format de date invalide. Utilisez JJ/MM/AAAA.",
         "success": "Message HL7 envoyé avec succès.",
@@ -394,6 +402,8 @@ translations = {
         "gender": "Gender",
         "send_oru": "Send ORU MLLP",
         "send_adt": "Receive ADT MLLP",
+        "send_oru_http": "Send ORU HTTP",
+        "send_adt_http": "Receive ADT HTTP",
         "error_fields": "Please fill in all fields.",
         "error_date": "Invalid date format. Use DD/MM/YYYY.",
         "success": "HL7 message sent successfully.",
@@ -418,6 +428,8 @@ translations = {
         "gender": "Género",
         "send_oru": "Enviar ORU MLLP",
         "send_adt": "Recibir ADT MLLP",
+        "send_oru_http": "Enviar ORU HTTP",
+        "send_adt_http": "Recibir ADT HTTP",
         "error_fields": "Por favor complete todos los campos.",
         "error_date": "Formato de fecha inválido. Use DD/MM/AAAA.",
         "success": "Mensaje HL7 enviado con éxito.",
@@ -473,6 +485,22 @@ def get_adt_port():
         return int(entry_adt_port.get().strip())
     except ValueError:
         return DEFAULT_SERVER_PORT + 1
+
+def get_http_namespace():
+    return entry_http_namespace.get().strip() or "iris-health-training-dev"
+
+def get_http_port():
+    p = entry_http_port.get().strip()
+    return p if p else "80"
+
+def get_http_credentials():
+    return _current_http_auth or "_system:SYS"
+
+def get_http_oru_cfgitem():
+    return entry_http_oru_cfgitem.get().strip()
+
+def get_http_adt_cfgitem():
+    return entry_http_adt_cfgitem.get().strip()
 
 def get_nb_messages():
     try:
@@ -563,9 +591,8 @@ def send_hl7_message(message_generator=None, port_getter=None):
                     window.after(0, lambda m=pending: append_to_response_console(m))
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         s.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
-                        s.settimeout(5)
+                        s.settimeout(CONNECT_TIMEOUT)
                         s.connect((server_ip, server_port))
-                        s.settimeout(None)
                         s.sendall(hl7_wrapped)
                         response = s.recv(1024).decode()
                         response_clean = re.sub(r'[^\x20-\x7E\r\n\t]', '\n', response)
@@ -635,6 +662,165 @@ def send_oru_message():
 def send_adt_message():
     send_hl7_message(generate_adt_message, port_getter=get_adt_port)
 
+def send_hl7_http(message_generator=None, cfgitem=""):
+    if message_generator is None:
+        message_generator = generate_random_hl7_message
+    log_text.configure(state="normal")
+    log_text.delete("1.0", tk.END)
+    log_text.configure(state="disabled")
+    log_response.configure(state="normal")
+    log_response.delete("1.0", tk.END)
+    log_response.configure(state="disabled")
+
+    server_ip = get_server_ip()
+    namespace = get_http_namespace()
+    credentials = get_http_credentials()
+    nb = get_nb_messages()
+    nb_threads = get_nb_threads()
+
+    csp_path = f"/{namespace}/csp/healthshare/dglab/EnsLib.HL7.Service.HTTPService.cls"
+    if cfgitem:
+        csp_path += f"?CfgItem={urllib.parse.quote(cfgitem)}"
+    http_port = get_http_port()
+    host_part = f"{server_ip}:{http_port}" if http_port not in ("80", "443", "") else server_ip
+    url = f"http://{host_part}{csp_path}"
+    auth_header = "Basic " + base64.b64encode(credentials.encode()).decode()
+
+    msg_type = "ADT" if message_generator is generate_adt_message else "ORU"
+    append_to_response_console(f"▶ {msg_type} HTTP → {url}")
+
+    def truncate_ed_base64(msg, max_chars=200):
+        def _truncate(m):
+            prefix, b64, suffix = m.group(1), m.group(2), m.group(3)
+            if len(b64) > max_chars:
+                return f"{prefix}{b64[:max_chars]}...[truncated {len(b64)} chars]{suffix}"
+            return m.group(0)
+        return re.sub(r'(OBX\|[^\|]*\|ED\|[^\r\n]*\^Base64\^)([A-Za-z0-9+/=]+)(\|[^\r\n]*)', _truncate, msg)
+
+    messages = []
+    for _ in range(nb):
+        msg = message_generator()
+        if msg is None:
+            return
+        messages.append(msg)
+
+    if forward_to_file_var.get():
+        messages = [
+            re.sub(r'^(MSH\|[^|]*\|[^|]*\|[^|]*\|[^|]*\|)[^|]*(\|)',
+                   r'\1FILE\2', m, count=1, flags=re.MULTILINE)
+            for m in messages
+        ]
+
+    logging.info("%s:\n%s", translations[current_language]["hl7_generated"], truncate_ed_base64(messages[0]))
+    append_to_log_console(translations[current_language]["hl7_generated"] + "\n" + truncate_ed_base64(messages[0]))
+    if nb > 1:
+        threads_info = f"{nb_threads} thread(s)"
+        t = translations[current_language]
+        start_msg = t["load_test_start"].format(nb=nb, threads=threads_info)
+        window.after(0, lambda m=start_msg: append_to_response_console(m))
+
+    ok_count = [0]
+    fail_count = [0]
+    sent_count = [0]
+    done_threads = [0]
+    bytes_total = [0]
+    lock = threading.Lock()
+    start_time = time.time()
+
+    chunks = [messages[i::nb_threads] for i in range(nb_threads)]
+
+    def _http_worker(chunk):
+        for _msg_idx, hl7_message in enumerate(chunk):
+            if _msg_idx > 0:
+                time.sleep(HTTP_INTER_MSG_DELAY)
+            hl7_cr = hl7_message.replace("\n", "\r").encode("utf-8")
+            req = urllib.request.Request(
+                url, data=hl7_cr,
+                headers={"Content-Type": "text/plain; charset=utf-8", "Authorization": auth_header},
+                method="POST"
+            )
+            for attempt in range(1, MAX_RETRIES + 1):
+                try:
+                    pending = f"⏳ HTTP POST → {url}" if attempt == 1 else f"⏳ HTTP POST → {url} (attempt {attempt}/{MAX_RETRIES})"
+                    window.after(0, lambda m=pending: append_to_response_console(m))
+                    with urllib.request.urlopen(req, timeout=CONNECT_TIMEOUT) as resp:
+                        body = resp.read().decode("utf-8", errors="replace")
+                        body_clean = re.sub(r'[^\x20-\x7E\r\n\t]', '\n', body)
+                        with lock:
+                            ok_count[0] += 1
+                            sent_count[0] += 1
+                            bytes_total[0] += len(hl7_cr)
+                            n_sent = sent_count[0]
+                        if nb == 1:
+                            msg_size = len(hl7_cr)
+                            logging.info("%s:\n%s", translations[current_language]["response_received"], body_clean)
+                            window.after(0, lambda rc=body_clean, sz=msg_size: append_to_response_console(
+                                translations[current_language]["response_received"] + rc + f"\n[{_fmt_bytes(sz)} {translations[current_language]['bytes_sent']}]"))
+                        else:
+                            elapsed = time.time() - start_time
+                            status = f"[{n_sent}/{nb}] OK HTTP ({elapsed:.1f}s) - {_fmt_bytes(len(hl7_cr))} - {body_clean[:60].strip()}"
+                            logging.info(status)
+                            window.after(0, lambda m=status: append_to_response_console(m))
+                        break  # success
+                except urllib.error.HTTPError as e:
+                    retryable = e.code in (503, 429, 502, 504)
+                    if retryable and attempt < MAX_RETRIES:
+                        time.sleep(RETRY_DELAY)
+                        continue
+                    body = e.read().decode("utf-8", errors="replace") if e.fp else str(e)
+                    with lock:
+                        fail_count[0] += 1
+                        sent_count[0] += 1
+                        n_sent = sent_count[0]
+                    err = f"[{n_sent}/{nb}] HTTP {e.code}: {body[:120]}"
+                    logging.error(err)
+                    window.after(0, lambda m=err: append_to_response_console(m))
+                    break
+                except Exception as e:
+                    if attempt < MAX_RETRIES:
+                        time.sleep(RETRY_DELAY)
+                        continue
+                    with lock:
+                        fail_count[0] += 1
+                        sent_count[0] += 1
+                        n_sent = sent_count[0]
+                    elapsed = time.time() - start_time
+                    err = f"[{n_sent}/{nb}] FAILED HTTP: {e}"
+                    logging.error(err)
+                    window.after(0, lambda m=err: append_to_response_console(m))
+                    break
+
+        with lock:
+            done_threads[0] += 1
+            if done_threads[0] == actual_threads and nb > 1:
+                elapsed = time.time() - start_time
+                rate = ok_count[0] / elapsed if elapsed > 0 else 0
+                threads_label = f"{actual_threads} thread(s)"
+                prefix = "✅ " if fail_count[0] == 0 else "❌ "
+                t = translations[current_language]
+                total_b = _fmt_bytes(bytes_total[0])
+                failed_part = f"{fail_count[0]} {t['load_test_failed']} — " if fail_count[0] > 0 else ""
+                summary = (
+                    f"{prefix}{t['load_test_done']}: {ok_count[0]}/{nb} OK "
+                    f"{failed_part}{elapsed:.2f}s ({rate:.1f} msg/s) "
+                    f"[{threads_label}] — {total_b} {t['bytes_total']}"
+                )
+                logging.info(summary)
+                window.after(0, lambda: append_to_response_console("-" * 120))
+                window.after(0, lambda s=summary: append_to_response_console(s))
+                window.after(0, lambda: append_to_response_console("-" * 120))
+
+    actual_threads = sum(1 for chunk in chunks if chunk)
+    for chunk in chunks:
+        if chunk:
+            threading.Thread(target=_http_worker, args=(chunk,), daemon=True).start()
+
+def send_oru_http_message():
+    send_hl7_http(generate_random_hl7_message, cfgitem=get_http_oru_cfgitem())
+
+def send_adt_http_message():
+    send_hl7_http(generate_adt_message, cfgitem=get_http_adt_cfgitem())
+
 languages = ["fr", "en", "es"]    
 def switch_language():
     global current_language
@@ -652,6 +838,8 @@ def update_labels():
     label_sodium.config(text=translations[current_language]["sodium"])
     btn_send.config(text=translations[current_language]["send_oru"])
     btn_send_adt.config(text=translations[current_language]["send_adt"])
+    btn_send_http_oru.config(text=translations[current_language]["send_oru_http"])
+    btn_send_http_adt.config(text=translations[current_language]["send_adt_http"])
 
     # Mettre à jour le drapeau 🇫🇷 / 🇬🇧 / 🇪🇸
     flag_map = {"fr": "🇫🇷", "en": "🇬🇧", "es": "🇪🇸"}
@@ -755,7 +943,6 @@ entry_sodium.insert(0, random.randint(135, 145))
 chk_include_pdf = tk.Checkbutton(window, bg=_BG, fg=_ACCENT, font=("Avenir", 13), variable=include_pdf_var, text="include PDF", activebackground=_BG, activeforeground=_ACCENT, selectcolor=_INPUT_BG)
 
 chk_forward_to_file = tk.Checkbutton(window, bg=_BG, fg=_ACCENT, font=("Avenir", 13), variable=forward_to_file_var, text="forward to file repository", activebackground=_BG, activeforeground=_ACCENT, selectcolor=_INPUT_BG)
-label_file_dest = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="File destination")
 entry_file_dest = ttk.Combobox(window, font=("Avenir", 13), values=["/dev/data/HL7/ORU/in"])
 entry_file_dest.set("/dev/data/HL7/ORU/in")
 
@@ -768,13 +955,14 @@ entry_nb_threads = ttk.Combobox(window, font=("Avenir", 13), values=["1", "2", "
 entry_nb_threads.set("1")
 
 _ENV_MAP = {
-    "dev-aws":              (DEFAULT_SERVER_IP, "9001"),
-    "prod-aws":             (DEFAULT_SERVER_IP, "9500"),
-    "dev-local-community":  ("localhost",        "39001"),
-    "prod-local-community": ("localhost",        "39501"),
-    "dev-local":            ("localhost",        "9001"),
-    "prod-local":           ("localhost",        "9002"),
+    "dev-aws":              (DEFAULT_SERVER_IP, "9001",  "iris-health-training-dev",  "_system:IRIS4Good/", "80"),
+    "prod-aws":             (DEFAULT_SERVER_IP, "9500",  "iris-health-training-prod", "_system:IRIS4Good/", "80"),
+    "dev-local-community":  ("localhost",        "39001", "iris-health-training-dev",  "_system:SYS",        "881"),
+    "prod-local-community": ("localhost",        "39501", "iris-health-training-prod", "_system:SYS",        "881"),
+    "dev-local":            ("localhost",        "9001",  "iris-health-training-dev",  "_system:SYS",        "881"),
+    "prod-local":           ("localhost",        "9002",  "iris-health-training-prod", "_system:SYS",        "881"),
 }
+_current_http_auth = _ENV_MAP["dev-aws"][3]
 
 label_environment = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Environment")
 entry_environment = ttk.Combobox(window, font=("Avenir", 13), state="readonly",
@@ -794,21 +982,47 @@ label_adt_port = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), tex
 entry_adt_port = ttk.Combobox(window, font=("Avenir", 13), values=["9002", "9003", "9501", "39002", "39502", "6662", "2576"])
 entry_adt_port.set(str(DEFAULT_SERVER_PORT + 1))
 
+entry_http_namespace = ttk.Combobox(window, font=("Avenir", 13), values=["iris-health-training-dev", "iris-health-training-prod"])
+entry_http_namespace.set("iris-health-training-dev")
+
+label_http_port = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="HTTP Port")
+entry_http_port = ttk.Combobox(window, font=("Avenir", 13), values=["80", "881", "443", "884"])
+entry_http_port.set("80")
+
+label_http_oru_cfgitem = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="ORU Cfg")
+entry_http_oru_cfgitem = ttk.Combobox(window, font=("Avenir", 13), values=["LAB RESULT from DGLAB - HTTP", "LAB RESULT from DGLAB - MLLP"])
+entry_http_oru_cfgitem.set("LAB RESULT from DGLAB - HTTP")
+
+label_http_adt_cfgitem = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="ADT Cfg")
+entry_http_adt_cfgitem = ttk.Combobox(window, font=("Avenir", 13), values=["Patient Information from IHE PAM - HTTP", "Patient Information from IHE PAM - MLLP"])
+entry_http_adt_cfgitem.set("Patient Information from IHE PAM - HTTP")
+
 def _on_env_selected(event):
+    global _current_http_auth
     env = entry_environment.get()
     if env in _ENV_MAP:
-        ip, port = _ENV_MAP[env]
+        ip, port, namespace, auth, http_port = _ENV_MAP[env]
         server_ip_var.set(ip)
         entry_server_port.set(port)
         entry_adt_port.set(str(int(port) + 1))
+        entry_http_namespace.set(namespace)
+        entry_http_port.set(http_port)
+        _current_http_auth = auth
+        entry_http_oru_cfgitem.set("LAB RESULT from DGLAB - HTTP")
+        entry_http_adt_cfgitem.set("Patient Information from IHE PAM - HTTP")
         tier = "prod" if env.startswith("prod") else "dev"
         new_dest = re.sub(r'^/(dev|prod)/', f'/{tier}/', entry_file_dest.get())
         entry_file_dest.set(new_dest)
 
 entry_environment.bind("<<ComboboxSelected>>", _on_env_selected)
 
-btn_send = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_oru_message, font=("Avenir", 13, "bold"), activebackground=_ACCENT, activeforeground=_BG, cursor="hand2")
-btn_send_adt = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_adt_message, font=("Avenir", 13, "bold"), activebackground=_ACCENT, activeforeground=_BG, cursor="hand2")
+_CLR_ORU = "#4ade80"   # green border  – ORU
+_CLR_ADT = "#f472b6"   # pink border   – ADT
+
+btn_send = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_oru_message, font=("Avenir", 13, "bold"), activebackground=_ACCENT, activeforeground=_BG, cursor="hand2", highlightbackground=_CLR_ORU, highlightthickness=2)
+btn_send_adt = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_adt_message, font=("Avenir", 13, "bold"), activebackground=_ACCENT, activeforeground=_BG, cursor="hand2", highlightbackground=_CLR_ADT, highlightthickness=2)
+btn_send_http_oru = tk.Button(window, bg="#065f46", fg=_BG, text="", command=send_oru_http_message, font=("Avenir", 13, "bold"), activebackground="#10b981", activeforeground=_BG, cursor="hand2", highlightbackground=_CLR_ORU, highlightthickness=2)
+btn_send_http_adt = tk.Button(window, bg="#065f46", fg=_BG, text="", command=send_adt_http_message, font=("Avenir", 13, "bold"), activebackground="#10b981", activeforeground=_BG, cursor="hand2", highlightbackground=_CLR_ADT, highlightthickness=2)
 btn_lang = tk.Button(window, bg=_BG, fg=_BTN_FG, text="🇬🇧", command=switch_language, font=("Avenir", 23), activebackground=_BG, cursor="hand2")
 
 label_patient_id.place(x=50, y=50)
@@ -831,26 +1045,31 @@ label_sodium.place(x=50, y=300)
 entry_sodium.place(x=550, y=300, width=200)
 
 chk_include_pdf.place(x=550, y=350)
+chk_forward_to_file.place(x=690, y=350)
 
-chk_forward_to_file.place(x=550, y=388)
-label_file_dest.place(x=760, y=391)
-entry_file_dest.place(x=880, y=388, width=300)
-
-label_environment.place(x=50, y=428)
-entry_environment.place(x=175, y=426, width=180)
-label_server_ip.place(x=370, y=428)
-entry_server_ip.place(x=450, y=426, width=420)
-label_server_port.place(x=885, y=428)
-entry_server_port.place(x=965, y=426, width=70)
-label_adt_port.place(x=1050, y=428)
-entry_adt_port.place(x=1130, y=426, width=70)
+label_environment.place(x=50, y=388)
+entry_environment.place(x=175, y=386, width=180)
+label_server_ip.place(x=370, y=388)
+entry_server_ip.place(x=450, y=386, width=420)
+label_server_port.place(x=885, y=388)
+entry_server_port.place(x=965, y=386, width=70)
+label_adt_port.place(x=1050, y=388)
+entry_adt_port.place(x=1130, y=386, width=70)
+label_http_port.place(x=1215, y=388)
+entry_http_port.place(x=1295, y=386, width=70)
 
 label_nb_messages.place(x=50, y=468)
 entry_nb_messages.place(x=170, y=465, width=70)
 label_nb_threads.place(x=260, y=468)
 entry_nb_threads.place(x=370, y=465, width=50)
-btn_send.place(x=550, y=465, width=185)
-btn_send_adt.place(x=745, y=465, width=185)
+btn_send.place(x=430, y=465, width=185)
+btn_send_adt.place(x=620, y=465, width=185)
+btn_send_http_oru.place(x=810, y=465, width=185)
+btn_send_http_adt.place(x=1000, y=465, width=185)
+label_http_oru_cfgitem.place(x=50, y=430)
+entry_http_oru_cfgitem.place(x=115, y=427, width=300)
+label_http_adt_cfgitem.place(x=425, y=430)
+entry_http_adt_cfgitem.place(x=490, y=427, width=380)
 btn_lang.place(x=0, y=0, width=50)
 
 # Zone de log affichée dans l'interface

@@ -1,0 +1,133 @@
+<div class="app">
+  <!-- Header -->
+  <header class="header">
+    <span class="header-title">IRIS HEALTH &nbsp;·&nbsp; HL7 HTTP TEST TOOL</span>
+    <span class="header-sub">EnsLib.HL7.Service.HTTPService</span>
+  </header>
+
+  <!-- Patient form -->
+  <section class="form-grid">
+    <label>Patient ID</label>
+    <div class="input-row">
+      <input [(ngModel)]="patientId" name="patientId" />
+      <button class="btn-icon" (click)="randomize()" title="Randomize">🎲</button>
+    </div>
+
+    <label>First Name</label>
+    <input [(ngModel)]="firstName" name="firstName" />
+
+    <label>Last Name</label>
+    <input [(ngModel)]="lastName" name="lastName" />
+
+    <label>Date of Birth</label>
+    <input type="date" [(ngModel)]="dob" name="dob" />
+
+    <label>Gender</label>
+    <select [(ngModel)]="gender" name="gender">
+      <option *ngFor="let g of genderOpts" [value]="g.value">{{ g.label }}</option>
+    </select>
+
+    <label>Sodium (mmol/L)</label>
+    <input type="number" [(ngModel)]="sodium" name="sodium" />
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Options row -->
+  <section class="options-row">
+    <label class="chk-label">
+      <input type="checkbox" [(ngModel)]="includePdf" name="includePdf" />
+      Include PDF
+    </label>
+    <label *ngIf="includePdf" class="field-inline">
+      PDF file
+      <span class="pdf-pick">
+        <input type="file" accept=".pdf,application/pdf" (change)="onPdfFileSelected($event)" class="input-file" />
+        <span *ngIf="pdfFileName" class="pdf-name">{{ pdfFileName }}</span>
+        <span *ngIf="!pdfBase64 && includePdf" class="pdf-hint">(no file selected)</span>
+      </span>
+    </label>
+
+    <label class="chk-label">
+      <input type="checkbox" [(ngModel)]="forwardToFile" name="forwardToFile" />
+      Forward to file repository
+    </label>
+
+    <label class="field-inline">
+      File destination
+      <input [(ngModel)]="fileDestination" name="fileDestination" class="input-wide" />
+    </label>
+
+    <label class="field-inline">
+      Nb messages
+      <input type="number" [(ngModel)]="nbMessages" name="nbMessages" min="1" max="1000" class="input-sm" />
+    </label>
+  </section>
+
+  <!-- Server / env row -->
+  <section class="server-row">
+    <label class="field-inline">
+      Environment
+      <select [(ngModel)]="environment" name="environment" (ngModelChange)="onEnvChange()">
+        <option *ngFor="let k of envKeys" [value]="k">{{ k }}</option>
+      </select>
+    </label>
+
+    <label class="field-inline">
+      Base URL
+      <input [(ngModel)]="baseUrl" name="baseUrl" class="input-url" />
+    </label>
+
+    <label class="field-inline">
+      ORU CfgItem
+      <input [(ngModel)]="oruCfgItem" name="oruCfgItem" class="input-cfgitem" placeholder="service name" />
+    </label>
+
+    <label class="field-inline">
+      ADT CfgItem
+      <input [(ngModel)]="adtCfgItem" name="adtCfgItem" class="input-cfgitem" placeholder="service name" />
+    </label>
+
+    <label class="field-inline">
+      Username
+      <input [(ngModel)]="username" name="username" class="input-sm" />
+    </label>
+
+    <label class="field-inline">
+      Password
+      <input type="password" [(ngModel)]="password" name="password" class="input-sm" />
+    </label>
+  </section>
+
+  <!-- Send buttons -->
+  <section class="btn-row">
+    <button class="btn-send" (click)="sendOru()">Send ORU HTTP</button>
+    <button class="btn-send btn-adt" (click)="sendAdt()">Receive ADT HTTP</button>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- HL7 log -->
+  <section class="log-section">
+    <div class="log-label">HL7 message generated</div>
+    <div class="log-box hl7-log">
+      <div *ngFor="let e of hl7Log" class="log-entry">
+        <span class="log-ts">{{ e.timestamp }}</span>
+        <pre class="hl7-text">{{ e.text }}</pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Response log -->
+  <section class="log-section">
+    <div class="log-label">Responses</div>
+    <div class="log-box resp-log">
+      <div *ngFor="let e of responseLog" class="log-entry" [ngClass]="e.type">
+        <span class="log-ts">{{ e.timestamp }}</span>
+        <span class="log-text">{{ e.text }}</span>
+      </div>
+    </div>
+  </section>
+</div>

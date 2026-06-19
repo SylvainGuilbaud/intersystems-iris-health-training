@@ -1,0 +1,29 @@
+### DEV COMMUNITY - ORU
+POST http://localhost:881/iris-health-training-dev/csp/healthshare/dglab/EnsLib.HL7.Service.HTTPService.cls?CfgItem=LAB RESULT from DGLAB - HTTP HTTP/1.1
+Content-Type: text/plain; charset=utf-8
+Authorization: Basic X3N5c3RlbTpTWVM=
+
+< ./docs/20260610_144322985_DEF_6100130_000043.HL7
+
+
+### DEV COMMUNITY - ADT
+POST http://localhost:881/iris-health-training-dev/csp/healthshare/dglab/EnsLib.HL7.Service.HTTPService.cls?CfgItem=Patient Information from IHE PAM - HTTP HTTP/1.1
+Content-Type: text/plain; charset=utf-8
+Authorization: Basic X3N5c3RlbTpTWVM=
+
+< ./docs/1-ADT.hl7
+
+### DEV AWS - ORU
+POST http://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com/iris-health-training-dev/csp/healthshare/dglab/EnsLib.HL7.Service.HTTPService.cls?CfgItem=aaa HTTP/1.1
+Content-Type: text/plain; charset=utf-8
+Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+
+< ./docs/20260610_144322985_DEF_6100130_000043.HL7
+
+
+### DEV AWS - ADT
+POST http://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com/iris-health-training-dev/csp/healthshare/dglab/EnsLib.HL7.Service.HTTPService.cls?CfgItem=aaa HTTP/1.1
+Content-Type: text/plain; charset=utf-8
+Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+
+< ./docs/1-ADT.hl7
