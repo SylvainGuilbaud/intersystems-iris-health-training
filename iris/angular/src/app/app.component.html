@@ -69,10 +69,15 @@
 
         <div class="nb-row">
           <span class="cfg-label">{{ t.nbMessages }}</span>
-          <input type="text" inputmode="numeric" list="nbMessagesList" [(ngModel)]="nbMessages" name="nbMessages" class="cfg-input-sm" />
-          <datalist id="nbMessagesList">
-            <option *ngFor="let n of nbMessagesOpts" [value]="n">{{ n }}</option>
-          </datalist>
+          <div class="combo">
+            <input type="text" inputmode="numeric" [(ngModel)]="nbMessages" name="nbMessages"
+                   class="cfg-input-sm" autocomplete="off" (focus)="nbOpen = true" />
+            <button type="button" class="combo-arrow" (click)="toggleNb()" tabindex="-1">▾</button>
+            <ul class="combo-list" *ngIf="nbOpen">
+              <li *ngFor="let n of nbMessagesOpts" (click)="selectNb(n)"
+                  [class.active]="+nbMessages === n">{{ n }}</li>
+            </ul>
+          </div>
         </div>
       </div><!-- /options-panel -->
 

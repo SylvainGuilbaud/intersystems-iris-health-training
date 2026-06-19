@@ -478,6 +478,51 @@ label {
   .hl7-text { width: 100%; }
 }
 
+.combo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+
+  .combo-arrow {
+    position: absolute;
+    right: 4px;
+    background: transparent;
+    border: none;
+    color: $accent;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+  }
+
+  .combo-list {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 4px 0;
+    list-style: none;
+    background: #0f2336;
+    border: 1px solid #2a4a6c;
+    border-radius: 4px;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 20;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+
+    li {
+      padding: 4px 12px;
+      color: #e2e8f0;
+      font-size: 13px;
+      cursor: pointer;
+
+      &:hover { background: #1a3a5c; }
+      &.active { color: $accent; font-weight: 600; }
+    }
+  }
+}
+
 $input-bg:  #0f2336;
 $input-fg:  #e2e8f0;
 $label-fg:  #94a3b8;

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { catchError, from, mergeMap, of } from 'rxjs';
@@ -239,6 +239,23 @@ export class AppComponent {
   readonly firstNameOpts = ['Anne','Delphine','Danmark','Marck-Augustus','Carl-Jamie','Francois','Rochelle','Neil','Adrian','Philippe','Jean-Michel','Olivier','Michael','Sophie','Frederic','Ronald'];
 
   readonly nbMessagesOpts = [1, 5, 10, 20, 50, 100, 200, 500, 1000];
+
+  // Editable Nb messages combobox
+  nbOpen = false;
+
+  toggleNb(): void { this.nbOpen = !this.nbOpen; }
+
+  selectNb(n: number): void {
+    this.nbMessages = n;
+    this.nbOpen = false;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!(event.target as HTMLElement).closest('.combo')) {
+      this.nbOpen = false;
+    }
+  }
 
   onFirstNameChange(): void {
     if (AppComponent.MALE_NAMES.has(this.firstName))        this.gender = 'M';
