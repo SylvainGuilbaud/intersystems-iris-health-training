@@ -11,13 +11,13 @@ interface LogEntry {
   type: 'info' | 'success' | 'error' | 'hl7';
 }
 
-const ENV_MAP: Record<string, { baseUrl: string; oruCfgItem: string; adtCfgItem: string; username: string; password: string; fileDir: string }> = {
-  'dev-aws':              { baseUrl: '/irisaws/iris-health-training-dev/csp/healthshare/dglab',  oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/', fileDir: '/dev/data/HL7/ORU/in'  },
-  'prod-aws':             { baseUrl: '/irisaws/iris-health-training-prod/csp/healthshare/dglab', oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/', fileDir: '/prod/data/HL7/ORU/in' },
-  'dev-local-community':  { baseUrl: '/iris881/iris-health-training-dev/csp/healthshare/dglab',  oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'SYS',        fileDir: '/dev/data/HL7/ORU/in'  },
-  'prod-local-community': { baseUrl: '/iris881/iris-health-training-prod/csp/healthshare/dglab', oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'SYS',        fileDir: '/prod/data/HL7/ORU/in' },
-  'dev-local':            { baseUrl: '/iris80/iris-health-training-dev/csp/healthshare/dglab',   oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/', fileDir: '/dev/data/HL7/ORU/in'  },
-  'prod-local':           { baseUrl: '/iris80/iris-health-training-prod/csp/healthshare/dglab',  oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/', fileDir: '/prod/data/HL7/ORU/in' },
+const ENV_MAP: Record<string, { baseUrl: string; oruCfgItem: string; adtCfgItem: string; username: string; password: string }> = {
+  'dev-aws':              { baseUrl: '/irisaws/iris-health-training-dev/csp/healthshare/dglab',  oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/' },
+  'prod-aws':             { baseUrl: '/irisaws/iris-health-training-prod/csp/healthshare/dglab', oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/' },
+  'dev-local-community':  { baseUrl: '/iris881/iris-health-training-dev/csp/healthshare/dglab',  oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'SYS'        },
+  'prod-local-community': { baseUrl: '/iris881/iris-health-training-prod/csp/healthshare/dglab', oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'SYS'        },
+  'dev-local':            { baseUrl: '/iris80/iris-health-training-dev/csp/healthshare/dglab',   oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/' },
+  'prod-local':           { baseUrl: '/iris80/iris-health-training-prod/csp/healthshare/dglab',  oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/' },
 };
 
 @Component({
@@ -39,7 +39,6 @@ export class AppComponent {
   // Options
   includePdf      = false;
   forwardToFile   = false;
-  fileDestination = ENV_MAP['dev-aws'].fileDir;
   nbMessages      = 1;
   pdfBase64:  string | null = null;
   pdfFileName = '';
@@ -75,7 +74,6 @@ export class AppComponent {
     this.adtCfgItem      = e.adtCfgItem;
     this.username        = e.username;
     this.password        = e.password;
-    this.fileDestination = e.fileDir;
   }
 
   randomize(): void {
