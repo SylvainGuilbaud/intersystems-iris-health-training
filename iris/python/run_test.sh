@@ -6,7 +6,7 @@ run_test() {
     echo "$1"
     local start=$SECONDS
     shift
-    python3 send_hl7_tcp_ORU_cli.py --silent "$@"
+    python3 DGLAB_cli.py --silent "$@"
     echo "Elapsed: $((SECONDS - start))s"
     echo "---"
 }
