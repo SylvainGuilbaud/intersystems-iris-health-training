@@ -496,7 +496,10 @@ def get_adt_port():
         return DEFAULT_SERVER_PORT + 1
 
 def get_http_namespace():
-    return entry_http_namespace.get().strip() or "iris-health-training-dev"
+    env = entry_environment.get()
+    if env in _ENV_MAP:
+        return _ENV_MAP[env][2]
+    return "iris-health-training-dev"
 
 def get_http_port():
     p = entry_http_port.get().strip()
@@ -915,10 +918,9 @@ canvas.create_text(464, 16, text="InterSystems IRIS for Health  ·  HL7 ORU/ADT 
 canvas.create_line(10, 430, 1718, 430, fill="#1a3a5c", width=1)             # divider above HL7 log
 canvas.create_line(10, 675, 1718, 675, fill="#1a3a5c", width=1)             # divider above response
 # Config panel (right side, under TECHNIDATA image)
-canvas.create_rectangle(1126, 158, 1726, 425, outline="#2a4a6c", fill="", width=1)
+canvas.create_rectangle(1126, 158, 1726, 398, outline="#2a4a6c", fill="", width=1)
 canvas.create_text(1426, 166, text="⚙  SERVER CONFIGURATION", fill=_ACCENT, font=("Avenir", 10, "bold"), anchor="center")
 canvas.create_line(1126, 174, 1726, 174, fill="#2a4a6c", width=1)
-canvas.create_text(1133, 329, text="Namespace", fill=_LABEL_FG, font=("Avenir", 13), anchor="w")
 
 # Widgets sur canvas
 entry = tk.Entry(window, font=("Avenir", 23))
@@ -1009,7 +1011,7 @@ entry_adt_port = ttk.Combobox(window, font=("Avenir", 13), values=["9002", "9003
 entry_adt_port.set(str(DEFAULT_SERVER_PORT + 1))
 
 entry_http_namespace = ttk.Combobox(window, font=("Avenir", 13), values=["iris-health-training-dev", "iris-health-training-prod"])
-entry_http_namespace.set("iris-health-training-dev")
+entry_http_namespace.set("iris-health-training-dev")  # kept for namespace logic (derived from environment), not displayed
 
 label_http_port = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="HTTP Port")
 entry_http_port = ttk.Combobox(window, font=("Avenir", 13), values=["80", "881", "443", "884"])
@@ -1031,7 +1033,6 @@ def _on_env_selected(event):
         server_ip_var.set(ip)
         entry_server_port.set(port)
         entry_adt_port.set(str(int(port) + 1))
-        entry_http_namespace.set(namespace)
         entry_http_port.set(http_port)
         _current_http_auth = auth
         entry_http_oru_cfgitem.set("LAB RESULT from DGLAB - HTTP")
@@ -1096,18 +1097,16 @@ entry_adt_port.place(x=1285, y=263, width=70)
 label_http_port.place(x=1133, y=292)
 entry_http_port.place(x=1285, y=290, width=70)
 
-entry_http_namespace.place(x=1285, y=317, width=418)
+label_http_adt_cfgitem.place(x=1133, y=319)
+entry_http_adt_cfgitem.place(x=1285, y=317, width=418)
 
-label_http_adt_cfgitem.place(x=1133, y=346)
-entry_http_adt_cfgitem.place(x=1285, y=344, width=418)
+label_http_oru_cfgitem.place(x=1133, y=346)
+entry_http_oru_cfgitem.place(x=1285, y=344, width=418)
 
-label_http_oru_cfgitem.place(x=1133, y=373)
-entry_http_oru_cfgitem.place(x=1285, y=371, width=418)
-
-label_nb_messages.place(x=1133, y=400)
-entry_nb_messages.place(x=1285, y=398, width=70)
-label_nb_threads.place(x=1365, y=400)
-entry_nb_threads.place(x=1455, y=398, width=60)
+label_nb_messages.place(x=1133, y=373)
+entry_nb_messages.place(x=1285, y=371, width=70)
+label_nb_threads.place(x=1365, y=373)
+entry_nb_threads.place(x=1455, y=371, width=60)
 
 btn_lang.place(x=0, y=0, width=50)
 

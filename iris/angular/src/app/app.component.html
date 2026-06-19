@@ -113,10 +113,7 @@
         <div class="config-row">
           <span class="cfg-label">Username</span>
           <input [(ngModel)]="username" name="username" class="cfg-input-sm" />
-        </div>
-
-        <div class="config-row">
-          <span class="cfg-label">Password</span>
+          <span class="cfg-label cfg-label-pw">Password</span>
           <input type="password" [(ngModel)]="password" name="password" class="cfg-input-sm" />
         </div>
 
@@ -138,7 +135,7 @@
     <div class="log-box hl7-log">
       <div *ngFor="let e of hl7Log" class="log-entry">
         <span class="log-ts">{{ e.timestamp }}</span>
-        <pre class="hl7-text">{{ e.text }}</pre>
+        <pre class="hl7-text" [innerHTML]="e.html ?? e.text"></pre>
       </div>
     </div>
   </section>

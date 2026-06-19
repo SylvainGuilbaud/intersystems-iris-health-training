@@ -9,6 +9,7 @@ interface LogEntry {
   timestamp: string;
   text: string;
   type: 'info' | 'success' | 'error' | 'hl7';
+  html?: string;
 }
 
 const ENV_MAP: Record<string, { baseUrl: string; oruCfgItem: string; adtCfgItem: string; username: string; password: string }> = {
@@ -138,8 +139,47 @@ export class AppComponent {
     return new Date().toISOString().replace('T', ' ').slice(0, 23);
   }
 
-  private addHl7Log(text: string): void {
-    this.hl7Log = [{ timestamp: this.now(), text, type: 'hl7' }];
+  private addHl7Log(text: string, html?: string): void {
+    this.hl7Log = [{ timestamp: this.now(), text, type: 'hl7', html }];
+  }
+
+  private static escapeHtml(s: string): string {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  private static escapeRegExp(s: string): string {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  /** Wrap patient demographics and the sodium test value in highlight markers. */
+  private static highlightHl7(text: string, p: Hl7Params): string {
+    let html = AppComponent.escapeHtml(text);
+
+    const mark = (val: string, cls: string) => {
+      if (!val) return;
+      const esc = AppComponent.escapeRegExp(AppComponent.escapeHtml(val));
+      html = html.replace(new RegExp(esc, 'g'), m => `<mark class="${cls}">${m}</mark>`);
+    };
+
+    // Patient demographics (name + id)
+    mark(p.lastName, 'hl7-patient');
+    mark(p.firstName, 'hl7-patient');
+    mark(p.patientId, 'hl7-patient');
+
+    // DOB + gender, highlighted only in their PID position |YYYYMMDD|G|
+    html = html.replace(
+      new RegExp(`(\\|)(${AppComponent.escapeRegExp(p.dob)})(\\|)([MFX])(\\|)`, 'g'),
+      (_m, a, dob, b, g, c) =>
+        `${a}<mark class="hl7-patient">${dob}</mark>${b}<mark class="hl7-patient">${g}</mark>${c}`,
+    );
+
+    // Sodium test value (S-Sodium OBX segment)
+    html = html.replace(
+      /(S-Sodium\^L\|1\|)(\d+)/,
+      (_m, pre, val) => `${pre}<mark class="hl7-value">${val}</mark>`,
+    );
+
+    return html;
   }
 
   private addResponse(text: string, type: LogEntry['type'] = 'info'): void {
@@ -189,7 +229,7 @@ export class AppComponent {
 
     const display = messages[0].replace(/\r/g, '\n')
       .replace(/(Base64\^)([A-Za-z0-9+/=]{200})[A-Za-z0-9+/=]+/g, '$1$2[...]');
-    this.addHl7Log(display);
+    this.addHl7Log(display, AppComponent.highlightHl7(display, params));
 
     this.addResponse(`▶ ${type} → ${this.baseUrl}?CfgItem=${cfgItem}`, 'info');
     if (count > 1) {

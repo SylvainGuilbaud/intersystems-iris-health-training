@@ -159,6 +159,11 @@ $panel-border: #2a4a6c;
   text-align: right;
 }
 
+.cfg-label-pw {
+  width: auto;
+  margin-left: 12px;
+}
+
 .cfg-input-full {
   flex: 1;
   background: $input-bg;
@@ -430,6 +435,22 @@ label {
   white-space: pre-wrap;
   word-break: break-all;
   color: $log-fg;
+
+  .hl7-patient {
+    background: #1e1b4b;
+    color: #f472b6;
+    border-radius: 2px;
+    padding: 0 2px;
+    font-weight: 700;
+  }
+
+  .hl7-value {
+    background: #052e16;
+    color: #38bdf8;
+    border-radius: 2px;
+    padding: 0 2px;
+    font-weight: 700;
+  }
 }
 
 .log-text {
@@ -714,6 +735,22 @@ label {
   white-space: pre-wrap;
   word-break: break-all;
   color: $log-fg;
+
+  .hl7-patient {
+    background: #1e1b4b;
+    color: #f472b6;
+    border-radius: 2px;
+    padding: 0 2px;
+    font-weight: 700;
+  }
+
+  .hl7-value {
+    background: #052e16;
+    color: #38bdf8;
+    border-radius: 2px;
+    padding: 0 2px;
+    font-weight: 700;
+  }
 }
 
 .log-text {
