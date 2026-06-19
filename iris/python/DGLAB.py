@@ -1130,7 +1130,7 @@ log_text.tag_config("important_value", underline=True, foreground="#f472b6", bac
 log_text.tag_config("error", background="#450a0a", foreground="#f87171")
 log_text.tag_config("ack", background="#052e16", foreground="#4ade80")
 
-log_text.place(x=20, y=445)
+log_text.place(x=20, y=445, width=1688)
 # log_text.configure(state="disabled")  # lecture seule
 
 log_text.tag_config("highlight", background="#1e293b", foreground=_ACCENT)
