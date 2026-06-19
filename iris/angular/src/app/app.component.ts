@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { catchError, of } from 'rxjs';
+import { catchError, from, mergeMap, of } from 'rxjs';
 import { Hl7Service } from './hl7.service';
 import { generateOruMessage, generateAdtMessage, Hl7Params } from './hl7-generator';
 
@@ -173,50 +173,63 @@ export class AppComponent {
     return `${v.toFixed(1)} TB`;
   }
 
+  private static readonly CONCURRENCY = 6;
+
   private doSend(type: 'ORU' | 'ADT', cfgItem: string): void {
     const count = Math.max(1, Math.min(this.nbMessages, 1000));
     const params = this.params();
     const startTime = Date.now();
     let ok = 0, fail = 0, bytesTotal = 0;
 
+    // Pre-generate all messages
+    const messages = Array.from({ length: count }, () =>
+      type === 'ORU' ? generateOruMessage(params) : generateAdtMessage(params)
+    );
+    bytesTotal = messages.reduce((sum, m) => sum + new Blob([m]).size, 0);
+
+    const display = messages[0].replace(/\r/g, '\n')
+      .replace(/(Base64\^)([A-Za-z0-9+/=]{200})[A-Za-z0-9+/=]+/g, '$1$2[...]');
+    this.addHl7Log(display);
+
     this.addResponse(`▶ ${type} → ${this.baseUrl}?CfgItem=${cfgItem}`, 'info');
     if (count > 1) {
       this.setProgress(`⏳ Sending 0 / ${count}...`);
     }
 
-    for (let i = 0; i < count; i++) {
-      const msg = type === 'ORU' ? generateOruMessage(params) : generateAdtMessage(params);
-      bytesTotal += new Blob([msg]).size;
-      if (i === 0) {
-        const display = msg.replace(/\r/g, '\n')
-          .replace(/(Base64\^)([A-Za-z0-9+/=]{200})[A-Za-z0-9+/=]+/g, '$1$2[...]');
-        this.addHl7Log(display);
-      }
-
-      this.hl7.send(this.baseUrl, cfgItem, this.username, this.password, msg).pipe(
-        catchError(err => of(`ERROR: ${err.message ?? err.statusText ?? 'Unknown'}`)),
-      ).subscribe(resp => {
+    from(messages).pipe(
+      mergeMap(
+        msg => this.hl7.send(this.baseUrl, cfgItem, this.username, this.password, msg).pipe(
+          catchError(err => of(`ERROR: ${err.message ?? err.statusText ?? 'Unknown'}`)),
+        ),
+        AppComponent.CONCURRENCY,
+      ),
+    ).subscribe({
+      next: resp => {
         const isError = resp.startsWith('ERROR:');
         isError ? fail++ : ok++;
         const done = ok + fail;
 
         if (count === 1) {
-          this.addResponse(resp, isError ? 'error' : 'success');
+          const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+          const suffix = ` — ${AppComponent.fmtBytes(bytesTotal)} — ${elapsed}s`;
+          this.addResponse(resp + suffix, isError ? 'error' : 'success');
         } else {
           this.setProgress(`⏳ Sending ${done} / ${count}${fail > 0 ? ' (' + fail + ' failed)' : ''}...`);
-          if (done === count) {
-            const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
-            const rate    = (ok / parseFloat(elapsed)).toFixed(1);
-            const prefix  = fail === 0 ? '✅' : '❌';
-            const failPart = fail > 0 ? ` ${fail} failed —` : '';
-            this.clearProgress();
-            this.addResponse(
-              `${prefix} ${ok}/${count} OK,${failPart} ${elapsed}s (${rate} msg/s) — ${AppComponent.fmtBytes(bytesTotal)} total`,
-              fail === 0 ? 'success' : 'error',
-            );
-          }
         }
-      });
-    }
+      },
+      complete: () => {
+        if (count > 1) {
+          const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+          const rate    = (ok / parseFloat(elapsed)).toFixed(1);
+          const prefix  = fail === 0 ? '✅' : '❌';
+          const failPart = fail > 0 ? ` ${fail} failed —` : '';
+          this.clearProgress();
+          this.addResponse(
+            `${prefix} ${ok}/${count} OK,${failPart} ${elapsed}s (${rate} msg/s) — ${AppComponent.fmtBytes(bytesTotal)} total`,
+            fail === 0 ? 'success' : 'error',
+          );
+        }
+      },
+    });
   }
 }
