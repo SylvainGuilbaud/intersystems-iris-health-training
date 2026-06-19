@@ -133,7 +133,7 @@
   <section class="log-section">
     <div class="log-label">HL7 message generated</div>
     <div class="log-box hl7-log">
-      <div *ngFor="let e of hl7Log" class="log-entry">
+      <div *ngFor="let e of hl7Log" class="log-entry hl7-entry">
         <span class="log-ts">{{ e.timestamp }}</span>
         <pre class="hl7-text" [innerHTML]="e.html ?? e.text"></pre>
       </div>

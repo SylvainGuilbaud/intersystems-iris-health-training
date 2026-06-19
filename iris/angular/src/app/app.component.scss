@@ -436,17 +436,17 @@ label {
   word-break: break-all;
   color: $log-fg;
 
-  .hl7-patient {
-    background: rgba(125, 211, 252, 0.12);
-    color: #7dd3fc;
+  ::ng-deep .hl7-patient {
+    background: rgba(125, 211, 252, 0.10);
+    color: #93c5fd;
     border-radius: 3px;
     padding: 0 3px;
     font-weight: 600;
   }
 
-  .hl7-value {
-    background: rgba(252, 211, 77, 0.12);
-    color: #fcd34d;
+  ::ng-deep .hl7-value {
+    background: rgba(148, 163, 184, 0.12);
+    color: #cbd5e1;
     border-radius: 3px;
     padding: 0 3px;
     font-weight: 600;
@@ -455,6 +455,14 @@ label {
 
 .log-text {
   word-break: break-all;
+}
+
+.hl7-entry {
+  flex-direction: column;
+  gap: 2px;
+
+  .log-ts { margin-top: 0; }
+  .hl7-text { width: 100%; }
 }
 
 $input-bg:  #0f2336;
@@ -736,17 +744,17 @@ label {
   word-break: break-all;
   color: $log-fg;
 
-  .hl7-patient {
-    background: rgba(125, 211, 252, 0.12);
-    color: #7dd3fc;
+  ::ng-deep .hl7-patient {
+    background: rgba(125, 211, 252, 0.10);
+    color: #93c5fd;
     border-radius: 3px;
     padding: 0 3px;
     font-weight: 600;
   }
 
-  .hl7-value {
-    background: rgba(252, 211, 77, 0.12);
-    color: #fcd34d;
+  ::ng-deep .hl7-value {
+    background: rgba(148, 163, 184, 0.12);
+    color: #cbd5e1;
     border-radius: 3px;
     padding: 0 3px;
     font-weight: 600;
