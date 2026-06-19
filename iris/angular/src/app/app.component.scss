@@ -9,6 +9,7 @@ $btn-fg:    #f0f9ff;
 $log-bg:    #020917;
 $log-fg:    #4ade80;
 $resp-fg:   #22d3ee;
+$panel-border: #2a4a6c;
 
 // ── Layout ────────────────────────────────────────────────────────────────
 .app {
@@ -17,6 +18,7 @@ $resp-fg:   #22d3ee;
   font-family: 'Avenir', 'Segoe UI', sans-serif;
   min-height: 100vh;
   padding: 0 0 40px;
+  position: relative;
 }
 
 // ── Header ────────────────────────────────────────────────────────────────
@@ -41,16 +43,206 @@ $resp-fg:   #22d3ee;
     color: $label-fg;
     font-size: 11px;
   }
+
+  .lang-btn {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid #2a4a6c;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover { border-color: $accent; }
+  }
+}
+
+// ── Three-column main layout ──────────────────────────────────────────────
+.main-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+}
+
+// ── Left column ───────────────────────────────────────────────────────────
+.left-col {
+  flex: 0 0 auto;
+  width: 560px;
+  padding-bottom: 8px;
+}
+
+// ── Middle column ─────────────────────────────────────────────────────────
+.middle-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px 0;
+  gap: 16px;
+}
+
+// ── Right column ──────────────────────────────────────────────────────────
+.right-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  position: relative;
+  min-height: 430px;
+}
+
+.technidata-img {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+// ── Options panel (middle column) ────────────────────────────────────────
+.options-panel {
+  width: 100%;
+  border: 1px solid $panel-border;
+  border-radius: 3px;
+  padding: 4px 16px 12px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.options-panel-title {
+  color: $accent;
+  font-size: 11px;
+  font-weight: bold;
+  text-align: center;
+  padding: 6px 0;
+  border-bottom: 1px solid $panel-border;
+  letter-spacing: 0.5px;
+}
+
+.pdf-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.nb-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+// ── Config panel ──────────────────────────────────────────────────────────
+.config-panel {
+  width: calc(100% - 32px);
+  max-width: 600px;
+  border: 1px solid $panel-border;
+  border-radius: 3px;
+  margin: 0 16px;
+  padding: 4px 12px 10px;
+  box-sizing: border-box;
+}
+
+.config-panel-title {
+  color: $accent;
+  font-size: 11px;
+  font-weight: bold;
+  text-align: center;
+  padding: 6px 0 6px;
+  border-bottom: 1px solid $panel-border;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.config-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.cfg-label {
+  color: $label-fg;
+  font-size: 13px;
+  width: 80px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.cfg-label-pw {
+  width: auto;
+  margin-left: 12px;
+}
+
+.cfg-input-full {
+  flex: 1;
+  background: $input-bg;
+  color: $input-fg;
+  border: 1px solid #1a3a5c;
+  border-radius: 3px;
+  padding: 5px 8px;
+  font-size: 13px;
+  font-family: inherit;
+  box-sizing: border-box;
+  outline: none;
+  &:focus { border-color: $accent; }
+  &[readonly] { opacity: 0.7; cursor: default; }
+}
+
+.cfg-input-sm {
+  width: 160px;
+  background: $input-bg;
+  color: $input-fg;
+  border: 1px solid #1a3a5c;
+  border-radius: 3px;
+  padding: 5px 8px;
+  font-size: 13px;
+  font-family: inherit;
+  box-sizing: border-box;
+  outline: none;
+  &:focus { border-color: $accent; }
+}
+
+.cfg-select-sm {
+  width: 180px;
+  background: $input-bg;
+  color: $input-fg;
+  border: 1px solid #1a3a5c;
+  border-radius: 3px;
+  padding: 5px 8px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  &:focus { border-color: $accent; }
+  option { background: $input-bg; }
+}
+
+// ── ISC logo ──────────────────────────────────────────────────────────────
+.isc-logo-wrap {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 12px 16px;
+}
+
+.isc-logo {
+  width: 180px;
+  height: auto;
+  opacity: 0.9;
 }
 
 // ── Form grid ─────────────────────────────────────────────────────────────
 .form-grid {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 160px 1fr;
   align-items: center;
   gap: 10px 16px;
   padding: 20px 24px 12px;
-  max-width: 860px;
 }
 
 // ── Shared input styles ───────────────────────────────────────────────────
@@ -165,7 +357,8 @@ label {
 .btn-row {
   display: flex;
   gap: 12px;
-  padding: 12px 24px;
+  padding: 0;
+  justify-content: center;
 }
 
 .btn-send {
@@ -205,6 +398,16 @@ label {
   height: 1px;
   background: #1a3a5c;
   margin: 8px 24px;
+}
+
+// ── Bottom accent ─────────────────────────────────────────────────────────
+.bottom-accent {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: $accent;
 }
 
 // ── Log sections ──────────────────────────────────────────────────────────
@@ -257,8 +460,77 @@ label {
   white-space: pre-wrap;
   word-break: break-all;
   color: $log-fg;
+
+  ::ng-deep .hl7-patient {
+    background: rgba(125, 211, 252, 0.10);
+    color: #93c5fd;
+    border-radius: 3px;
+    padding: 0 3px;
+    font-weight: 600;
+  }
+
+  ::ng-deep .hl7-value {
+    background: rgba(148, 163, 184, 0.12);
+    color: #cbd5e1;
+    border-radius: 3px;
+    padding: 0 3px;
+    font-weight: 600;
+  }
 }
 
 .log-text {
   word-break: break-all;
+}
+
+.hl7-entry {
+  flex-direction: column;
+  gap: 2px;
+
+  .log-ts { margin-top: 0; }
+  .hl7-text { width: 100%; }
+}
+
+.combo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+
+  .combo-arrow {
+    position: absolute;
+    right: 4px;
+    background: transparent;
+    border: none;
+    color: $accent;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+  }
+
+  .combo-list {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 4px 0;
+    list-style: none;
+    background: #0f2336;
+    border: 1px solid #2a4a6c;
+    border-radius: 4px;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 20;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+
+    li {
+      padding: 4px 12px;
+      color: #e2e8f0;
+      font-size: 13px;
+      cursor: pointer;
+
+      &:hover { background: #1a3a5c; }
+      &.active { color: $accent; font-weight: 600; }
+    }
+  }
 }
