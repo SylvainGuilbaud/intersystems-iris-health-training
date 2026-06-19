@@ -381,7 +381,7 @@ translations = {
         "title": "DGLAB - Interopérabilité avec Dossier Patient Informatisé et Gestion Administrative des Patients",
         "first_name": "Prénom",
         "last_name": "Nom",
-        "dob": "Date de naissance (JJ/MM/AAAA)",
+        "dob": "Date de naissance",
         "gender": "Sexe",
         "send_oru": "Envoyer ORU MLLP",
         "send_adt": "Recevoir ADT MLLP",
@@ -407,7 +407,7 @@ translations = {
         "title": "DGLAB - Interoperability with Electronic Health Record and Patient Administration Management",
         "first_name": "First Name",
         "last_name": "Last Name",
-        "dob": "Date of Birth (DD/MM/YYYY)",
+        "dob": "Date of Birth",
         "gender": "Gender",
         "send_oru": "Send ORU MLLP",
         "send_adt": "Receive ADT MLLP",
@@ -433,7 +433,7 @@ translations = {
         "title": "DGLAB - Interoperabilidad con Historia Clínica Electrónica y Gestión Administrativa de Pacientes",
         "first_name": "Nombre",
         "last_name": "Apellido",
-        "dob": "Fecha de nacimiento (DD/MM/AAAA)",
+        "dob": "Fecha de nacimiento",
         "gender": "Género",
         "send_oru": "Enviar ORU MLLP",
         "send_adt": "Recibir ADT MLLP",
@@ -912,8 +912,13 @@ canvas.create_rectangle(0, 997, 1728, 1000, fill=_ACCENT, outline="")      # bot
 canvas.create_rectangle(0, 3, 927, 30, fill="#0b0b25", outline="")          # header strip (left)
 canvas.create_text(464, 16, text="InterSystems IRIS for Health  ·  HL7 ORU/ADT  ·  MLLP/FILE TESTS",
                    fill=_ACCENT, font=("Avenir", 11, "bold"), anchor="center")
-canvas.create_line(10, 510, 1718, 510, fill="#1a3a5c", width=1)             # divider above HL7 log
-canvas.create_line(10, 695, 1718, 695, fill="#1a3a5c", width=1)             # divider above response
+canvas.create_line(10, 430, 1718, 430, fill="#1a3a5c", width=1)             # divider above HL7 log
+canvas.create_line(10, 675, 1718, 675, fill="#1a3a5c", width=1)             # divider above response
+# Config panel (right side, under TECHNIDATA image)
+canvas.create_rectangle(1126, 158, 1726, 425, outline="#2a4a6c", fill="", width=1)
+canvas.create_text(1426, 166, text="⚙  SERVER CONFIGURATION", fill=_ACCENT, font=("Avenir", 10, "bold"), anchor="center")
+canvas.create_line(1126, 174, 1726, 174, fill="#2a4a6c", width=1)
+canvas.create_text(1133, 329, text="Namespace", fill=_LABEL_FG, font=("Avenir", 13), anchor="w")
 
 # Widgets sur canvas
 entry = tk.Entry(window, font=("Avenir", 23))
@@ -1046,55 +1051,68 @@ btn_send_http_oru = tk.Button(window, bg="#065f46", fg=_BG, text="", command=sen
 btn_send_http_adt = tk.Button(window, bg="#065f46", fg=_BG, text="", command=send_adt_http_message, font=("Avenir", 13, "bold"), activebackground="#10b981", activeforeground=_BG, cursor="hand2", highlightbackground=_CLR_ADT, highlightthickness=2)
 btn_lang = tk.Button(window, bg=_BG, fg=_BTN_FG, text="🇬🇧", command=switch_language, font=("Avenir", 23), activebackground=_BG, cursor="hand2")
 
-label_patient_id.place(x=50, y=50)
-entry_patient_id.place(x=550, y=50, width=200)
-btn_generate_data.place(x=745, y=50, height=43)
+# ── Left column: Patient data ───────────────────────────────────────────────
+label_patient_id.place(x=30, y=42)
+entry_patient_id.place(x=350, y=42, width=180)
+btn_generate_data.place(x=535, y=42, height=43)
 
-label_first_name.place(x=50, y=100)
-entry_first_name.place(x=550, y=100, width=250)
+label_first_name.place(x=30, y=92)
+entry_first_name.place(x=350, y=92, width=230)
 
-label_last_name.place(x=50, y=150)
-entry_last_name.place(x=550, y=150, width=200)
+label_last_name.place(x=30, y=142)
+entry_last_name.place(x=350, y=142, width=180)
 
-label_dob.place(x=50, y=200)
-entry_dob.place(x=550, y=200, width=200)
+label_dob.place(x=30, y=192)
+entry_dob.place(x=350, y=192, width=180)
 
-label_gender.place(x=50, y=250)
-entry_gender.place(x=550, y=250, width=200)
+label_gender.place(x=30, y=242)
+entry_gender.place(x=350, y=242, width=180)
 
-label_sodium.place(x=50, y=300)
-entry_sodium.place(x=550, y=300, width=200)
+label_sodium.place(x=30, y=292)
+entry_sodium.place(x=350, y=292, width=180)
 
-chk_include_pdf.place(x=550, y=350)
-chk_forward_to_file.place(x=690, y=350)
+chk_include_pdf.place(x=350, y=342)
+chk_forward_to_file.place(x=510, y=342)
 
-label_environment.place(x=50, y=388)
-entry_environment.place(x=175, y=386, width=180)
-label_server_ip.place(x=370, y=388)
-entry_server_ip.place(x=450, y=386, width=420)
-label_server_port.place(x=885, y=388)
-entry_server_port.place(x=965, y=386, width=70)
-label_adt_port.place(x=1050, y=388)
-entry_adt_port.place(x=1130, y=386, width=70)
-label_http_port.place(x=1215, y=388)
-entry_http_port.place(x=1295, y=386, width=70)
+# ── Buttons ──────────────────────────────────────────────────────────────────
+btn_send_adt.place(x=30,  y=385, width=175)
+btn_send.place(x=215, y=385, width=175)
+btn_send_http_adt.place(x=400, y=385, width=175)
+btn_send_http_oru.place(x=585, y=385, width=175)
 
-label_nb_messages.place(x=50, y=468)
-entry_nb_messages.place(x=170, y=465, width=70)
-label_nb_threads.place(x=260, y=468)
-entry_nb_threads.place(x=370, y=465, width=50)
-btn_send.place(x=430, y=465, width=185)
-btn_send_adt.place(x=620, y=465, width=185)
-btn_send_http_oru.place(x=810, y=465, width=185)
-btn_send_http_adt.place(x=1000, y=465, width=185)
-label_http_oru_cfgitem.place(x=50, y=430)
-entry_http_oru_cfgitem.place(x=115, y=427, width=300)
-label_http_adt_cfgitem.place(x=425, y=430)
-entry_http_adt_cfgitem.place(x=490, y=427, width=380)
+# ── Right column: Server config (panel under TECHNIDATA image) ──────────────────
+label_environment.place(x=1133, y=184)
+entry_environment.place(x=1285, y=182, width=160)
+
+label_server_ip.place(x=1133, y=211)
+entry_server_ip.place(x=1285, y=209, width=418)
+
+label_server_port.place(x=1133, y=238)
+entry_server_port.place(x=1285, y=236, width=70)
+
+label_adt_port.place(x=1133, y=265)
+entry_adt_port.place(x=1285, y=263, width=70)
+
+label_http_port.place(x=1133, y=292)
+entry_http_port.place(x=1285, y=290, width=70)
+
+entry_http_namespace.place(x=1285, y=317, width=418)
+
+label_http_adt_cfgitem.place(x=1133, y=346)
+entry_http_adt_cfgitem.place(x=1285, y=344, width=418)
+
+label_http_oru_cfgitem.place(x=1133, y=373)
+entry_http_oru_cfgitem.place(x=1285, y=371, width=418)
+
+label_nb_messages.place(x=1133, y=400)
+entry_nb_messages.place(x=1285, y=398, width=70)
+label_nb_threads.place(x=1365, y=400)
+entry_nb_threads.place(x=1455, y=398, width=60)
+
 btn_lang.place(x=0, y=0, width=50)
 
 # Zone de log affichée dans l'interface
-log_text = tk.Text(window, height=10, width=212, bg=_LOG_BG, fg=_LOG_FG,
+log_text = tk.Text(window, height=14, width=212, bg=_LOG_BG, fg=_LOG_FG,
                    insertbackground=_ACCENT, selectbackground=_ACCENT,
                    selectforeground=_BG, font=("Monaco", 11))
 
@@ -1113,17 +1131,17 @@ log_text.tag_config("important_value", underline=True, foreground="#f472b6", bac
 log_text.tag_config("error", background="#450a0a", foreground="#f87171")
 log_text.tag_config("ack", background="#052e16", foreground="#4ade80")
 
-log_text.place(x=20, y=525)
+log_text.place(x=20, y=445)
 # log_text.configure(state="disabled")  # lecture seule
 
 log_text.tag_config("highlight", background="#1e293b", foreground=_ACCENT)
 
 # Zone de réponse reçue
-log_response = tk.Text(window, height=14, width=212, bg=_LOG_BG, fg=_RESP_FG,
+log_response = tk.Text(window, height=18, width=212, bg=_LOG_BG, fg=_RESP_FG,
                        insertbackground=_ACCENT, selectbackground=_ACCENT,
                        selectforeground=_BG, font=("Monaco", 11))
 log_response.tag_config("ack", background="#052e16", foreground="#4ade80")
-log_response.place(x=20, y=700)
+log_response.place(x=20, y=685)
 
 # log_text.tag_add("highlight", "1.0", "1.20")  # surligne les 20 premiers caractères de la ligne 3
 

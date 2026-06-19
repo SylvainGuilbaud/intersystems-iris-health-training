@@ -5,111 +5,126 @@
     <span class="header-sub">EnsLib.HL7.Service.HTTPService</span>
   </header>
 
-  <!-- Patient form -->
-  <section class="form-grid">
-    <label>Patient ID</label>
-    <div class="input-row">
-      <input [(ngModel)]="patientId" name="patientId" />
-      <button class="btn-icon" (click)="randomize()" title="Randomize">🎲</button>
-    </div>
+  <!-- Two-column main layout -->
+  <div class="main-layout">
 
-    <label>First Name</label>
-    <input list="firstNameList" [(ngModel)]="firstName" name="firstName" (ngModelChange)="onFirstNameChange()" />
-    <datalist id="firstNameList">
-      <option *ngFor="let n of firstNameOpts" [value]="n">{{ n }}</option>
-    </datalist>
+    <!-- LEFT COLUMN: Patient form + options + buttons -->
+    <div class="left-col">
 
-    <label>Last Name</label>
-    <input [(ngModel)]="lastName" name="lastName" />
+      <!-- Patient form -->
+      <section class="form-grid">
+        <label>Patient ID</label>
+        <div class="input-row">
+          <input [(ngModel)]="patientId" name="patientId" />
+          <button class="btn-icon" (click)="randomize()" title="Randomize">🎲</button>
+        </div>
 
-    <label>Date of Birth</label>
-    <input type="date" [(ngModel)]="dob" name="dob" />
+        <label>First Name</label>
+        <input list="firstNameList" [(ngModel)]="firstName" name="firstName" (ngModelChange)="onFirstNameChange()" />
+        <datalist id="firstNameList">
+          <option *ngFor="let n of firstNameOpts" [value]="n">{{ n }}</option>
+        </datalist>
 
-    <label>Gender</label>
-    <select [(ngModel)]="gender" name="gender">
-      <option *ngFor="let g of genderOpts" [value]="g.value">{{ g.label }}</option>
-    </select>
+        <label>Last Name</label>
+        <input [(ngModel)]="lastName" name="lastName" />
 
-    <label>Sodium (mmol/L)</label>
-    <input type="number" [(ngModel)]="sodium" name="sodium" />
-  </section>
+        <label>Date of Birth</label>
+        <input type="date" [(ngModel)]="dob" name="dob" />
 
-  <div class="divider"></div>
+        <label>Gender</label>
+        <select [(ngModel)]="gender" name="gender">
+          <option *ngFor="let g of genderOpts" [value]="g.value">{{ g.label }}</option>
+        </select>
 
-  <!-- Options row -->
-  <section class="options-row">
-    <label class="chk-label">
-      <input type="checkbox" [(ngModel)]="includePdf" name="includePdf" />
-      Include PDF
-    </label>
-    <label *ngIf="includePdf" class="field-inline">
-      PDF file
-      <span class="pdf-pick">
-        <input type="file" accept=".pdf,application/pdf" (change)="onPdfFileSelected($event)" class="input-file" />
-        <span *ngIf="pdfFileName" class="pdf-name">{{ pdfFileName }}</span>
-        <span *ngIf="!pdfBase64 && includePdf" class="pdf-hint">(no file selected)</span>
-      </span>
-    </label>
+        <label>Sodium (mmol/L)</label>
+        <input type="number" [(ngModel)]="sodium" name="sodium" />
+      </section>
 
-    <label class="chk-label">
-      <input type="checkbox" [(ngModel)]="forwardToFile" name="forwardToFile" />
-      Forward to file repository
-    </label>
+      <div class="divider"></div>
 
-    <label class="field-inline">
-      Nb messages
-      <input type="number" [(ngModel)]="nbMessages" name="nbMessages" min="1" max="1000" class="input-sm" />
-    </label>
-  </section>
+      <!-- Options row -->
+      <section class="options-row">
+        <label class="chk-label">
+          <input type="checkbox" [(ngModel)]="includePdf" name="includePdf" />
+          Include PDF
+        </label>
+        <label *ngIf="includePdf" class="field-inline">
+          PDF file
+          <span class="pdf-pick">
+            <input type="file" accept=".pdf,application/pdf" (change)="onPdfFileSelected($event)" class="input-file" />
+            <span *ngIf="pdfFileName" class="pdf-name">{{ pdfFileName }}</span>
+            <span *ngIf="!pdfBase64 && includePdf" class="pdf-hint">(no file selected)</span>
+          </span>
+        </label>
 
-  <!-- Server / env row -->
-  <section class="server-row">
-    <div class="server-row-top">
-      <div class="env-url-row">
+        <label class="chk-label">
+          <input type="checkbox" [(ngModel)]="forwardToFile" name="forwardToFile" />
+          Forward to file repository
+        </label>
+
         <label class="field-inline">
-          Environment
-          <select [(ngModel)]="environment" name="environment" (ngModelChange)="onEnvChange()">
+          Nb messages
+          <input type="number" [(ngModel)]="nbMessages" name="nbMessages" min="1" max="1000" class="input-sm" />
+        </label>
+      </section>
+
+      <!-- Send buttons -->
+      <section class="btn-row">
+        <button class="btn-send btn-adt" (click)="sendAdt()">Receive ADT HTTP</button>
+        <button class="btn-send" (click)="sendOru()">Send ORU HTTP</button>
+      </section>
+
+    </div><!-- /left-col -->
+
+    <!-- RIGHT COLUMN: TECHNIDATA image + server config panel -->
+    <div class="right-col">
+      <img src="TECHNIDATA.jpg" class="technidata-img" alt="TECHNIDATA" />
+
+      <!-- Server config panel -->
+      <div class="config-panel">
+        <div class="config-panel-title">⚙&nbsp; SERVER CONFIGURATION</div>
+
+        <div class="config-row">
+          <span class="cfg-label">Environment</span>
+          <select [(ngModel)]="environment" name="environment" (ngModelChange)="onEnvChange()" class="cfg-select-sm">
             <option *ngFor="let k of envKeys" [value]="k">{{ k }}</option>
           </select>
-        </label>
+        </div>
 
-        <label class="field-inline url-label">
-          Base URL
-          <input [(ngModel)]="baseUrl" name="baseUrl" class="input-url" />
-        </label>
+        <div class="config-row">
+          <span class="cfg-label">Base URL</span>
+          <input [(ngModel)]="baseUrl" name="baseUrl" class="cfg-input-full" readonly />
+        </div>
+
+        <div class="config-row">
+          <span class="cfg-label">ADT Cfg</span>
+          <input [(ngModel)]="adtCfgItem" name="adtCfgItem" class="cfg-input-full" placeholder="service name" />
+        </div>
+
+        <div class="config-row">
+          <span class="cfg-label">ORU Cfg</span>
+          <input [(ngModel)]="oruCfgItem" name="oruCfgItem" class="cfg-input-full" placeholder="service name" />
+        </div>
+
+        <div class="config-row">
+          <span class="cfg-label">Username</span>
+          <input [(ngModel)]="username" name="username" class="cfg-input-sm" />
+        </div>
+
+        <div class="config-row">
+          <span class="cfg-label">Password</span>
+          <input type="password" [(ngModel)]="password" name="password" class="cfg-input-sm" />
+        </div>
+
+      </div><!-- /config-panel -->
+
+      <!-- ISC logo bottom right -->
+      <div class="isc-logo-wrap">
+        <img src="IS_logo.jpg" class="isc-logo" alt="InterSystems" />
       </div>
+    </div><!-- /right-col -->
 
-      <div class="cfg-row">
-        <label class="field-inline">
-          ADT CfgItem
-          <input [(ngModel)]="adtCfgItem" name="adtCfgItem" class="input-cfgitem" placeholder="service name" />
-        </label>
-
-        <label class="field-inline">
-          ORU CfgItem
-          <input [(ngModel)]="oruCfgItem" name="oruCfgItem" class="input-cfgitem" placeholder="service name" />
-        </label>
-      </div>
-    </div>
-
-    <div class="server-row-bottom">
-      <label class="field-inline">
-        Username
-        <input [(ngModel)]="username" name="username" class="input-sm" />
-      </label>
-
-      <label class="field-inline">
-        Password
-        <input type="password" [(ngModel)]="password" name="password" class="input-sm" />
-      </label>
-    </div>
-  </section>
-
-  <!-- Send buttons -->
-  <section class="btn-row">
-    <button class="btn-send btn-adt" (click)="sendAdt()">Receive ADT HTTP</button>
-    <button class="btn-send" (click)="sendOru()">Send ORU HTTP</button>
-  </section>
+  </div><!-- /main-layout -->
 
   <div class="divider"></div>
 
@@ -136,4 +151,7 @@
       </div>
     </div>
   </section>
+
+  <!-- Bottom border accent -->
+  <div class="bottom-accent"></div>
 </div>
