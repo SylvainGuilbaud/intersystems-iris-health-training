@@ -54,6 +54,7 @@ export class AppComponent {
   // Logs
   hl7Log:      LogEntry[] = [];
   responseLog: LogEntry[] = [];
+  private progressEntry: LogEntry | null = null;
 
   sending = false;
 
@@ -145,17 +146,52 @@ export class AppComponent {
     this.responseLog = [{ timestamp: this.now(), text, type }, ...this.responseLog].slice(0, 200);
   }
 
+  private setProgress(text: string): void {
+    if (this.progressEntry) {
+      this.progressEntry.text = text;
+      this.responseLog = [...this.responseLog];
+    } else {
+      this.progressEntry = { timestamp: this.now(), text, type: 'info' };
+      this.responseLog = [this.progressEntry, ...this.responseLog].slice(0, 200);
+    }
+  }
+
+  private clearProgress(): void {
+    if (this.progressEntry) {
+      this.responseLog = this.responseLog.filter(e => e !== this.progressEntry);
+      this.progressEntry = null;
+    }
+  }
+
+  private static fmtBytes(n: number): string {
+    const units = ['bytes', 'KB', 'MB', 'GB'];
+    let v = n;
+    for (const u of units) {
+      if (v < 1024) return `${v.toFixed(1)} ${u}`;
+      v /= 1024;
+    }
+    return `${v.toFixed(1)} TB`;
+  }
+
   private doSend(type: 'ORU' | 'ADT', cfgItem: string): void {
     const count = Math.max(1, Math.min(this.nbMessages, 1000));
     const params = this.params();
     const startTime = Date.now();
-    let ok = 0, fail = 0;
+    let ok = 0, fail = 0, bytesTotal = 0;
 
     this.addResponse(`▶ ${type} → ${this.baseUrl}?CfgItem=${cfgItem}`, 'info');
+    if (count > 1) {
+      this.setProgress(`⏳ Sending 0 / ${count}...`);
+    }
 
     for (let i = 0; i < count; i++) {
       const msg = type === 'ORU' ? generateOruMessage(params) : generateAdtMessage(params);
-      if (i === 0) this.addHl7Log(msg.replace(/\r/g, '\n'));
+      bytesTotal += new Blob([msg]).size;
+      if (i === 0) {
+        const display = msg.replace(/\r/g, '\n')
+          .replace(/(Base64\^)([A-Za-z0-9+/=]{200})[A-Za-z0-9+/=]+/g, '$1$2[...]');
+        this.addHl7Log(display);
+      }
 
       this.hl7.send(this.baseUrl, cfgItem, this.username, this.password, msg).pipe(
         catchError(err => of(`ERROR: ${err.message ?? err.statusText ?? 'Unknown'}`)),
@@ -166,15 +202,19 @@ export class AppComponent {
 
         if (count === 1) {
           this.addResponse(resp, isError ? 'error' : 'success');
-        } else if (done === count) {
-          const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
-          const rate    = (ok / parseFloat(elapsed)).toFixed(1);
-          const prefix  = fail === 0 ? '✅' : '❌';
-          const failPart = fail > 0 ? ` ${fail} failed —` : '';
-          this.addResponse(
-            `${prefix} ${ok}/${count} OK,${failPart} ${elapsed}s (${rate} msg/s)`,
-            fail === 0 ? 'success' : 'error',
-          );
+        } else {
+          this.setProgress(`⏳ Sending ${done} / ${count}${fail > 0 ? ' (' + fail + ' failed)' : ''}...`);
+          if (done === count) {
+            const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+            const rate    = (ok / parseFloat(elapsed)).toFixed(1);
+            const prefix  = fail === 0 ? '✅' : '❌';
+            const failPart = fail > 0 ? ` ${fail} failed —` : '';
+            this.clearProgress();
+            this.addResponse(
+              `${prefix} ${ok}/${count} OK,${failPart} ${elapsed}s (${rate} msg/s) — ${AppComponent.fmtBytes(bytesTotal)} total`,
+              fail === 0 ? 'success' : 'error',
+            );
+          }
         }
       });
     }
