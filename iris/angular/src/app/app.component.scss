@@ -162,12 +162,24 @@ label {
   padding: 10px 24px;
 }
 
-.server-row-top,
+.server-row-top {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.env-url-row,
+.cfg-row,
 .server-row-bottom {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 16px 24px;
+}
+
+.url-label {
+  flex: 1;
+  .input-url { width: 100%; }
 }
 
 // ── Buttons ───────────────────────────────────────────────────────────────

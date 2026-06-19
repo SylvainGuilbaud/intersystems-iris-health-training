@@ -62,27 +62,31 @@
   <!-- Server / env row -->
   <section class="server-row">
     <div class="server-row-top">
-      <label class="field-inline">
-        Environment
-        <select [(ngModel)]="environment" name="environment" (ngModelChange)="onEnvChange()">
-          <option *ngFor="let k of envKeys" [value]="k">{{ k }}</option>
-        </select>
-      </label>
+      <div class="env-url-row">
+        <label class="field-inline">
+          Environment
+          <select [(ngModel)]="environment" name="environment" (ngModelChange)="onEnvChange()">
+            <option *ngFor="let k of envKeys" [value]="k">{{ k }}</option>
+          </select>
+        </label>
 
-      <label class="field-inline">
-        Base URL
-        <input [(ngModel)]="baseUrl" name="baseUrl" class="input-url" />
-      </label>
+        <label class="field-inline url-label">
+          Base URL
+          <input [(ngModel)]="baseUrl" name="baseUrl" class="input-url" />
+        </label>
+      </div>
 
-      <label class="field-inline">
-        ORU CfgItem
-        <input [(ngModel)]="oruCfgItem" name="oruCfgItem" class="input-cfgitem" placeholder="service name" />
-      </label>
+      <div class="cfg-row">
+        <label class="field-inline">
+          ADT CfgItem
+          <input [(ngModel)]="adtCfgItem" name="adtCfgItem" class="input-cfgitem" placeholder="service name" />
+        </label>
 
-      <label class="field-inline">
-        ADT CfgItem
-        <input [(ngModel)]="adtCfgItem" name="adtCfgItem" class="input-cfgitem" placeholder="service name" />
-      </label>
+        <label class="field-inline">
+          ORU CfgItem
+          <input [(ngModel)]="oruCfgItem" name="oruCfgItem" class="input-cfgitem" placeholder="service name" />
+        </label>
+      </div>
     </div>
 
     <div class="server-row-bottom">
@@ -100,8 +104,8 @@
 
   <!-- Send buttons -->
   <section class="btn-row">
-    <button class="btn-send" (click)="sendOru()">Send ORU HTTP</button>
     <button class="btn-send btn-adt" (click)="sendAdt()">Receive ADT HTTP</button>
+    <button class="btn-send" (click)="sendOru()">Send ORU HTTP</button>
   </section>
 
   <div class="divider"></div>
