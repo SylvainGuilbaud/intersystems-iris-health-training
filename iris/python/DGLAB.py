@@ -374,7 +374,7 @@ def check_port_open(host, port, timeout=1):
     s.close()
     return result == 0
 
-current_language = "fr"
+current_language = "en"
 
 translations = {
     "fr": {
@@ -614,7 +614,7 @@ def send_hl7_message(message_generator=None, port_getter=None):
                             msg_size = len(hl7_wrapped)
                             logging.info("%s:\n%s", translations[current_language]["response_received"], response_clean.replace("\r", "\n"))
                             window.after(0, lambda rc=response_clean, sz=msg_size: append_to_response_console(
-                                translations[current_language]["response_received"] + rc.replace("\r", "\n") + f"\n[{_fmt_bytes(sz)} {translations[current_language]['bytes_sent']}]"))
+                                translations[current_language]["response_received"] + "\n" + rc.replace("\r", "\n") + f"\n[{_fmt_bytes(sz)} {translations[current_language]['bytes_sent']}]"))
                         else:
                             msg_size = len(hl7_wrapped)
                             elapsed = time.time() - start_time
@@ -750,7 +750,8 @@ def send_hl7_http(message_generator=None, cfgitem=""):
             )
             for attempt in range(1, MAX_RETRIES + 1):
                 try:
-                    pending = f"⏳ HTTP POST → {url}" if attempt == 1 else f"⏳ HTTP POST → {url} (attempt {attempt}/{MAX_RETRIES})"
+                    display_url = urllib.parse.unquote(url)
+                    pending = f"⏳ HTTP POST → {display_url}" if attempt == 1 else f"⏳ HTTP POST → {display_url} (attempt {attempt}/{MAX_RETRIES})"
                     window.after(0, lambda m=pending: append_to_response_console(m))
                     with urllib.request.urlopen(req, timeout=CONNECT_TIMEOUT) as resp:
                         body = resp.read().decode("utf-8", errors="replace")
@@ -764,7 +765,7 @@ def send_hl7_http(message_generator=None, cfgitem=""):
                             msg_size = len(hl7_cr)
                             logging.info("%s:\n%s", translations[current_language]["response_received"], body_clean)
                             window.after(0, lambda rc=body_clean, sz=msg_size: append_to_response_console(
-                                translations[current_language]["response_received"] + rc + f"\n[{_fmt_bytes(sz)} {translations[current_language]['bytes_sent']}]"))
+                                translations[current_language]["response_received"] + "\n" + rc.replace("\r", "\n") + f"\n[{_fmt_bytes(sz)} {translations[current_language]['bytes_sent']}]"))
                         else:
                             elapsed = time.time() - start_time
                             status = f"[{n_sent}/{nb}] OK HTTP ({elapsed:.1f}s) - {_fmt_bytes(len(hl7_cr))} - {body_clean[:60].strip()}"
@@ -830,7 +831,7 @@ def send_oru_http_message():
 def send_adt_http_message():
     send_hl7_http(generate_adt_message, cfgitem=get_http_adt_cfgitem())
 
-languages = ["fr", "en", "es"]    
+languages = ["en", "fr", "es"]    
 def switch_language():
     global current_language
     index = languages.index(current_language)
@@ -912,7 +913,7 @@ canvas.create_rectangle(0, 3, 927, 30, fill="#0b0b25", outline="")          # he
 canvas.create_text(464, 16, text="InterSystems IRIS for Health  ·  HL7 ORU/ADT  ·  MLLP/FILE TESTS",
                    fill=_ACCENT, font=("Avenir", 11, "bold"), anchor="center")
 canvas.create_line(10, 510, 1718, 510, fill="#1a3a5c", width=1)             # divider above HL7 log
-canvas.create_line(10, 815, 1718, 815, fill="#1a3a5c", width=1)             # divider above response
+canvas.create_line(10, 695, 1718, 695, fill="#1a3a5c", width=1)             # divider above response
 
 # Widgets sur canvas
 entry = tk.Entry(window, font=("Avenir", 23))
@@ -934,6 +935,8 @@ def _on_first_name_selected(event):
     elif fn in _FEMALE_NAMES:
         gender_var.set(gender_options_dict[current_language][1])
 entry_first_name.bind("<<ComboboxSelected>>", _on_first_name_selected)
+entry_first_name.bind("<FocusOut>", _on_first_name_selected)
+entry_first_name.bind("<Return>", _on_first_name_selected)
 
 label_last_name = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23))
 entry_last_name = tk.Entry(window, bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT, selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 23))
@@ -1091,7 +1094,7 @@ entry_http_adt_cfgitem.place(x=490, y=427, width=380)
 btn_lang.place(x=0, y=0, width=50)
 
 # Zone de log affichée dans l'interface
-log_text = tk.Text(window, height=18, width=212, bg=_LOG_BG, fg=_LOG_FG,
+log_text = tk.Text(window, height=10, width=212, bg=_LOG_BG, fg=_LOG_FG,
                    insertbackground=_ACCENT, selectbackground=_ACCENT,
                    selectforeground=_BG, font=("Monaco", 11))
 
@@ -1116,11 +1119,11 @@ log_text.place(x=20, y=525)
 log_text.tag_config("highlight", background="#1e293b", foreground=_ACCENT)
 
 # Zone de réponse reçue
-log_response = tk.Text(window, height=8, width=212, bg=_LOG_BG, fg=_RESP_FG,
+log_response = tk.Text(window, height=14, width=212, bg=_LOG_BG, fg=_RESP_FG,
                        insertbackground=_ACCENT, selectbackground=_ACCENT,
                        selectforeground=_BG, font=("Monaco", 11))
 log_response.tag_config("ack", background="#052e16", foreground="#4ade80")
-log_response.place(x=20, y=820)
+log_response.place(x=20, y=700)
 
 # log_text.tag_add("highlight", "1.0", "1.20")  # surligne les 20 premiers caractères de la ligne 3
 
