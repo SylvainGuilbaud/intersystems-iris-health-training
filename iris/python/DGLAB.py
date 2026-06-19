@@ -514,6 +514,15 @@ def get_http_oru_cfgitem():
 def get_http_adt_cfgitem():
     return entry_http_adt_cfgitem.get().strip()
 
+def get_message_override():
+    """Return the raw message pasted in the override text box, or '' if empty.
+    When non-empty, this content is sent as-is, independently of the patient form."""
+    try:
+        txt = entry_message_override.get("1.0", tk.END)
+    except Exception:
+        return ""
+    return txt.strip("\n").strip()
+
 def get_nb_messages():
     try:
         n = int(entry_nb_messages.get().strip())
@@ -555,13 +564,17 @@ def send_hl7_message(message_generator=None, port_getter=None):
             return m.group(0)
         return re.sub(r'(OBX\|[^\|]*\|ED\|[^\r\n]*\^Base64\^)([A-Za-z0-9+/=]+)(\|[^\r\n]*)', _truncate, msg)
 
-    # Pre-generate all messages on the main thread
+    # Pre-generate all messages on the main thread (or use the pasted raw override)
+    override = get_message_override()
     messages = []
-    for _ in range(nb):
-        msg = message_generator()
-        if msg is None:
-            return
-        messages.append(msg)
+    if override:
+        messages = [override for _ in range(nb)]
+    else:
+        for _ in range(nb):
+            msg = message_generator()
+            if msg is None:
+                return
+            messages.append(msg)
 
     # Set MSH-6 (Receiving Facility) to FILE when forwarding to file repository
     if forward_to_file_var.get():
@@ -709,12 +722,16 @@ def send_hl7_http(message_generator=None, cfgitem=""):
             return m.group(0)
         return re.sub(r'(OBX\|[^\|]*\|ED\|[^\r\n]*\^Base64\^)([A-Za-z0-9+/=]+)(\|[^\r\n]*)', _truncate, msg)
 
+    override = get_message_override()
     messages = []
-    for _ in range(nb):
-        msg = message_generator()
-        if msg is None:
-            return
-        messages.append(msg)
+    if override:
+        messages = [override for _ in range(nb)]
+    else:
+        for _ in range(nb):
+            msg = message_generator()
+            if msg is None:
+                return
+            messages.append(msg)
 
     if forward_to_file_var.get():
         messages = [
@@ -917,6 +934,8 @@ canvas.create_text(464, 16, text="InterSystems IRIS for Health  ·  HL7 ORU/ADT 
                    fill=_ACCENT, font=("Avenir", 11, "bold"), anchor="center")
 canvas.create_line(10, 430, 1718, 430, fill="#1a3a5c", width=1)             # divider above HL7 log
 canvas.create_line(10, 675, 1718, 675, fill="#1a3a5c", width=1)             # divider above response
+# Raw message override box (middle column)
+canvas.create_rectangle(785, 36, 1118, 402, outline="#2a4a6c", fill="", width=1)
 # Config panel (right side, under TECHNIDATA image)
 canvas.create_rectangle(1126, 158, 1726, 398, outline="#2a4a6c", fill="", width=1)
 canvas.create_text(1426, 166, text="⚙  SERVER CONFIGURATION", fill=_ACCENT, font=("Avenir", 10, "bold"), anchor="center")
@@ -1052,6 +1071,16 @@ btn_send_http_oru = tk.Button(window, bg="#065f46", fg=_BG, text="", command=sen
 btn_send_http_adt = tk.Button(window, bg="#065f46", fg=_BG, text="", command=send_adt_http_message, font=("Avenir", 13, "bold"), activebackground="#10b981", activeforeground=_BG, cursor="hand2", highlightbackground=_CLR_ADT, highlightthickness=2)
 btn_lang = tk.Button(window, bg=_BG, fg=_BTN_FG, text="🇬🇧", command=switch_language, font=("Avenir", 23), activebackground=_BG, cursor="hand2")
 
+# ── Middle column: raw message override (paste any content to send as-is) ───
+label_message_override = tk.Label(window, bg=_BG, fg=_ACCENT, font=("Avenir", 11, "bold"),
+                                  text="📋 Raw message — paste to override the form")
+entry_message_override = tk.Text(window, height=18, width=44, bg=_INPUT_BG, fg=_INPUT_FG,
+                                 insertbackground=_ACCENT, selectbackground=_ACCENT,
+                                 selectforeground=_BG, font=("Monaco", 10), wrap="none", undo=True)
+btn_clear_override = tk.Button(window, text="✕ clear", font=("Avenir", 10), bg=_BTN_BG, fg=_BTN_FG,
+                               activebackground=_ACCENT, activeforeground=_BG, relief="flat",
+                               cursor="hand2", command=lambda: entry_message_override.delete("1.0", tk.END))
+
 # ── Left column: Patient data ───────────────────────────────────────────────
 label_patient_id.place(x=30, y=42)
 entry_patient_id.place(x=350, y=42, width=180)
@@ -1109,6 +1138,11 @@ label_nb_threads.place(x=1365, y=373)
 entry_nb_threads.place(x=1455, y=371, width=60)
 
 btn_lang.place(x=0, y=0, width=50)
+
+# ── Middle column: raw message override ─────────────────────────────────────
+label_message_override.place(x=790, y=40)
+entry_message_override.place(x=790, y=66, width=320, height=300)
+btn_clear_override.place(x=790, y=372, width=80, height=24)
 
 # Zone de log affichée dans l'interface
 log_text = tk.Text(window, height=14, width=212, bg=_LOG_BG, fg=_LOG_FG,

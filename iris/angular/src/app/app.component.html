@@ -81,6 +81,16 @@
         </div>
       </div><!-- /options-panel -->
 
+      <!-- Raw message override -->
+      <div class="raw-panel">
+        <div class="raw-panel-title">📋&nbsp; {{ t.rawMessage }}</div>
+        <textarea class="raw-input" [(ngModel)]="rawMessage" name="rawMessage"
+                  spellcheck="false" autocomplete="off"
+                  placeholder="MSH|^~\&amp;|..."></textarea>
+        <button type="button" class="btn-clear-raw" (click)="rawMessage = ''"
+                [disabled]="!rawMessage">✕ {{ t.clearRaw }}</button>
+      </div><!-- /raw-panel -->
+
       <!-- Send buttons -->
       <section class="btn-row">
         <button class="btn-send btn-adt" (click)="sendAdt()">{{ t.receiveAdt }}</button>

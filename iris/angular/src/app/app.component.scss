@@ -135,6 +135,60 @@ $panel-border: #2a4a6c;
   gap: 10px;
 }
 
+// ── Raw message override panel ─────────────────────────────────────────────
+.raw-panel {
+  width: 100%;
+  border: 1px solid $panel-border;
+  border-radius: 3px;
+  padding: 4px 16px 12px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.raw-panel-title {
+  color: $accent;
+  font-size: 11px;
+  font-weight: bold;
+  text-align: center;
+  padding: 6px 0;
+  border-bottom: 1px solid $panel-border;
+  letter-spacing: 0.5px;
+}
+
+.raw-input {
+  width: 100%;
+  min-height: 140px;
+  resize: vertical;
+  box-sizing: border-box;
+  background: $input-bg;
+  color: $input-fg;
+  border: 1px solid $panel-border;
+  border-radius: 3px;
+  padding: 8px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre;
+  overflow: auto;
+  &:focus { border-color: $accent; outline: none; }
+  &::placeholder { color: $label-fg; opacity: 0.6; }
+}
+
+.btn-clear-raw {
+  align-self: flex-end;
+  background: $input-bg;
+  color: $input-fg;
+  border: 1px solid $panel-border;
+  border-radius: 3px;
+  padding: 4px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  &:hover:not(:disabled) { border-color: $accent; color: $accent; }
+  &:disabled { opacity: 0.4; cursor: default; }
+}
+
 // ── Config panel ──────────────────────────────────────────────────────────
 .config-panel {
   width: calc(100% - 32px);

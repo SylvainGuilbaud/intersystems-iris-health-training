@@ -43,6 +43,8 @@ interface Translation {
   nbMessages: string;
   receiveAdt: string;
   sendOru: string;
+  rawMessage: string;
+  clearRaw: string;
   serverConfig: string;
   environment: string;
   baseUrl: string;
@@ -78,6 +80,8 @@ const TRANSLATIONS: Record<Lang, Translation> = {
     nbMessages: 'Nb messages',
     receiveAdt: 'Receive ADT HTTP',
     sendOru: 'Send ORU HTTP',
+    rawMessage: 'Raw message — paste to override the form',
+    clearRaw: 'Clear',
     serverConfig: 'SERVER CONFIGURATION',
     environment: 'Environment',
     baseUrl: 'Base URL',
@@ -111,6 +115,8 @@ const TRANSLATIONS: Record<Lang, Translation> = {
     nbMessages: 'Nb messages',
     receiveAdt: 'Recevoir ADT HTTP',
     sendOru: 'Envoyer ORU HTTP',
+    rawMessage: 'Message brut — collez pour ignorer le formulaire',
+    clearRaw: 'Effacer',
     serverConfig: 'CONFIGURATION DU SERVEUR',
     environment: 'Environnement',
     baseUrl: 'URL de base',
@@ -144,6 +150,8 @@ const TRANSLATIONS: Record<Lang, Translation> = {
     nbMessages: 'Nº mensajes',
     receiveAdt: 'Recibir ADT HTTP',
     sendOru: 'Enviar ORU HTTP',
+    rawMessage: 'Mensaje sin procesar — pegar para anular el formulario',
+    clearRaw: 'Borrar',
     serverConfig: 'CONFIGURACIÓN DEL SERVIDOR',
     environment: 'Entorno',
     baseUrl: 'URL base',
@@ -182,6 +190,9 @@ export class AppComponent {
   nbMessages      = 1;
   pdfBase64:  string | null = null;
   pdfFileName = '';
+
+  // Raw message override (paste any content to send as-is, independent of the form)
+  rawMessage = '';
 
   // Server config
   environment  = 'dev-aws';
@@ -395,9 +406,11 @@ export class AppComponent {
     const startTime = Date.now();
     let ok = 0, fail = 0, bytesTotal = 0;
 
-    // Pre-generate all messages
+    // Pre-generate all messages (or use the pasted raw override, sent as-is)
+    const override = (this.rawMessage ?? '').trim();
+    const overrideMsg = override ? override.replace(/\r\n/g, '\n').replace(/\n/g, '\r') : '';
     const messages = Array.from({ length: count }, () =>
-      type === 'ORU' ? generateOruMessage(params) : generateAdtMessage(params)
+      overrideMsg ? overrideMsg : (type === 'ORU' ? generateOruMessage(params) : generateAdtMessage(params))
     );
     bytesTotal = messages.reduce((sum, m) => sum + new Blob([m]).size, 0);
 
