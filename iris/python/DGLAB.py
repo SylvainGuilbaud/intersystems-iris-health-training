@@ -46,7 +46,7 @@ message_control_id = 0
 MAX_RETRIES = 5
 RETRY_DELAY = 3          # seconds between retries
 CONNECT_TIMEOUT = 5      # seconds for connect + recv
-HTTP_INTER_MSG_DELAY = 2.0  # seconds between consecutive HTTP POSTs (avoids 503)
+HTTP_INTER_MSG_DELAY = 0    # seconds between consecutive HTTP POSTs (0 = no throttling)
 
 def generate_random_hl7_message():
     patient_id = entry_patient_id.get()
@@ -959,8 +959,8 @@ _ENV_MAP = {
     "prod-aws":             (DEFAULT_SERVER_IP, "9500",  "iris-health-training-prod", "_system:IRIS4Good/", "80"),
     "dev-local-community":  ("localhost",        "39001", "iris-health-training-dev",  "_system:SYS",        "881"),
     "prod-local-community": ("localhost",        "39501", "iris-health-training-prod", "_system:SYS",        "881"),
-    "dev-local":            ("localhost",        "9001",  "iris-health-training-dev",  "_system:SYS",        "881"),
-    "prod-local":           ("localhost",        "9002",  "iris-health-training-prod", "_system:SYS",        "881"),
+    "dev-local":            ("localhost",        "9001",  "iris-health-training-dev",  "_system:IRIS4Good/", "80"),
+    "prod-local":           ("localhost",        "9002",  "iris-health-training-prod", "_system:IRIS4Good/", "80"),
 }
 _current_http_auth = _ENV_MAP["dev-aws"][3]
 
