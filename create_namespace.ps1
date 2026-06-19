@@ -37,7 +37,7 @@ CreateResource:Name=%DB_${Namespace}_CODE,Description="${Namespace}_CODE databas
 CreateDatabase:Name=${Namespace}_CODE,Directory=/${ISC_DATA_DIRECTORY}/mgr/${Namespace}_CODE,Resource=%DB_${Namespace}_CODE
 CreateNamespace:Name=${Namespace},Globals=${Namespace}_DATA,Routines=${Namespace}_CODE,Interop=1
 CreateRole:Name=${NAMESPACE}_ROLE,Description="Role for ${NAMESPACE} namespace",Resources=%DB_${NAMESPACE}_DATA,%DB_${NAMESPACE}_CODE
-CreateUser:Name=${NAMESPACE},NameSpace=${NAMESPACE},AccountNeverExpires=1,PasswordNeverExpires=1,Roles=%All,${NAMESPACE}_ROLE,PasswordHash=4c458bac977abcc5c5537edca92bd3789eab4c8bc3af70874966c35a0947f0d358591e85f176d2c6d06b7e41ba439cdd91f0b6f42c541f906656852d1e4456a1,b0da7a46afc5af0d44da87452b85e5cefb9fe02aa01706cf501f1a168babaab78fef063c5a577e8228d6fcc0f3961363c9906d39cc689e5a264c447a0fff3692,10000,SHA512
+CreateUser:Name=${NAMESPACE},NameSpace=${NAMESPACE},FullName=TECHNIDATA,AccountNeverExpires=1,PasswordNeverExpires=1,Roles=%All,${NAMESPACE}_ROLE,PasswordHash=4c458bac977abcc5c5537edca92bd3789eab4c8bc3af70874966c35a0947f0d358591e85f176d2c6d06b7e41ba439cdd91f0b6f42c541f906656852d1e4456a1,b0da7a46afc5af0d44da87452b85e5cefb9fe02aa01706cf501f1a168babaab78fef063c5a577e8228d6fcc0f3961363c9906d39cc689e5a264c447a0fff3692,10000,SHA512
 "@ | Set-Content -Encoding UTF8 -NoNewline $CPF_FILE
 
 Write-Host "Generated $CPF_FILE for namespace $Namespace"
