@@ -8,7 +8,7 @@
   <!-- Two-column main layout -->
   <div class="main-layout">
 
-    <!-- LEFT COLUMN: Patient form + options + buttons -->
+    <!-- LEFT COLUMN: Patient form -->
     <div class="left-col">
 
       <!-- Patient form -->
@@ -40,41 +40,45 @@
         <input type="number" [(ngModel)]="sodium" name="sodium" />
       </section>
 
-      <div class="divider"></div>
 
-      <!-- Options row -->
-      <section class="options-row">
+    </div><!-- /left-col -->
+
+    <!-- MIDDLE COLUMN: Options + buttons -->
+    <div class="middle-col">
+      <div class="options-panel">
+        <div class="options-panel-title">⚙&nbsp; OPTIONS</div>
+
         <label class="chk-label">
           <input type="checkbox" [(ngModel)]="includePdf" name="includePdf" />
           Include PDF
         </label>
-        <label *ngIf="includePdf" class="field-inline">
-          PDF file
+
+        <div *ngIf="includePdf" class="pdf-row">
+          <label class="cfg-label">PDF file</label>
           <span class="pdf-pick">
             <input type="file" accept=".pdf,application/pdf" (change)="onPdfFileSelected($event)" class="input-file" />
             <span *ngIf="pdfFileName" class="pdf-name">{{ pdfFileName }}</span>
             <span *ngIf="!pdfBase64 && includePdf" class="pdf-hint">(no file selected)</span>
           </span>
-        </label>
+        </div>
 
         <label class="chk-label">
           <input type="checkbox" [(ngModel)]="forwardToFile" name="forwardToFile" />
           Forward to file repository
         </label>
 
-        <label class="field-inline">
-          Nb messages
-          <input type="number" [(ngModel)]="nbMessages" name="nbMessages" min="1" max="1000" class="input-sm" />
-        </label>
-      </section>
+        <div class="nb-row">
+          <span class="cfg-label">Nb messages</span>
+          <input type="number" [(ngModel)]="nbMessages" name="nbMessages" min="1" max="1000" class="cfg-input-sm" />
+        </div>
+      </div><!-- /options-panel -->
 
       <!-- Send buttons -->
       <section class="btn-row">
         <button class="btn-send btn-adt" (click)="sendAdt()">Receive ADT HTTP</button>
         <button class="btn-send" (click)="sendOru()">Send ORU HTTP</button>
       </section>
-
-    </div><!-- /left-col -->
+    </div><!-- /middle-col -->
 
     <!-- RIGHT COLUMN: TECHNIDATA image + server config panel -->
     <div class="right-col">
