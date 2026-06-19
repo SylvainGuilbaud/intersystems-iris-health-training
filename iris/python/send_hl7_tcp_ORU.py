@@ -523,6 +523,14 @@ def send_hl7_message(message_generator=None, port_getter=None):
             return
         messages.append(msg)
 
+    # Set MSH-6 (Receiving Facility) to FILE when forwarding to file repository
+    if forward_to_file_var.get():
+        messages = [
+            re.sub(r'^(MSH\|[^|]*\|[^|]*\|[^|]*\|[^|]*\|)[^|]*(\|)',
+                   r'\1FILE\2', m, count=1, flags=re.MULTILINE)
+            for m in messages
+        ]
+
     # Log first message preview
     logging.info("%s:\n%s", translations[current_language]["hl7_generated"], truncate_ed_base64(messages[0]))
     append_to_log_console(translations[current_language]["hl7_generated"] + "\n" + truncate_ed_base64(messages[0]))
