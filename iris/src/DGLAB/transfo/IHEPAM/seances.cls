@@ -19,9 +19,6 @@ XData DTL [ XMLNamespace = "http://www.intersystems.com/dtl" ]
 <assign value='..Lookup("Gender",source.{PID:8},source.{PID:8})' property='target.{PID:8}' action='set' >
 <annotation>Gender normalized via the shared Gender table</annotation>
 </assign>
-<assign value='..Lookup("PatientClasses",source.{PV1:2},source.{PV1:2})' property='target.{PV1:2}' action='set' >
-<annotation>Patient class transcoded via the shared PatientClasses table</annotation>
-</assign>
 <if condition='source.{PV1:51}="V"' >
 <annotation>Visit level (session): ignore stay opening, closing and cancellation</annotation>
 <true>

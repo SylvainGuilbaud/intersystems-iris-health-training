@@ -15,7 +15,6 @@ XData DTL [ XMLNamespace = "http://www.intersystems.com/dtl" ]
 <annotation>ORU transmission: title, gender and patient class transcoded via the SAME shared tables as the ADT reception (Titles, Gender, PatientClasses). Demonstrates sharing a transcoding centralized in the IRIS namespace, which cannot be centralized on the DGLab side.</annotation>
 <assign value='..Lookup("Titles",source.{PIDgrpgrp(1).PIDgrp.PID:PatientName.prefix})' property='target.{PIDgrpgrp().PIDgrp.PID:PatientName.prefix}' action='set' />
 <assign value='..Lookup("Gender",source.{PIDgrpgrp(1).PIDgrp.PID:Sex})' property='target.{PIDgrpgrp(1).PIDgrp.PID:Sex}' action='set' />
-<assign value='..Lookup("PatientClasses",source.{PIDgrpgrp().PIDgrp.PV1grp.PV1:PatientClass})' property='target.{PIDgrpgrp().PIDgrp.PV1grp.PV1:PatientClass}' action='set' />
 </transform>
 }
 
