@@ -1,0 +1,16 @@
+{
+  "/iris881": {
+    "target": "http://localhost:881",
+    "pathRewrite": { "^/iris881": "" },
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "info"
+  },
+  "/iris80": {
+    "target": "http://localhost:80",
+    "pathRewrite": { "^/iris80": "" },
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "info"
+  }
+}
