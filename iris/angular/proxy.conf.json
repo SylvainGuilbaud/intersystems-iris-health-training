@@ -12,5 +12,12 @@
     "secure": false,
     "changeOrigin": true,
     "logLevel": "info"
+  },
+  "/irisaws": {
+    "target": "http://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com",
+    "pathRewrite": { "^/irisaws": "" },
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "info"
   }
 }
