@@ -14,7 +14,9 @@
     </div>
 
     <label>First Name</label>
-    <input [(ngModel)]="firstName" name="firstName" />
+    <select [(ngModel)]="firstName" name="firstName" (ngModelChange)="onFirstNameChange()">
+      <option *ngFor="let n of firstNameOpts" [value]="n">{{ n }}</option>
+    </select>
 
     <label>Last Name</label>
     <input [(ngModel)]="lastName" name="lastName" />

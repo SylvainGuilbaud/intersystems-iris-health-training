@@ -76,8 +76,18 @@ export class AppComponent {
     this.password        = e.password;
   }
 
+  private static readonly MALE_NAMES   = new Set(['Danmark','Marck-Augustus','Carl-Jamie','Francois','Neil','Adrian','Philippe','Jean-Michel','Olivier','Michael','Frederic','Ronald','Jean','Nicolas','Pierre']);
+  private static readonly FEMALE_NAMES = new Set(['Delphine','Rochelle','Sophie','Anne','Marie']);
+
+  readonly firstNameOpts = ['Anne','Delphine','Danmark','Marck-Augustus','Carl-Jamie','Francois','Rochelle','Neil','Adrian','Philippe','Jean-Michel','Olivier','Michael','Sophie','Frederic','Ronald'];
+
+  onFirstNameChange(): void {
+    if (AppComponent.MALE_NAMES.has(this.firstName))        this.gender = 'M';
+    else if (AppComponent.FEMALE_NAMES.has(this.firstName)) this.gender = 'F';
+  }
+
   randomize(): void {
-    const fnames = ['Anne', 'Jean', 'Marie', 'Pierre', 'Sophie', 'Nicolas', 'Delphine', 'Olivier'];
+    const fnames = this.firstNameOpts;
     const lnames = ['DUPONT', 'MARTIN', 'BERNARD', 'THOMAS', 'PETIT', 'NOVIANT', 'GARDET', 'CRUZ'];
     this.patientId = Math.random().toString().slice(2, 10);
     this.firstName = fnames[Math.floor(Math.random() * fnames.length)];
@@ -87,7 +97,7 @@ export class AppComponent {
     const m = String(1 + Math.floor(Math.random() * 12)).padStart(2, '0');
     const d = String(1 + Math.floor(Math.random() * 28)).padStart(2, '0');
     this.dob = `${y}-${m}-${d}`;
-    this.gender = Math.random() > 0.5 ? 'M' : 'F';
+    this.onFirstNameChange();
   }
 
   sendOru(): void { this.doSend('ORU', this.oruCfgItem); }

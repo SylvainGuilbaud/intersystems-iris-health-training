@@ -149,9 +149,12 @@ logging.basicConfig(
 def generate_random_patient_id():
     return ''.join(random.choices(string.digits, k=8))
 
+_MALE_NAMES   = {"Danmark", "Marck-Augustus", "Carl-Jamie", "Francois", "Neil", "Adrian", "Philippe", "Jean-Michel", "Olivier", "Michael", "Frederic", "Ronald"}
+_FEMALE_NAMES = {"Delphine", "Rochelle", "Sophie", "Anne"}
+
 def generate_random_first_name():
     # renvoyer des prénoms internationaux parmi une liste de 500
-    first_names = ["Delphine", "Danmark", "Marck-Augustus", "Carl-Jamie", "Francois", "Rochelle", "Neil", "Adrian", "Philippe", "Jean-Michel", "Olivier", "Michael", "Sophie", "Frederic"]
+    first_names = ["Delphine", "Danmark", "Marck-Augustus", "Carl-Jamie", "Francois", "Rochelle", "Neil", "Adrian", "Philippe", "Jean-Michel", "Olivier", "Michael", "Sophie", "Frederic", "Ronald"]
     return random.choice(first_names)
 
 def generate_random_last_name():
@@ -168,14 +171,20 @@ def on_generate_data():
     new_patient_id = generate_random_patient_id()
     entry_patient_id.delete(0, tk.END)
     entry_patient_id.insert(0, new_patient_id)
-    entry_first_name.delete(0, tk.END)
-    entry_first_name.insert(0, generate_random_first_name())
+    first_name = generate_random_first_name()
+    entry_first_name.set(first_name)
     entry_last_name.delete(0, tk.END)
     entry_last_name.insert(0, generate_random_last_name())
     entry_dob.delete(0, tk.END)
     entry_dob.insert(0, generate_random_dob())
     entry_gender.delete(0, tk.END)
-    entry_gender.set(gender_options_dict[current_language][random.randint(0, 1)]) 
+    if first_name in _MALE_NAMES:
+        gender_label = gender_options_dict[current_language][0]  # homme/male/hombre
+    elif first_name in _FEMALE_NAMES:
+        gender_label = gender_options_dict[current_language][1]  # femme/female/mujer
+    else:
+        gender_label = gender_options_dict[current_language][random.randint(0, 1)]
+    entry_gender.set(gender_label) 
 
     sodium = random.randint(135, 145)
     entry_sodium.delete(0, tk.END)
@@ -914,8 +923,17 @@ entry_patient_id.insert(0, "24445670")
 btn_generate_data = tk.Button(window, text="🎲", font=("Avenir", 13), bg=_BTN_BG, fg=_BTN_FG, activebackground=_ACCENT, activeforeground=_BG, relief="flat", cursor="hand2", command=on_generate_data)
 
 label_first_name = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23))
-entry_first_name = tk.Entry(window, bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT, selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 23))
-entry_first_name.insert(0, "Anne")
+_FIRST_NAMES = ["Anne", "Delphine", "Danmark", "Marck-Augustus", "Carl-Jamie", "Francois", "Rochelle", "Neil", "Adrian", "Philippe", "Jean-Michel", "Olivier", "Michael", "Sophie", "Frederic", "Ronald"]
+entry_first_name = ttk.Combobox(window, font=("Avenir", 23), values=_FIRST_NAMES)
+entry_first_name.set("Anne")
+
+def _on_first_name_selected(event):
+    fn = entry_first_name.get()
+    if fn in _MALE_NAMES:
+        gender_var.set(gender_options_dict[current_language][0])
+    elif fn in _FEMALE_NAMES:
+        gender_var.set(gender_options_dict[current_language][1])
+entry_first_name.bind("<<ComboboxSelected>>", _on_first_name_selected)
 
 label_last_name = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23))
 entry_last_name = tk.Entry(window, bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT, selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 23))
@@ -1030,7 +1048,7 @@ entry_patient_id.place(x=550, y=50, width=200)
 btn_generate_data.place(x=745, y=50, height=43)
 
 label_first_name.place(x=50, y=100)
-entry_first_name.place(x=550, y=100, width=200)
+entry_first_name.place(x=550, y=100, width=250)
 
 label_last_name.place(x=50, y=150)
 entry_last_name.place(x=550, y=150, width=200)
