@@ -43,6 +43,19 @@ $panel-border: #2a4a6c;
     color: $label-fg;
     font-size: 11px;
   }
+
+  .lang-btn {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid #2a4a6c;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover { border-color: $accent; }
+  }
 }
 
 // ── Two-column main layout ────────────────────────────────────────────────

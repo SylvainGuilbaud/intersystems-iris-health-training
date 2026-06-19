@@ -1,8 +1,8 @@
 <div class="app">
   <!-- Header -->
   <header class="header">
-    <span class="header-title">IRIS HEALTH &nbsp;·&nbsp; HL7 HTTP TEST TOOL</span>
-    <span class="header-sub">EnsLib.HL7.Service.HTTPService</span>
+    <span class="header-title">IRIS HEALTH &nbsp;·&nbsp; {{ t.headerTitle }}</span>
+    <button class="lang-btn" (click)="cycleLang()" [title]="lang">{{ langFlags[lang] }}</button>
   </header>
 
   <!-- Two-column main layout -->
@@ -13,30 +13,30 @@
 
       <!-- Patient form -->
       <section class="form-grid">
-        <label>Patient ID</label>
+        <label>{{ t.patientId }}</label>
         <div class="input-row">
           <input [(ngModel)]="patientId" name="patientId" />
-          <button class="btn-icon" (click)="randomize()" title="Randomize">🎲</button>
+          <button class="btn-icon" (click)="randomize()" [title]="t.randomize">🎲</button>
         </div>
 
-        <label>First Name</label>
+        <label>{{ t.firstName }}</label>
         <input list="firstNameList" [(ngModel)]="firstName" name="firstName" (ngModelChange)="onFirstNameChange()" />
         <datalist id="firstNameList">
           <option *ngFor="let n of firstNameOpts" [value]="n">{{ n }}</option>
         </datalist>
 
-        <label>Last Name</label>
+        <label>{{ t.lastName }}</label>
         <input [(ngModel)]="lastName" name="lastName" />
 
-        <label>Date of Birth</label>
+        <label>{{ t.dob }}</label>
         <input type="date" [(ngModel)]="dob" name="dob" />
 
-        <label>Gender</label>
+        <label>{{ t.gender }}</label>
         <select [(ngModel)]="gender" name="gender">
           <option *ngFor="let g of genderOpts" [value]="g.value">{{ g.label }}</option>
         </select>
 
-        <label>Sodium (mmol/L)</label>
+        <label>{{ t.sodium }}</label>
         <input type="number" [(ngModel)]="sodium" name="sodium" />
       </section>
 
@@ -46,37 +46,40 @@
     <!-- MIDDLE COLUMN: Options + buttons -->
     <div class="middle-col">
       <div class="options-panel">
-        <div class="options-panel-title">⚙&nbsp; OPTIONS</div>
+        <div class="options-panel-title">⚙&nbsp; {{ t.options }}</div>
 
         <label class="chk-label">
           <input type="checkbox" [(ngModel)]="includePdf" name="includePdf" />
-          Include PDF
+          {{ t.includePdf }}
         </label>
 
         <div *ngIf="includePdf" class="pdf-row">
-          <label class="cfg-label">PDF file</label>
+          <label class="cfg-label">{{ t.pdfFile }}</label>
           <span class="pdf-pick">
             <input type="file" accept=".pdf,application/pdf" (change)="onPdfFileSelected($event)" class="input-file" />
             <span *ngIf="pdfFileName" class="pdf-name">{{ pdfFileName }}</span>
-            <span *ngIf="!pdfBase64 && includePdf" class="pdf-hint">(no file selected)</span>
+            <span *ngIf="!pdfBase64 && includePdf" class="pdf-hint">{{ t.noFile }}</span>
           </span>
         </div>
 
         <label class="chk-label">
           <input type="checkbox" [(ngModel)]="forwardToFile" name="forwardToFile" />
-          Forward to file repository
+          {{ t.forwardToFile }}
         </label>
 
         <div class="nb-row">
-          <span class="cfg-label">Nb messages</span>
-          <input type="number" [(ngModel)]="nbMessages" name="nbMessages" min="1" max="1000" class="cfg-input-sm" />
+          <span class="cfg-label">{{ t.nbMessages }}</span>
+          <input type="text" inputmode="numeric" list="nbMessagesList" [(ngModel)]="nbMessages" name="nbMessages" class="cfg-input-sm" />
+          <datalist id="nbMessagesList">
+            <option *ngFor="let n of nbMessagesOpts" [value]="n">{{ n }}</option>
+          </datalist>
         </div>
       </div><!-- /options-panel -->
 
       <!-- Send buttons -->
       <section class="btn-row">
-        <button class="btn-send btn-adt" (click)="sendAdt()">Receive ADT HTTP</button>
-        <button class="btn-send" (click)="sendOru()">Send ORU HTTP</button>
+        <button class="btn-send btn-adt" (click)="sendAdt()">{{ t.receiveAdt }}</button>
+        <button class="btn-send" (click)="sendOru()">{{ t.sendOru }}</button>
       </section>
     </div><!-- /middle-col -->
 
@@ -86,34 +89,34 @@
 
       <!-- Server config panel -->
       <div class="config-panel">
-        <div class="config-panel-title">⚙&nbsp; SERVER CONFIGURATION</div>
+        <div class="config-panel-title">⚙&nbsp; {{ t.serverConfig }}</div>
 
         <div class="config-row">
-          <span class="cfg-label">Environment</span>
+          <span class="cfg-label">{{ t.environment }}</span>
           <select [(ngModel)]="environment" name="environment" (ngModelChange)="onEnvChange()" class="cfg-select-sm">
             <option *ngFor="let k of envKeys" [value]="k">{{ k }}</option>
           </select>
         </div>
 
         <div class="config-row">
-          <span class="cfg-label">Base URL</span>
+          <span class="cfg-label">{{ t.baseUrl }}</span>
           <input [(ngModel)]="baseUrl" name="baseUrl" class="cfg-input-full" readonly />
         </div>
 
         <div class="config-row">
-          <span class="cfg-label">ADT Cfg</span>
+          <span class="cfg-label">{{ t.adtCfg }}</span>
           <input [(ngModel)]="adtCfgItem" name="adtCfgItem" class="cfg-input-full" placeholder="service name" />
         </div>
 
         <div class="config-row">
-          <span class="cfg-label">ORU Cfg</span>
+          <span class="cfg-label">{{ t.oruCfg }}</span>
           <input [(ngModel)]="oruCfgItem" name="oruCfgItem" class="cfg-input-full" placeholder="service name" />
         </div>
 
         <div class="config-row">
-          <span class="cfg-label">Username</span>
+          <span class="cfg-label">{{ t.username }}</span>
           <input [(ngModel)]="username" name="username" class="cfg-input-sm" />
-          <span class="cfg-label cfg-label-pw">Password</span>
+          <span class="cfg-label cfg-label-pw">{{ t.password }}</span>
           <input type="password" [(ngModel)]="password" name="password" class="cfg-input-sm" />
         </div>
 
@@ -131,7 +134,7 @@
 
   <!-- HL7 log -->
   <section class="log-section">
-    <div class="log-label">HL7 message generated</div>
+    <div class="log-label">{{ t.hl7Generated }}</div>
     <div class="log-box hl7-log">
       <div *ngFor="let e of hl7Log" class="log-entry hl7-entry">
         <span class="log-ts">{{ e.timestamp }}</span>
@@ -144,7 +147,7 @@
 
   <!-- Response log -->
   <section class="log-section">
-    <div class="log-label">Responses</div>
+    <div class="log-label">{{ t.responses }}</div>
     <div class="log-box resp-log">
       <div *ngFor="let e of responseLog" class="log-entry" [ngClass]="e.type">
         <span class="log-ts">{{ e.timestamp }}</span>

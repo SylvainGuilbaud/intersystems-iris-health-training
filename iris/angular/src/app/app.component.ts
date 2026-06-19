@@ -21,6 +21,145 @@ const ENV_MAP: Record<string, { baseUrl: string; oruCfgItem: string; adtCfgItem:
   'prod-local':           { baseUrl: '/iris80/iris-health-training-prod/csp/healthshare/dglab',  oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/' },
 };
 
+type Lang = 'en' | 'fr' | 'es';
+
+interface Translation {
+  headerTitle: string;
+  patientId: string;
+  firstName: string;
+  lastName: string;
+  dob: string;
+  gender: string;
+  sodium: string;
+  genderMale: string;
+  genderFemale: string;
+  genderOther: string;
+  randomize: string;
+  options: string;
+  includePdf: string;
+  pdfFile: string;
+  noFile: string;
+  forwardToFile: string;
+  nbMessages: string;
+  receiveAdt: string;
+  sendOru: string;
+  serverConfig: string;
+  environment: string;
+  baseUrl: string;
+  adtCfg: string;
+  oruCfg: string;
+  username: string;
+  password: string;
+  hl7Generated: string;
+  responses: string;
+  sending: string;
+  failed: string;
+  total: string;
+}
+
+const TRANSLATIONS: Record<Lang, Translation> = {
+  en: {
+    headerTitle: 'HL7 HTTP TEST TOOL',
+    patientId: 'Patient ID',
+    firstName: 'First Name',
+    lastName: 'Last Name',
+    dob: 'Date of Birth',
+    gender: 'Gender',
+    sodium: 'Sodium (mmol/L)',
+    genderMale: 'Male',
+    genderFemale: 'Female',
+    genderOther: 'Other',
+    randomize: 'Randomize',
+    options: 'OPTIONS',
+    includePdf: 'Include PDF',
+    pdfFile: 'PDF file',
+    noFile: '(no file selected)',
+    forwardToFile: 'Forward to file repository',
+    nbMessages: 'Nb messages',
+    receiveAdt: 'Receive ADT HTTP',
+    sendOru: 'Send ORU HTTP',
+    serverConfig: 'SERVER CONFIGURATION',
+    environment: 'Environment',
+    baseUrl: 'Base URL',
+    adtCfg: 'ADT Cfg',
+    oruCfg: 'ORU Cfg',
+    username: 'Username',
+    password: 'Password',
+    hl7Generated: 'HL7 message generated',
+    responses: 'Responses',
+    sending: 'Sending',
+    failed: 'failed',
+    total: 'total',
+  },
+  fr: {
+    headerTitle: 'OUTIL DE TEST HL7 HTTP',
+    patientId: 'Identifiant du patient',
+    firstName: 'Prénom',
+    lastName: 'Nom',
+    dob: 'Date de naissance',
+    gender: 'Sexe',
+    sodium: 'Sodium (mmol/L)',
+    genderMale: 'Homme',
+    genderFemale: 'Femme',
+    genderOther: 'Autre',
+    randomize: 'Aléatoire',
+    options: 'OPTIONS',
+    includePdf: 'Inclure un PDF',
+    pdfFile: 'Fichier PDF',
+    noFile: '(aucun fichier sélectionné)',
+    forwardToFile: 'Transférer vers le répertoire de fichiers',
+    nbMessages: 'Nb messages',
+    receiveAdt: 'Recevoir ADT HTTP',
+    sendOru: 'Envoyer ORU HTTP',
+    serverConfig: 'CONFIGURATION DU SERVEUR',
+    environment: 'Environnement',
+    baseUrl: 'URL de base',
+    adtCfg: 'Cfg ADT',
+    oruCfg: 'Cfg ORU',
+    username: 'Utilisateur',
+    password: 'Mot de passe',
+    hl7Generated: 'Message HL7 généré',
+    responses: 'Réponses',
+    sending: 'Envoi',
+    failed: 'échoué(s)',
+    total: 'au total',
+  },
+  es: {
+    headerTitle: 'HERRAMIENTA DE PRUEBA HL7 HTTP',
+    patientId: 'Identificador del paciente',
+    firstName: 'Nombre',
+    lastName: 'Apellido',
+    dob: 'Fecha de nacimiento',
+    gender: 'Género',
+    sodium: 'Sodio (mmol/L)',
+    genderMale: 'Hombre',
+    genderFemale: 'Mujer',
+    genderOther: 'Otro',
+    randomize: 'Aleatorio',
+    options: 'OPCIONES',
+    includePdf: 'Incluir PDF',
+    pdfFile: 'Archivo PDF',
+    noFile: '(ningún archivo seleccionado)',
+    forwardToFile: 'Reenviar al repositorio de archivos',
+    nbMessages: 'Nº mensajes',
+    receiveAdt: 'Recibir ADT HTTP',
+    sendOru: 'Enviar ORU HTTP',
+    serverConfig: 'CONFIGURACIÓN DEL SERVIDOR',
+    environment: 'Entorno',
+    baseUrl: 'URL base',
+    adtCfg: 'Cfg ADT',
+    oruCfg: 'Cfg ORU',
+    username: 'Usuario',
+    password: 'Contraseña',
+    hl7Generated: 'Mensaje HL7 generado',
+    responses: 'Respuestas',
+    sending: 'Enviando',
+    failed: 'fallido(s)',
+    total: 'en total',
+  },
+};
+
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -59,12 +198,28 @@ export class AppComponent {
 
   sending = false;
 
-  readonly envKeys    = Object.keys(ENV_MAP);
-  readonly genderOpts = [
-    { value: 'M', label: 'Male / Homme' },
-    { value: 'F', label: 'Female / Femme' },
-    { value: 'X', label: 'Other / Autre' },
-  ];
+  // i18n — runtime language switch (EN / FR / ES)
+  lang: Lang = 'en';
+  readonly langFlags: Record<Lang, string> = { en: '🇬🇧', fr: '🇫🇷', es: '🇪🇸' };
+
+  get t(): Translation {
+    return TRANSLATIONS[this.lang];
+  }
+
+  cycleLang(): void {
+    const order: Lang[] = ['en', 'fr', 'es'];
+    this.lang = order[(order.indexOf(this.lang) + 1) % order.length];
+  }
+
+  readonly envKeys = Object.keys(ENV_MAP);
+
+  get genderOpts(): { value: string; label: string }[] {
+    return [
+      { value: 'M', label: this.t.genderMale },
+      { value: 'F', label: this.t.genderFemale },
+      { value: 'X', label: this.t.genderOther },
+    ];
+  }
 
   constructor(private hl7: Hl7Service) {}
 
@@ -82,6 +237,8 @@ export class AppComponent {
   private static readonly FEMALE_NAMES = new Set(['Delphine','Rochelle','Sophie','Anne','Marie']);
 
   readonly firstNameOpts = ['Anne','Delphine','Danmark','Marck-Augustus','Carl-Jamie','Francois','Rochelle','Neil','Adrian','Philippe','Jean-Michel','Olivier','Michael','Sophie','Frederic','Ronald'];
+
+  readonly nbMessagesOpts = [1, 5, 10, 20, 50, 100, 200, 500, 1000];
 
   onFirstNameChange(): void {
     if (AppComponent.MALE_NAMES.has(this.firstName))        this.gender = 'M';
@@ -216,7 +373,7 @@ export class AppComponent {
   private static readonly CONCURRENCY = 6;
 
   private doSend(type: 'ORU' | 'ADT', cfgItem: string): void {
-    const count = Math.max(1, Math.min(this.nbMessages, 1000));
+    const count = Math.max(1, Math.min(Math.floor(Number(this.nbMessages)) || 1, 1000));
     const params = this.params();
     const startTime = Date.now();
     let ok = 0, fail = 0, bytesTotal = 0;
@@ -233,7 +390,7 @@ export class AppComponent {
 
     this.addResponse(`▶ ${type} → ${this.baseUrl}?CfgItem=${cfgItem}`, 'info');
     if (count > 1) {
-      this.setProgress(`⏳ Sending 0 / ${count}...`);
+      this.setProgress(`⏳ ${this.t.sending} 0 / ${count}...`);
     }
 
     from(messages).pipe(
@@ -254,7 +411,7 @@ export class AppComponent {
           const suffix = ` — ${AppComponent.fmtBytes(bytesTotal)} — ${elapsed}s`;
           this.addResponse(resp + suffix, isError ? 'error' : 'success');
         } else {
-          this.setProgress(`⏳ Sending ${done} / ${count}${fail > 0 ? ' (' + fail + ' failed)' : ''}...`);
+          this.setProgress(`⏳ ${this.t.sending} ${done} / ${count}${fail > 0 ? ' (' + fail + ' ' + this.t.failed + ')' : ''}...`);
         }
       },
       complete: () => {
@@ -262,10 +419,10 @@ export class AppComponent {
           const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
           const rate    = (ok / parseFloat(elapsed)).toFixed(1);
           const prefix  = fail === 0 ? '✅' : '❌';
-          const failPart = fail > 0 ? ` ${fail} failed —` : '';
+          const failPart = fail > 0 ? ` ${fail} ${this.t.failed} —` : '';
           this.clearProgress();
           this.addResponse(
-            `${prefix} ${ok}/${count} OK,${failPart} ${elapsed}s (${rate} msg/s) — ${AppComponent.fmtBytes(bytesTotal)} total`,
+            `${prefix} ${ok}/${count} OK,${failPart} ${elapsed}s (${rate} msg/s) — ${AppComponent.fmtBytes(bytesTotal)} ${this.t.total}`,
             fail === 0 ? 'success' : 'error',
           );
         }
