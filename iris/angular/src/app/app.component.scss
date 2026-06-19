@@ -147,18 +147,27 @@ label {
   font-style: italic;
 }
 
-.input-wide  { width: 320px; }
-.input-sm    { width: 120px; }
-.input-url     { width: 580px; }
-.input-cfgitem { width: 280px; }
+.input-wide    { width: 320px; }
+.input-sm      { width: 120px; }
+
+// Higher specificity to override .field-inline input { width: auto }
+.field-inline .input-url     { width: 620px; }
+.field-inline .input-cfgitem { width: 380px; }
 
 // ── Server row ────────────────────────────────────────────────────────────
 .server-row {
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 24px;
+}
+
+.server-row-top,
+.server-row-bottom {
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 16px 24px;
-  padding: 10px 24px;
 }
 
 // ── Buttons ───────────────────────────────────────────────────────────────

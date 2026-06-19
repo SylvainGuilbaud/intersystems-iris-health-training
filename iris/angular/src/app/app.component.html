@@ -61,37 +61,41 @@
 
   <!-- Server / env row -->
   <section class="server-row">
-    <label class="field-inline">
-      Environment
-      <select [(ngModel)]="environment" name="environment" (ngModelChange)="onEnvChange()">
-        <option *ngFor="let k of envKeys" [value]="k">{{ k }}</option>
-      </select>
-    </label>
+    <div class="server-row-top">
+      <label class="field-inline">
+        Environment
+        <select [(ngModel)]="environment" name="environment" (ngModelChange)="onEnvChange()">
+          <option *ngFor="let k of envKeys" [value]="k">{{ k }}</option>
+        </select>
+      </label>
 
-    <label class="field-inline">
-      Base URL
-      <input [(ngModel)]="baseUrl" name="baseUrl" class="input-url" />
-    </label>
+      <label class="field-inline">
+        Base URL
+        <input [(ngModel)]="baseUrl" name="baseUrl" class="input-url" />
+      </label>
 
-    <label class="field-inline">
-      ORU CfgItem
-      <input [(ngModel)]="oruCfgItem" name="oruCfgItem" class="input-cfgitem" placeholder="service name" />
-    </label>
+      <label class="field-inline">
+        ORU CfgItem
+        <input [(ngModel)]="oruCfgItem" name="oruCfgItem" class="input-cfgitem" placeholder="service name" />
+      </label>
 
-    <label class="field-inline">
-      ADT CfgItem
-      <input [(ngModel)]="adtCfgItem" name="adtCfgItem" class="input-cfgitem" placeholder="service name" />
-    </label>
+      <label class="field-inline">
+        ADT CfgItem
+        <input [(ngModel)]="adtCfgItem" name="adtCfgItem" class="input-cfgitem" placeholder="service name" />
+      </label>
+    </div>
 
-    <label class="field-inline">
-      Username
-      <input [(ngModel)]="username" name="username" class="input-sm" />
-    </label>
+    <div class="server-row-bottom">
+      <label class="field-inline">
+        Username
+        <input [(ngModel)]="username" name="username" class="input-sm" />
+      </label>
 
-    <label class="field-inline">
-      Password
-      <input type="password" [(ngModel)]="password" name="password" class="input-sm" />
-    </label>
+      <label class="field-inline">
+        Password
+        <input type="password" [(ngModel)]="password" name="password" class="input-sm" />
+      </label>
+    </div>
   </section>
 
   <!-- Send buttons -->
