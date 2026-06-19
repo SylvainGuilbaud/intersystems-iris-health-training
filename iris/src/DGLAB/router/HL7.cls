@@ -42,7 +42,7 @@ XData RuleDefinition [ XMLNamespace = "http://www.intersystems.com/rule" ]
 <constraint name="docCategory" value=""></constraint>
 <constraint name="docName" value=""></constraint>
 <when condition="(Source Contains &quot;IHE PAM&quot;)&amp;&amp;(HL7.{MSH:9.1}=&quot;ADT&quot;)" comment="">
-<send transform="" target="forward Patient Information to DGLAB - MLLP"></send>
+<send transform="DGLAB.transfo.IHEPAM.seances" target="forward Patient Information to DGLAB - MLLP"></send>
 <trace value="&quot;Forward IHE PAM ADT to DGLAB MLLP&quot;"></trace>
 </when>
 <when condition="((Source Contains &quot;FILE&quot;)=0)&amp;&amp;(HL7.{MSH:9.1}=&quot;ADT&quot;)" comment="">
