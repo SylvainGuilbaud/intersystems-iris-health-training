@@ -12,9 +12,18 @@ Parameter TREATEMPTYREPEATINGFIELDASNULL = 0;
 XData DTL [ XMLNamespace = "http://www.intersystems.com/dtl" ]
 {
 <transform sourceClass='EnsLib.HL7.Message' targetClass='EnsLib.HL7.Message' sourceDocType='HL7v25IHE:ADT_AXX' targetDocType='HL7v25IHE:ADT_AXX' create='copy' language='objectscript' >
-<annotation>traitement des séjours à séances : si PV1-51=V (visite) on ignore les dates d&#39;admission/sortie (PV1-44/45) et donc l&#39;ouverture/fermeture/annulation de séjour ; si PV1-51=A (compte) le message est traité normalement (copie)</annotation>
+<annotation>Session-stay handling: if PV1-51=V (visit) the admission/discharge dates (PV1-44/45) are ignored, hence the stay opening/closing/cancellation is ignored; if PV1-51=A (account) the message is handled normally (copy). Title, gender and patient class are transcoded via the shared tables (Titles, Gender, PatientClasses).</annotation>
+<assign value='..Lookup("Titles",source.{PID:5.5},source.{PID:5.5})' property='target.{PID:5.5}' action='set' >
+<annotation>Title (PID-5.5) normalized via the SHARED Titles table (common to ADT/ORU)</annotation>
+</assign>
+<assign value='..Lookup("Gender",source.{PID:8},source.{PID:8})' property='target.{PID:8}' action='set' >
+<annotation>Gender normalized via the shared Gender table</annotation>
+</assign>
+<assign value='..Lookup("PatientClasses",source.{PV1:2},source.{PV1:2})' property='target.{PV1:2}' action='set' >
+<annotation>Patient class transcoded via the shared PatientClasses table</annotation>
+</assign>
 <if condition='source.{PV1:51}="V"' >
-<annotation>Niveau visite (séance) : ignorer ouverture, fermeture et annulation de séjour</annotation>
+<annotation>Visit level (session): ignore stay opening, closing and cancellation</annotation>
 <true>
 <assign value='""' property='target.{PV1:44}' action='set' >
 <annotation>Ignore PV1-44 Admission Date/Time</annotation>

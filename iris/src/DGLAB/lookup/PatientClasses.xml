@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="IRIS" version="26">
+<Document name="PatientClasses.LUT">
+<lookupTable>
+<!-- Shared transcoding table: patient class (PV1-2).
+     Key = HL7 code received; value = normalized label/code.
+     Reused by both the ADT reception and the ORU transmission. -->
+<entry table="PatientClasses" key="I">Inpatient</entry>
+<entry table="PatientClasses" key="O">Outpatient</entry>
+<entry table="PatientClasses" key="E">Emergency</entry>
+<entry table="PatientClasses" key="R">Recurring</entry>
+<entry table="PatientClasses" key="P">Preadmit</entry>
+<entry table="PatientClasses" key="B">Obstetrics</entry>
+<entry table="PatientClasses" key="N">Not-applicable</entry>
+</lookupTable>
+</Document>
+</Export>

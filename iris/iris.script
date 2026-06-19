@@ -18,4 +18,9 @@
     set sc = $SYSTEM.OBJ.Import("/home/irisowner/dev/src","ck")
     do ##class(EnsLib.HL7.SchemaXML).Import("/home/irisowner/dev/src/HL7v2/HL7v25IHE.HL7")
 
+    #; Shared transcoding lookup tables reused by both ADT and ORU
+    do $SYSTEM.OBJ.Load("/home/irisowner/dev/src/DGLAB/lookup/Titles.xml","ck")
+    do $SYSTEM.OBJ.Load("/home/irisowner/dev/src/DGLAB/lookup/PatientClasses.xml","ck")
+    do $SYSTEM.OBJ.Load("/home/irisowner/dev/src/DGLAB/lookup/Gender.xml","ck")
+
     halt

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="IRIS" version="26">
+<Document name="Gender.LUT">
+<lookupTable>
+<!-- Shared transcoding table: administrative gender (PID-8).
+     Key = source code; value = normalized HL7 code (M/F/U).
+     Reused by both the ADT reception and the ORU transmission. -->
+<entry table="Gender" key="M">M</entry>
+<entry table="Gender" key="F">F</entry>
+<entry table="Gender" key="U">U</entry>
+<entry table="Gender" key="1">M</entry>
+<entry table="Gender" key="2">F</entry>
+<entry table="Gender" key="9">U</entry>
+<entry table="Gender" key="H">M</entry>
+</lookupTable>
+</Document>
+</Export>

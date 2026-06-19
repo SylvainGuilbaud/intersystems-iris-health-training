@@ -15,11 +15,11 @@ XData RuleDefinition [ XMLNamespace = "http://www.intersystems.com/rule" ]
 <when condition="1" comment="">
 <foreach propertypath="HL7.{PIDgrpgrp().ORCgrp().OBXgrp().OBX}">
 <when condition="(Segment.{ObservationIdentifier.identifier}=&quot;PDFREPORT&quot;)&amp;&amp;(Segment.{ValueType}=&quot;ED&quot;)" comment="">
-<send transform="" target="to EMR - FILE"></send>
+<send transform="DGLAB.transfo.ORU.transcodage" target="to EMR - FILE"></send>
 <trace value="&quot;Encapsulted Data&quot;"></trace>
 </when>
 <when condition="(Segment.{ObservationIdentifier.identifier}=&quot;PDFREPORT&quot;)&amp;&amp;(Segment.{ValueType}=&quot;RP&quot;)" comment="">
-<send transform="" target="to EMR - FILE"></send>
+<send transform="DGLAB.transfo.ORU.transcodage" target="to EMR - FILE"></send>
 <trace value="&quot;Reference Pointer&quot;"></trace>
 </when>
 <otherwise>
@@ -33,7 +33,7 @@ XData RuleDefinition [ XMLNamespace = "http://www.intersystems.com/rule" ]
 <constraint name="docCategory" value="2.3"></constraint>
 <constraint name="docName" value="ORU_R01"></constraint>
 <when condition="((Source Contains &quot;FILE&quot;)=0)&amp;&amp;(HL7.{MSH:ReceivingFacility.namespaceID}=&quot;FILE&quot;)" comment="">
-<send transform="" target="forward to LAB RESULT from DGLAB - FILE"></send>
+<send transform="DGLAB.transfo.ORU.transcodage" target="forward to LAB RESULT from DGLAB - FILE"></send>
 <trace value="&quot;Forward to LAB RESULT from DGLAB - FILE&quot;"></trace>
 </when>
 </rule>

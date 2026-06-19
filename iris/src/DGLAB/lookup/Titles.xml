@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="IRIS" version="26">
+<Document name="Titles.LUT">
+<lookupTable>
+<!-- Shared transcoding table: title / salutation (Mr., Mrs., Dr...)
+     Centralized in the IRIS namespace and therefore reusable by both
+     the ADT reception (DGLAB.transfo.IHEPAM.seances)
+     and the ORU transmission (DGLAB.transfo.ORU.transcodage).
+     Key = title code RECEIVED in the name prefix (PID-5.5, XPN-5);
+     value = normalized title written back to PID-5.5. -->
+<entry table="Titles" key="M">Mr.</entry>
+<entry table="Titles" key="MR">Mr.</entry>
+<entry table="Titles" key="MISTER">Mr.</entry>
+<entry table="Titles" key="MONSIEUR">Mr.</entry>
+<entry table="Titles" key="MME">Mrs.</entry>
+<entry table="Titles" key="MRS">Mrs.</entry>
+<entry table="Titles" key="MADAME">Mrs.</entry>
+<entry table="Titles" key="MLLE">Miss</entry>
+<entry table="Titles" key="MISS">Miss</entry>
+<entry table="Titles" key="MADEMOISELLE">Miss</entry>
+<entry table="Titles" key="DR">Dr</entry>
+<entry table="Titles" key="DOCTOR">Dr</entry>
+<entry table="Titles" key="DOCTEUR">Dr</entry>
+<entry table="Titles" key="PR">Prof.</entry>
+<entry table="Titles" key="PROF">Prof.</entry>
+<entry table="Titles" key="PROFESSOR">Prof.</entry>
+<entry table="Titles" key="1">Mr.</entry>
+<entry table="Titles" key="2">Mrs.</entry>
+<entry table="Titles" key="3">Miss</entry>
+</lookupTable>
+</Document>
+</Export>
