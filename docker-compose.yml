@@ -51,15 +51,14 @@ services:
       - ISC_DATA_DIRECTORY=/${ISC_DATA_DIRECTORY}
       - ISC_CPF_MERGE_FILE=/merge.cpf
  
-  webgateway: # Used for VS Code ObjectScript extension to connect to /api/atelier and for IRIS Administration Portal and Web Services
+  webgateway: # Used for VS Code ObjectScript extension to connect to /api/atelier and for IRIS Administration Portal
     image: containers.intersystems.com/intersystems/webgateway:latest-em
     container_name: ${IRIS_INSTANCE_NAME}-webgateway
     depends_on:
       - iris-dev
       - iris-prod
-    ports:
-      - ${WEBGATEWAY_PORT_HTTP}:80
-      - ${WEBGATEWAY_PORT_HTTPS}:443
+    expose:
+      - "80"
     restart: unless-stopped
     environment:
     - ISC_CSP_CONF_FILE=/webgateway/CSP.conf
@@ -68,6 +67,26 @@ services:
     - type: bind
       source: ./webgateway
       target: /webgateway
+    networks:
+      - default
+
+  nginx: # Serves the Angular app on /app/ and proxies everything else to the webgateway
+    image: nginx:alpine
+    container_name: ${IRIS_INSTANCE_NAME}-nginx
+    depends_on:
+      - webgateway
+    ports:
+      - ${WEBGATEWAY_PORT_HTTP}:80
+    volumes:
+    - type: bind
+      source: ./nginx/nginx.conf
+      target: /etc/nginx/conf.d/default.conf
+      read_only: true
+    - type: bind
+      source: ./iris/angular/dist/hl7-client/browser
+      target: /usr/share/nginx/html/app
+      read_only: true
+    restart: unless-stopped
     networks:
       - default
  

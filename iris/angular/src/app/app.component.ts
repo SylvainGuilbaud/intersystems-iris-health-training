@@ -13,6 +13,10 @@ interface LogEntry {
 }
 
 const ENV_MAP: Record<string, { baseUrl: string; oruCfgItem: string; adtCfgItem: string; username: string; password: string }> = {
+  // Cloud (served from the AWS webgateway — direct paths, no ng-serve proxy prefix)
+  'cloud-dev':            { baseUrl: '/iris-health-training-dev/csp/healthshare/dglab',          oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/' },
+  'cloud-prod':           { baseUrl: '/iris-health-training-prod/csp/healthshare/dglab',         oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/' },
+  // Local development (ng serve with proxy — prefixes resolved by proxy.conf.json)
   'dev-aws':              { baseUrl: '/irisaws/iris-health-training-dev/csp/healthshare/dglab',  oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/' },
   'prod-aws':             { baseUrl: '/irisaws/iris-health-training-prod/csp/healthshare/dglab', oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/' },
   'dev-local-community':  { baseUrl: '/iris881/iris-health-training-dev/csp/healthshare/dglab',  oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'SYS'        },
@@ -195,12 +199,12 @@ export class AppComponent {
   rawMessage = '';
 
   // Server config
-  environment  = 'dev-aws';
-  baseUrl      = ENV_MAP['dev-aws'].baseUrl;
-  oruCfgItem   = ENV_MAP['dev-aws'].oruCfgItem;
-  adtCfgItem   = ENV_MAP['dev-aws'].adtCfgItem;
-  username     = ENV_MAP['dev-aws'].username;
-  password     = ENV_MAP['dev-aws'].password;
+  environment  = 'cloud-dev';
+  baseUrl      = ENV_MAP['cloud-dev'].baseUrl;
+  oruCfgItem   = ENV_MAP['cloud-dev'].oruCfgItem;
+  adtCfgItem   = ENV_MAP['cloud-dev'].adtCfgItem;
+  username     = ENV_MAP['cloud-dev'].username;
+  password     = ENV_MAP['cloud-dev'].password;
 
   // Logs
   hl7Log:      LogEntry[] = [];
