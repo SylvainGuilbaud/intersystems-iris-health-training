@@ -68,8 +68,8 @@ _login_http_auth = None
 
 # Login page target choices: 4 local instances + 2 cloud instances
 _LOGIN_TARGETS = [
-    "dev-local-community",
-    "prod-local-community",
+    "dev-community",
+    "prod-community",
     "dev-local",
     "prod-local",
     "dev-aws",
@@ -552,8 +552,8 @@ def get_http_base_url():
 _IRIS_SUPERSERVER_PORT_MAP = {
     "dev-aws": 1973,
     "prod-aws": 1972,
-    "dev-local-community": 1975,
-    "prod-local-community": 1974,
+    "dev-community": 1975,
+    "prod-community": 1974,
     "dev-local": 1975,
     "prod-local": 1974,
 }
@@ -649,9 +649,11 @@ def send_hl7_message(message_generator=None, port_getter=None):
     nb = get_nb_messages()
     nb_threads = get_nb_threads()
     active_env = entry_environment.get().strip() or "unknown"
+    target_mllp = f"TARGET=[{active_env} {server_ip}:{server_port}]"
 
     msg_type = "ADT" if message_generator is generate_adt_message else "ORU"
     append_to_response_console(f"▶ [{active_env}] {msg_type} → {server_ip}:{server_port}")
+    logging.info("%s SEND_START %s MLLP", target_mllp, msg_type)
 
     # Truncate Base64 content in OBX|ED segments for display/logging only
     def truncate_ed_base64(msg, max_chars=200):
@@ -683,7 +685,7 @@ def send_hl7_message(message_generator=None, port_getter=None):
         ]
 
     # Log first message preview
-    logging.info("%s:\n%s", translations[current_language]["hl7_generated"], truncate_ed_base64(messages[0]))
+    logging.info("%s %s:\n%s", target_mllp, translations[current_language]["hl7_generated"], truncate_ed_base64(messages[0]))
     append_to_log_console(translations[current_language]["hl7_generated"] + "\n" + truncate_ed_base64(messages[0]))
     if nb > 1:
         threads_info = f"{nb_threads} thread(s)"
@@ -726,13 +728,13 @@ def send_hl7_message(message_generator=None, port_getter=None):
                             n_sent = sent_count[0]
                         if nb == 1:
                             msg_size = len(hl7_wrapped)
-                            logging.info("%s:\n%s", translations[current_language]["response_received"], response_clean.replace("\r", "\n"))
+                            logging.info("%s %s:\n%s", target_mllp, translations[current_language]["response_received"], response_clean.replace("\r", "\n"))
                             window.after(0, lambda rc=response_clean, sz=msg_size: append_to_response_console(
                                 translations[current_language]["response_received"] + "\n" + rc.replace("\r", "\n") + f"\n[{_fmt_bytes(sz)} {translations[current_language]['bytes_sent']}]"))
                         else:
                             msg_size = len(hl7_wrapped)
                             elapsed = time.time() - start_time
-                            status = f"[{n_sent}/{nb}] OK ({elapsed:.1f}s) - {_fmt_bytes(msg_size)} - {response_clean[:60].strip()}"
+                            status = f"[{n_sent}/{nb}] {target_mllp} OK ({elapsed:.1f}s) - {_fmt_bytes(msg_size)} - {response_clean[:60].strip()}"
                             logging.info(status)
                             window.after(0, lambda m=status: append_to_response_console(m))
                         break  # success
@@ -746,7 +748,7 @@ def send_hl7_message(message_generator=None, port_getter=None):
                             sent_count[0] += 1
                             n_sent = sent_count[0]
                         elapsed = time.time() - start_time
-                        err = f"[{n_sent}/{nb}] [{active_env}] FAILED: {e}"
+                        err = f"[{n_sent}/{nb}] {target_mllp} FAILED: {e}"
                         logging.error(err)
                         window.after(0, lambda m=err: append_to_response_console(m))
                         if "timed out" in str(e).lower():
@@ -807,10 +809,13 @@ def send_hl7_http(message_generator=None, cfgitem=""):
     if cfgitem:
         csp_path += f"?CfgItem={urllib.parse.quote(cfgitem)}"
     url = csp_path
+    display_url = urllib.parse.unquote(url)
+    target_http = f"TARGET=[{active_env} {display_url}]"
     auth_header = "Basic " + base64.b64encode(credentials.encode()).decode()
 
     msg_type = "ADT" if message_generator is generate_adt_message else "ORU"
     append_to_response_console(f"▶ [{active_env}] {msg_type} HTTP → {url}")
+    logging.info("%s SEND_START %s HTTP", target_http, msg_type)
 
     def truncate_ed_base64(msg, max_chars=200):
         def _truncate(m):
@@ -838,7 +843,7 @@ def send_hl7_http(message_generator=None, cfgitem=""):
             for m in messages
         ]
 
-    logging.info("%s:\n%s", translations[current_language]["hl7_generated"], truncate_ed_base64(messages[0]))
+    logging.info("%s %s:\n%s", target_http, translations[current_language]["hl7_generated"], truncate_ed_base64(messages[0]))
     append_to_log_console(translations[current_language]["hl7_generated"] + "\n" + truncate_ed_base64(messages[0]))
     if nb > 1:
         threads_info = f"{nb_threads} thread(s)"
@@ -868,7 +873,6 @@ def send_hl7_http(message_generator=None, cfgitem=""):
             )
             for attempt in range(1, MAX_RETRIES + 1):
                 try:
-                    display_url = urllib.parse.unquote(url)
                     pending = f"⏳ [{active_env}] HTTP POST → {display_url}" if attempt == 1 else f"⏳ [{active_env}] HTTP POST → {display_url} (attempt {attempt}/{MAX_RETRIES})"
                     window.after(0, lambda m=pending: append_to_response_console(m))
                     with urllib.request.urlopen(req, timeout=CONNECT_TIMEOUT) as resp:
@@ -881,12 +885,12 @@ def send_hl7_http(message_generator=None, cfgitem=""):
                             n_sent = sent_count[0]
                         if nb == 1:
                             msg_size = len(hl7_cr)
-                            logging.info("%s:\n%s", translations[current_language]["response_received"], body_clean)
+                            logging.info("%s %s:\n%s", target_http, translations[current_language]["response_received"], body_clean)
                             window.after(0, lambda rc=body_clean, sz=msg_size: append_to_response_console(
                                 translations[current_language]["response_received"] + "\n" + rc.replace("\r", "\n") + f"\n[{_fmt_bytes(sz)} {translations[current_language]['bytes_sent']}]"))
                         else:
                             elapsed = time.time() - start_time
-                            status = f"[{n_sent}/{nb}] OK HTTP ({elapsed:.1f}s) - {_fmt_bytes(len(hl7_cr))} - {body_clean[:60].strip()}"
+                            status = f"[{n_sent}/{nb}] {target_http} HTTP OK ({elapsed:.1f}s) - {_fmt_bytes(len(hl7_cr))} - {body_clean[:60].strip()}"
                             logging.info(status)
                             window.after(0, lambda m=status: append_to_response_console(m))
                         break  # success
@@ -900,7 +904,7 @@ def send_hl7_http(message_generator=None, cfgitem=""):
                         fail_count[0] += 1
                         sent_count[0] += 1
                         n_sent = sent_count[0]
-                    err = f"[{n_sent}/{nb}] [{active_env}] HTTP {e.code}: {body[:120]}"
+                    err = f"[{n_sent}/{nb}] {target_http} HTTP {e.code}: {body[:120]}"
                     logging.error(err)
                     window.after(0, lambda m=err: append_to_response_console(m))
                     break
@@ -913,7 +917,7 @@ def send_hl7_http(message_generator=None, cfgitem=""):
                         sent_count[0] += 1
                         n_sent = sent_count[0]
                     elapsed = time.time() - start_time
-                    err = f"[{n_sent}/{nb}] [{active_env}] FAILED HTTP: {e}"
+                    err = f"[{n_sent}/{nb}] {target_http} FAILED HTTP: {e}"
                     logging.error(err)
                     window.after(0, lambda m=err: append_to_response_console(m))
                     break
@@ -1102,8 +1106,8 @@ entry_nb_threads.set("1")
 _ENV_MAP = {
     "dev-aws":              (DEFAULT_SERVER_IP, "9001",  "iris-health-training-dev",  "testuser:IRIS", "80"),
     "prod-aws":             (DEFAULT_SERVER_IP, "9500",  "iris-health-training-prod", "testuser:IRIS", "80"),
-    "dev-local-community":  ("localhost",        "39001", "iris-health-training-dev",  "testuser:IRIS",        "881"),
-    "prod-local-community": ("localhost",        "39501", "iris-health-training-prod", "testuser:IRIS",        "881"),
+    "dev-community":  ("localhost",        "39001", "iris-health-training-dev",  "testuser:IRIS",        "881"),
+    "prod-community": ("localhost",        "39501", "iris-health-training-prod", "testuser:IRIS",        "881"),
     "dev-local":            ("localhost",        "9001",  "iris-health-training-dev",  "testuser:IRIS", "80"),
     "prod-local":           ("localhost",        "9002",  "iris-health-training-prod", "testuser:IRIS", "80"),
 }

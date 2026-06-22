@@ -43,7 +43,7 @@
             },
             "username": "superuser"
         },
-        "iris-health-training-dev-local-community": {
+        "iris-health-training-dev-community": {
              "webServer": {
                 "scheme": "http",
                 "host": "localhost",
@@ -53,7 +53,7 @@
             },
             "username": "superuser"
         },
-        "iris-health-training-prod-local-community": {
+        "iris-health-training-prod-community": {
              "webServer": {
                 "scheme": "http",
                 "host": "localhost",

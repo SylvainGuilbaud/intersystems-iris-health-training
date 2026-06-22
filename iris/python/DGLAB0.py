@@ -1004,8 +1004,8 @@ entry_nb_threads.set("1")
 _ENV_MAP = {
     "dev-aws":              (DEFAULT_SERVER_IP, "9001",  "iris-health-training-dev",  "testuser:IRIS", "80"),
     "prod-aws":             (DEFAULT_SERVER_IP, "9500",  "iris-health-training-prod", "testuser:IRIS", "80"),
-    "dev-local-community":  ("localhost",        "39001", "iris-health-training-dev",  "_system:SYS",        "881"),
-    "prod-local-community": ("localhost",        "39501", "iris-health-training-prod", "_system:SYS",        "881"),
+    "dev-community":  ("localhost",        "39001", "iris-health-training-dev",  "_system:SYS",        "881"),
+    "prod-community": ("localhost",        "39501", "iris-health-training-prod", "_system:SYS",        "881"),
     "dev-local":            ("localhost",        "9001",  "iris-health-training-dev",  "testuser:IRIS", "80"),
     "prod-local":           ("localhost",        "9002",  "iris-health-training-prod", "testuser:IRIS", "80"),
 }
