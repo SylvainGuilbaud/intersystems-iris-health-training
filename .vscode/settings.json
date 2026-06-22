@@ -1,6 +1,6 @@
 {
     "objectscript.conn": {
-        "active": false,
+        "active": true,
         "server": "iris-health-training-dev-local",
         "ns": "DGLAB"
     },
