@@ -17,21 +17,6 @@ import urllib.request
 import urllib.error
 import urllib.parse
 import base64
-import iris.dbapi
-
-def check_iris_login(host, port, namespace, username, password) -> bool:
-    try:
-        conn = iris.dbapi.connect(
-            hostname=host,
-            port=port,              # superserver port, ex: 1972 / 51773
-            namespace=namespace,
-            username=username,
-            password=password,
-        )
-        conn.close()
-        return True
-    except Exception:
-        return False
 
 # ── Modern dark theme palette ─────────────────────────────────────────────────
 _BG        = "#0b0b25"   # window / canvas background – matches IS_logo.jpg
@@ -62,20 +47,6 @@ MAX_RETRIES = 5
 RETRY_DELAY = 3          # seconds between retries
 CONNECT_TIMEOUT = 5      # seconds for connect + recv
 HTTP_INTER_MSG_DELAY = 0    # seconds between consecutive HTTP POSTs (0 = no throttling)
-
-# IRIS authentication state (login gate)
-_is_logged_in = False
-_login_http_auth = None
-
-# Login page target choices: 4 local instances + 2 cloud instances
-_LOGIN_TARGETS = [
-    "dev-local-community",
-    "prod-local-community",
-    "dev-local",
-    "prod-local",
-    "dev-aws",
-    "prod-aws",
-]
 
 def generate_random_hl7_message():
     patient_id = entry_patient_id.get()
@@ -535,51 +506,7 @@ def get_http_port():
     return p if p else "80"
 
 def get_http_credentials():
-    return _login_http_auth or _current_http_auth or "_system:SYS"
-
-_IRIS_SUPERSERVER_PORT_MAP = {
-    "dev-aws": 1973,
-    "prod-aws": 1972,
-    "dev-local-community": 1975,
-    "prod-local-community": 1974,
-    "dev-local": 1975,
-    "prod-local": 1974,
-}
-
-def _resolve_iris_login_target(target_env=None):
-    env = target_env if target_env in _ENV_MAP else entry_environment.get()
-    if env not in _ENV_MAP:
-        return None, None, None
-
-    host, _mllp_port, namespace, _auth, _http_port = _ENV_MAP[env]
-    port = _IRIS_SUPERSERVER_PORT_MAP.get(env, 1972)
-    return host, port, namespace
-
-def _build_http_service_url(target_env=None):
-    if target_env and target_env in _ENV_MAP:
-        server_ip, _port, _namespace, _auth, http_port = _ENV_MAP[target_env]
-    else:
-        server_ip = get_server_ip()
-        http_port = get_http_port()
-    host_part = f"{server_ip}:{http_port}" if http_port not in ("80", "443", "") else server_ip
-    return f"http://{host_part}/csp/healthshare/dglab"
-
-def _validate_iris_credentials(username, password, target_env=None):
-    """Validate credentials with a real IRIS login over superserver."""
-    host, port, namespace = _resolve_iris_login_target(target_env)
-    if not host or not port or not namespace:
-        return False, "Invalid target IRIS instance"
-
-    ok = check_iris_login(
-        host=host,
-        port=port,
-        namespace=namespace,
-        username=username,
-        password=password,
-    )
-    if ok:
-        return True, ""
-    return False, f"Invalid IRIS credentials or connection refused ({host}:{port}/{namespace})"
+    return _current_http_auth or "_system:SYS"
 
 def get_http_oru_cfgitem():
     return entry_http_oru_cfgitem.get().strip()
@@ -610,21 +537,9 @@ def get_nb_threads():
     except ValueError:
         return 1
 
-def ensure_authenticated():
-    if _is_logged_in:
-        return True
-    try:
-        append_to_response_console("ERROR: Please login first with a valid IRIS user/password.")
-    except Exception:
-        pass
-    messagebox.showwarning("", "Please login first with a valid IRIS user/password.")
-    return False
-
 def send_hl7_message(message_generator=None, port_getter=None):
     if message_generator is None:
         message_generator = generate_random_hl7_message
-    if not ensure_authenticated():
-        return
     log_text.configure(state="normal")
     log_text.delete("1.0", tk.END)
     log_text.configure(state="disabled")
@@ -775,8 +690,6 @@ def send_adt_message():
 def send_hl7_http(message_generator=None, cfgitem=""):
     if message_generator is None:
         message_generator = generate_random_hl7_message
-    if not ensure_authenticated():
-        return
     log_text.configure(state="normal")
     log_text.delete("1.0", tk.END)
     log_text.configure(state="disabled")
@@ -1034,7 +947,7 @@ entry = tk.Entry(window, font=("Avenir", 23))
 label_patient_id = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23), text=translations[current_language]["patient_id"])
 entry_patient_id = tk.Entry(window, bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT, selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 23))
 entry_patient_id.insert(0, "24445670")
-btn_generate_data = tk.Button(window, text="🎲", font=("Avenir", 13), bg=_BTN_BG, fg=_BG, activebackground=_ACCENT, activeforeground=_BG, relief="flat", cursor="hand2", command=on_generate_data)
+btn_generate_data = tk.Button(window, text="🎲", font=("Avenir", 13), bg=_BTN_BG, fg=_BTN_FG, activebackground=_ACCENT, activeforeground=_BG, relief="flat", cursor="hand2", command=on_generate_data)
 
 label_first_name = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23))
 _FIRST_NAMES = ["Anne", "Delphine", "Danmark", "Marck-Augustus", "Carl-Jamie", "Francois", "Rochelle", "Neil", "Adrian", "Philippe", "Jean-Michel", "Olivier", "Michael", "Sophie", "Frederic", "Ronald"]
@@ -1091,8 +1004,8 @@ entry_nb_threads.set("1")
 _ENV_MAP = {
     "dev-aws":              (DEFAULT_SERVER_IP, "9001",  "iris-health-training-dev",  "testuser:IRIS", "80"),
     "prod-aws":             (DEFAULT_SERVER_IP, "9500",  "iris-health-training-prod", "testuser:IRIS", "80"),
-    "dev-local-community":  ("localhost",        "39001", "iris-health-training-dev",  "testuser:IRIS",        "881"),
-    "prod-local-community": ("localhost",        "39501", "iris-health-training-prod", "testuser:IRIS",        "881"),
+    "dev-local-community":  ("localhost",        "39001", "iris-health-training-dev",  "_system:SYS",        "881"),
+    "prod-local-community": ("localhost",        "39501", "iris-health-training-prod", "_system:SYS",        "881"),
     "dev-local":            ("localhost",        "9001",  "iris-health-training-dev",  "testuser:IRIS", "80"),
     "prod-local":           ("localhost",        "9002",  "iris-health-training-prod", "testuser:IRIS", "80"),
 }
@@ -1147,102 +1060,16 @@ def _on_env_selected(event):
         new_dest = re.sub(r'^/(dev|prod)/', f'/{tier}/', entry_file_dest.get())
         entry_file_dest.set(new_dest)
 
-def _on_login_gate_submit(event=None):
-    global _is_logged_in, _login_http_auth
-    user = entry_gate_user.get().strip()
-    pwd = entry_gate_password.get()
-    target_env = login_target_var.get().strip()
-    if target_env not in _ENV_MAP:
-        _is_logged_in = False
-        _login_http_auth = None
-        label_gate_status.config(text="Please select a target IRIS instance", fg="#f87171")
-        return
-
-    if not user or not pwd:
-        _is_logged_in = False
-        label_gate_status.config(text="Please enter user and password", fg="#f87171")
-        return
-
-    label_gate_status.config(text="Checking credentials...", fg="#facc15")
-    window.update_idletasks()
-    ok, err = _validate_iris_credentials(user, pwd, target_env=target_env)
-    if ok:
-        _is_logged_in = True
-        _login_http_auth = f"{user}:{pwd}"
-        entry_environment.set(target_env)
-        _on_env_selected(None)
-        login_gate_frame.destroy()
-        append_to_response_console(f"Authenticated in IRIS as {user} on {target_env}")
-        return
-
-    _is_logged_in = False
-    _login_http_auth = None
-    label_gate_status.config(text=err or "Invalid credentials", fg="#f87171")
-
-def _logout_to_login():
-    global _is_logged_in, _login_http_auth
-    _is_logged_in = False
-    _login_http_auth = None
-    try:
-        login_gate_frame.destroy()
-    except Exception:
-        pass
-    _show_login_gate()
-    append_to_response_console("Logged out. Please sign in again.")
-
-def _show_login_gate():
-    global login_gate_frame, entry_gate_user, entry_gate_password, label_gate_status, login_target_var
-
-    login_gate_frame = tk.Frame(window, bg=_BG)
-    login_gate_frame.place(x=0, y=0, relwidth=1, relheight=1)
-
-    card = tk.Frame(login_gate_frame, bg=_INPUT_BG, highlightbackground="#2a4a6c", highlightthickness=1)
-    card.place(relx=0.5, rely=0.5, anchor="center", width=560, height=420)
-
-    tk.Label(card, text="Login", bg=_INPUT_BG, fg=_ACCENT, font=("Avenir", 22, "bold")).place(x=24, y=18)
-    tk.Label(card, text="Authenticate with an existing IRIS user.", bg=_INPUT_BG, fg=_LABEL_FG, font=("Avenir", 11)).place(x=24, y=58)
-
-    tk.Label(card, text="Target IRIS instance", bg=_INPUT_BG, fg=_LABEL_FG, font=("Avenir", 13)).place(x=24, y=92)
-    login_target_var = tk.StringVar(value=entry_environment.get() if entry_environment.get() in _LOGIN_TARGETS else _LOGIN_TARGETS[0])
-    entry_gate_target = ttk.Combobox(card, textvariable=login_target_var, state="readonly", font=("Avenir", 13),
-                                     values=_LOGIN_TARGETS)
-    entry_gate_target.place(x=24, y=118, width=510, height=34)
-
-    tk.Label(card, text="Login", bg=_INPUT_BG, fg=_LABEL_FG, font=("Avenir", 13)).place(x=24, y=162)
-    entry_gate_user = tk.Entry(card, bg="#d5dde8", fg=_BG, insertbackground=_BG, font=("Avenir", 16))
-    entry_gate_user.place(x=24, y=188, width=510, height=40)
-
-    tk.Label(card, text="Password", bg=_INPUT_BG, fg=_LABEL_FG, font=("Avenir", 13)).place(x=24, y=238)
-    entry_gate_password = tk.Entry(card, show="*", bg="#d5dde8", fg=_BG, insertbackground=_BG, font=("Avenir", 16))
-    entry_gate_password.place(x=24, y=264, width=510, height=40)
-
-    btn_gate_login = tk.Button(card, text="Sign in", font=("Avenir", 14, "bold"), bg=_BTN_BG, fg=_BG,
-                               activebackground=_ACCENT, activeforeground=_BG, relief="flat", cursor="hand2",
-                               command=_on_login_gate_submit)
-    btn_gate_login.place(x=24, y=314, width=510, height=38)
-
-    tk.Label(card, text="Credentials are checked against the selected IRIS instance", bg=_INPUT_BG, fg="#d5dde8",
-             font=("Avenir", 11, "bold"), anchor="w", justify="left").place(x=24, y=362, width=510)
-    label_gate_status = tk.Label(card, text="", bg=_INPUT_BG, fg="#f87171", font=("Avenir", 10))
-    label_gate_status.place(x=24, y=384, width=510)
-
-    entry_gate_user.bind("<Return>", _on_login_gate_submit)
-    entry_gate_password.bind("<Return>", _on_login_gate_submit)
-    entry_gate_user.focus_set()
-
 entry_environment.bind("<<ComboboxSelected>>", _on_env_selected)
 
 _CLR_ORU = "#4ade80"   # green border  – ORU
 _CLR_ADT = "#f472b6"   # pink border   – ADT
 
-btn_send = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_oru_message, font=("Avenir", 13, "bold"), activebackground=_ACCENT, activeforeground=_BG, disabledforeground=_BG, cursor="hand2", highlightbackground=_CLR_ORU, highlightthickness=2)
-btn_send_adt = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_adt_message, font=("Avenir", 13, "bold"), activebackground=_ACCENT, activeforeground=_BG, disabledforeground=_BG, cursor="hand2", highlightbackground=_CLR_ADT, highlightthickness=2)
-btn_send_http_oru = tk.Button(window, bg="#065f46", fg=_BG, text="", command=send_oru_http_message, font=("Avenir", 13, "bold"), activebackground="#10b981", activeforeground=_BG, disabledforeground=_BG, cursor="hand2", highlightbackground=_CLR_ORU, highlightthickness=2)
-btn_send_http_adt = tk.Button(window, bg="#065f46", fg=_BG, text="", command=send_adt_http_message, font=("Avenir", 13, "bold"), activebackground="#10b981", activeforeground=_BG, disabledforeground=_BG, cursor="hand2", highlightbackground=_CLR_ADT, highlightthickness=2)
+btn_send = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_oru_message, font=("Avenir", 13, "bold"), activebackground=_ACCENT, activeforeground=_BG, cursor="hand2", highlightbackground=_CLR_ORU, highlightthickness=2)
+btn_send_adt = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_adt_message, font=("Avenir", 13, "bold"), activebackground=_ACCENT, activeforeground=_BG, cursor="hand2", highlightbackground=_CLR_ADT, highlightthickness=2)
+btn_send_http_oru = tk.Button(window, bg="#065f46", fg=_BG, text="", command=send_oru_http_message, font=("Avenir", 13, "bold"), activebackground="#10b981", activeforeground=_BG, cursor="hand2", highlightbackground=_CLR_ORU, highlightthickness=2)
+btn_send_http_adt = tk.Button(window, bg="#065f46", fg=_BG, text="", command=send_adt_http_message, font=("Avenir", 13, "bold"), activebackground="#10b981", activeforeground=_BG, cursor="hand2", highlightbackground=_CLR_ADT, highlightthickness=2)
 btn_lang = tk.Button(window, bg=_BG, fg=_BTN_FG, text="🇬🇧", command=switch_language, font=("Avenir", 23), activebackground=_BG, cursor="hand2")
-btn_logout = tk.Button(window, text="Logout", font=("Avenir", 10, "bold"), bg=_BTN_BG, fg=_BG,
-                       activebackground=_ACCENT, activeforeground=_BG, relief="flat", cursor="hand2",
-                       command=_logout_to_login)
 
 # ── Middle column: raw message override (paste any content to send as-is) ───
 label_message_override = tk.Label(window, bg=_BG, fg=_ACCENT, font=("Avenir", 11, "bold"),
@@ -1250,7 +1077,7 @@ label_message_override = tk.Label(window, bg=_BG, fg=_ACCENT, font=("Avenir", 11
 entry_message_override = tk.Text(window, height=18, width=44, bg=_INPUT_BG, fg=_INPUT_FG,
                                  insertbackground=_ACCENT, selectbackground=_ACCENT,
                                  selectforeground=_BG, font=("Monaco", 10), wrap="none", undo=True)
-btn_clear_override = tk.Button(window, text="✕ clear", font=("Avenir", 10), bg=_BTN_BG, fg=_BG,
+btn_clear_override = tk.Button(window, text="✕ clear", font=("Avenir", 10), bg=_BTN_BG, fg=_BTN_FG,
                                activebackground=_ACCENT, activeforeground=_BG, relief="flat",
                                cursor="hand2", command=lambda: entry_message_override.delete("1.0", tk.END))
 
@@ -1311,7 +1138,6 @@ label_nb_threads.place(x=1365, y=373)
 entry_nb_threads.place(x=1455, y=371, width=60)
 
 btn_lang.place(x=0, y=0, width=50)
-btn_logout.place(x=56, y=4, width=78, height=24)
 
 # ── Middle column: raw message override ─────────────────────────────────────
 label_message_override.place(x=790, y=40)
@@ -1356,5 +1182,4 @@ log_response.place(x=20, y=685)
 # highlight_lines_with("OBX")
 
 update_labels()
-_show_login_gate()
 window.mainloop()

@@ -17,9 +17,9 @@ run_test "Sending ${NB_MESSAGES} HL7 message(s) to remote server" \
 run_test "Sending ${NB_MESSAGES} HL7 message(s) with embedded PDF to remote server" \
     --nb-messages "${NB_MESSAGES}" --nb-threads 20 --include-pdf
 
-run_test "Sending ${NB_MESSAGES} HL7 message(s) to localhost:39001" \
-    --server-ip localhost --server-port 39001 --nb-messages "${NB_MESSAGES}" --nb-threads 20
+run_test "Sending ${NB_MESSAGES} HL7 message(s) to localhost:9001" \
+    --server-ip localhost --server-port 9001 --nb-messages "${NB_MESSAGES}" --nb-threads 20
 
-run_test "Sending ${NB_MESSAGES} HL7 message(s) with embedded PDF to localhost:39001" \
-    --server-ip localhost --server-port 39001 --nb-messages "${NB_MESSAGES}" --nb-threads 20 --include-pdf
+run_test "Sending ${NB_MESSAGES} HL7 message(s) with embedded PDF to localhost:9001" \
+    --server-ip localhost --server-port 9001 --nb-messages "${NB_MESSAGES}" --nb-threads 20 --include-pdf
 
