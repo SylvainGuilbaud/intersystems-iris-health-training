@@ -111,34 +111,96 @@ Initialization script [iris/iris.script](iris/iris.script) imports and compiles 
 
 ### Local (Community Edition)
 
+**Linux/macOS:**
 ```bash
 ./start-community.sh
 ```
 
+**Windows (PowerShell):**
+```powershell
+.\start-community.ps1
+```
+
 Stop:
 
+**Linux/macOS:**
 ```bash
 ./stop-community.sh
 ```
 
+**Windows (PowerShell):**
+```powershell
+.\stop-community.ps1
+```
+
 ### Full Stack (non-local profile)
 
+**Linux/macOS:**
 ```bash
 ./start.sh
 ```
 
+**Windows (PowerShell):**
+```powershell
+.\start.ps1
+```
+
 Stop:
 
+**Linux/macOS:**
 ```bash
 ./stop.sh
 ```
 
-## Angular Test App
+**Windows (PowerShell):**
+```powershell
+.\stop.ps1
+```
+
+## Test Clients
+
+### DGLAB Desktop Client (Python/Tkinter)
+
+Run the Python desktop client locally:
+
+**Linux/macOS:**
+```bash
+./launch_client_app.sh
+```
+
+**Windows (PowerShell):**
+```powershell
+.\launch_client_app.ps1
+```
+
+### Angular Web Client
 
 Run the Angular app locally with proxy config:
 
+**Linux/macOS:**
 ```bash
-./launch_app.sh
+./launch_web_app.sh
+```
+
+**Windows (PowerShell):**
+```powershell
+.\launch_web_app.ps1
+```
+
+## Utility Scripts
+
+### Set Volume Permissions
+
+Set correct permissions on persistent Docker volumes:
+
+**Linux/macOS:**
+```bash
+./create_volumes_with_permissions.sh [instance_name]
+```
+
+**Windows (PowerShell):**
+```powershell
+.\create_volumes_with_permissions.ps1 [instance_name]
 ```
 
 ## Cloud Deployment Helpers
