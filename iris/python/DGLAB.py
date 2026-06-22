@@ -72,8 +72,8 @@ _LOGIN_TARGETS = [
     "prod-community",
     "dev-local",
     "prod-local",
-    "dev-aws",
-    "prod-aws",
+    "dev",
+    "prod",
 ]
 
 def generate_random_hl7_message():
@@ -239,6 +239,8 @@ def highlight_log_keywords():
 
     keywords = {
         "Erreur": "error",
+        "HTTP_ERROR": "error",
+        "FAILED HTTP": "error",
         "ACK": "ack",
         "Message HL7 généré": "message"
     }
@@ -374,17 +376,19 @@ def append_to_response_console(text):
     while int(log_response.index("end").split(".")[0]) - 1 > 200:
         log_response.delete("1.0", "2.0")
     log_response.see(tk.END)
-    # Highlight ACK only in the newly inserted lines
+    # Highlight ACK and errors only in the newly inserted lines
     n_new = text.count("\n") + 1
     end_line = int(log_response.index("end").split(".")[0]) - 1
     start = f"{max(1, end_line - n_new)}.0"
-    while True:
-        pos = log_response.search("ACK", start, stopindex=tk.END)
-        if not pos:
-            break
-        line_end = f"{pos} lineend"
-        log_response.tag_add("ack", pos, line_end)
-        start = line_end
+    for keyword, tag in (("ACK", "ack"), ("ERROR", "error"), ("HTTP_ERROR", "error"), ("FAILED", "error"), ("Erreur", "error")):
+        cursor = start
+        while True:
+            pos = log_response.search(keyword, cursor, stopindex=tk.END)
+            if not pos:
+                break
+            line_end = f"{pos} lineend"
+            log_response.tag_add(tag, pos, line_end)
+            cursor = line_end
     log_response.configure(state="disabled")
 
 def _fmt_bytes(n):
@@ -539,9 +543,19 @@ def get_http_port():
 def get_http_credentials():
     return _login_http_auth or _current_http_auth or "_system:SYS"
 
-def _compose_http_base_url(server_ip, http_port, namespace):
+def _get_http_instance_for_env(env=None):
+    target_env = env if env in _ENV_MAP else entry_environment.get()
+    if target_env in _ENV_MAP:
+        # ENV_MAP third element stores the IRIS instance path used by webgateway
+        return _ENV_MAP[target_env][2]
+    return ""
+
+def _compose_http_base_url(server_ip, http_port, namespace, instance_path=""):
     ns = (namespace or "dglab").strip().lower()
     host_part = f"{server_ip}:{http_port}" if http_port not in ("80", "443", "") else server_ip
+    instance = instance_path.strip().strip("/")
+    if instance:
+        return f"http://{host_part}/{instance}/csp/healthshare/{ns}"
     return f"http://{host_part}/csp/healthshare/{ns}"
 
 def get_http_base_url():
@@ -551,11 +565,16 @@ def get_http_base_url():
             return value.rstrip("/")
     except Exception:
         pass
-    return _compose_http_base_url(get_server_ip(), get_http_port(), get_http_namespace())
+    return _compose_http_base_url(
+        get_server_ip(),
+        get_http_port(),
+        get_http_namespace(),
+        _get_http_instance_for_env(),
+    )
 
 _IRIS_SUPERSERVER_PORT_MAP = {
-    "dev-aws": 1973,
-    "prod-aws": 1972,
+    "dev": 1973,
+    "prod": 1972,
     "dev-community": 1975,
     "prod-community": 1974,
     "dev-local": 1975,
@@ -574,13 +593,13 @@ def _resolve_iris_login_target(target_env=None):
 def _build_http_service_url(target_env=None):
     if target_env and target_env in _ENV_MAP:
         server_ip, _port, namespace, _auth, http_port = _ENV_MAP[target_env]
+        instance_path = _get_http_instance_for_env(target_env)
     else:
         server_ip = get_server_ip()
         http_port = get_http_port()
         namespace = get_http_namespace()
-    host_part = f"{server_ip}:{http_port}" if http_port not in ("80", "443", "") else server_ip
-    ns = (namespace or "dglab").strip().lower()
-    return f"http://{host_part}/csp/healthshare/{ns}"
+        instance_path = _get_http_instance_for_env()
+    return _compose_http_base_url(server_ip, http_port, namespace, instance_path)
 
 def _validate_iris_credentials(username, password, target_env=None):
     """Validate credentials with a real IRIS login over superserver."""
@@ -910,7 +929,7 @@ def send_hl7_http(message_generator=None, cfgitem=""):
                         fail_count[0] += 1
                         sent_count[0] += 1
                         n_sent = sent_count[0]
-                    err = f"[{n_sent}/{nb}] {target_http} HTTP {e.code}: {body[:120]}"
+                    err = f"HTTP_ERROR [{n_sent}/{nb}] {target_http} HTTP {e.code}: {body[:120]}"
                     logging.error(err)
                     window.after(0, lambda m=err: append_to_response_console(m))
                     break
@@ -923,7 +942,7 @@ def send_hl7_http(message_generator=None, cfgitem=""):
                         sent_count[0] += 1
                         n_sent = sent_count[0]
                     elapsed = time.time() - start_time
-                    err = f"[{n_sent}/{nb}] {target_http} FAILED HTTP: {e}"
+                    err = f"HTTP_ERROR [{n_sent}/{nb}] {target_http} FAILED HTTP: {e}"
                     logging.error(err)
                     window.after(0, lambda m=err: append_to_response_console(m))
                     break
@@ -1038,7 +1057,7 @@ canvas.create_image(1525, 883, image=logo_photo, anchor="nw")
 canvas.create_rectangle(0, 0, 1728, 3, fill=_ACCENT, outline="")           # top accent bar
 canvas.create_rectangle(0, 997, 1728, 1000, fill=_ACCENT, outline="")      # bottom accent bar
 canvas.create_rectangle(0, 3, 927, 30, fill="#0b0b25", outline="")          # header strip (left)
-canvas.create_text(464, 16, text="InterSystems IRIS for Health  ·  HL7 ORU/ADT  ·  MLLP/FILE TESTS",
+canvas.create_text(564, 16, text="InterSystems IRIS for Health  ·  HL7 ORU/ADT  ·  MLLP/FILE TESTS",
                    fill=_ACCENT, font=("Avenir", 11, "bold"), anchor="center")
 canvas.create_line(10, 430, 1718, 430, fill="#1a3a5c", width=1)             # divider above HL7 log
 canvas.create_line(10, 675, 1718, 675, fill="#1a3a5c", width=1)             # divider above response
@@ -1110,8 +1129,8 @@ entry_nb_threads = ttk.Combobox(window, font=("Avenir", 13), values=["1", "2", "
 entry_nb_threads.set("1")
 
 _ENV_MAP = {
-    "dev-aws":              (DEFAULT_SERVER_IP, "9001",  "iris-health-training-dev",  "testuser:IRIS", "80"),
-    "prod-aws":             (DEFAULT_SERVER_IP, "9500",  "iris-health-training-prod", "testuser:IRIS", "80"),
+    "dev":              (DEFAULT_SERVER_IP, "9001",  "iris-health-training-dev",  "testuser:IRIS", "80"),
+    "prod":             (DEFAULT_SERVER_IP, "9500",  "iris-health-training-prod", "testuser:IRIS", "80"),
     "dev-community":  ("localhost",        "39001", "iris-health-training-dev",  "testuser:IRIS",        "881"),
     "prod-community": ("localhost",        "39501", "iris-health-training-prod", "testuser:IRIS",        "881"),
     "dev-local":            ("localhost",        "9001",  "iris-health-training-dev",  "testuser:IRIS", "80"),
@@ -1122,12 +1141,12 @@ _NAMESPACE_OPTIONS = [
     "Jean-Michel", "Marck-Augustus", "Michael", "Neil", "Olivier", "Philippe",
     "QA-TESTING", "Rochelle", "Ronald", "Sophie", "STAGE", "Sylvain", "TRAINING", "UAT"
 ]
-_current_http_auth = _ENV_MAP["dev-aws"][3]
+_current_http_auth = _ENV_MAP["dev"][3]
 
 label_environment = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Environment")
 entry_environment = ttk.Combobox(window, font=("Avenir", 13), state="readonly",
                                  values=list(_ENV_MAP.keys()))
-entry_environment.set("dev-aws")
+entry_environment.set("dev")
 label_namespace = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Namespace")
 entry_http_namespace = ttk.Combobox(window, font=("Avenir", 13), values=_NAMESPACE_OPTIONS)
 entry_http_namespace.set("DGLAB")
@@ -1154,7 +1173,7 @@ entry_http_port = ttk.Combobox(window, font=("Avenir", 13), values=["80", "881",
 entry_http_port.set("80")
 
 label_base_url = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Base URL")
-base_url_var = tk.StringVar(value=_compose_http_base_url(DEFAULT_SERVER_IP, "80", "iris-health-training-dev"))
+base_url_var = tk.StringVar(value=_compose_http_base_url(DEFAULT_SERVER_IP, "80", "DGLAB", _get_http_instance_for_env("dev")))
 entry_base_url = tk.Entry(window, textvariable=base_url_var,
                           bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT,
                           selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 11))
@@ -1176,8 +1195,8 @@ def _on_env_selected(event):
         entry_server_port.set(port)
         entry_adt_port.set(str(int(port) + 1))
         entry_http_port.set(http_port)
-        selected_namespace = entry_http_namespace.get().strip() or namespace
-        base_url_var.set(_compose_http_base_url(ip, http_port, selected_namespace))
+        selected_namespace = entry_http_namespace.get().strip() or "DGLAB"
+        base_url_var.set(_compose_http_base_url(ip, http_port, selected_namespace, _get_http_instance_for_env(env)))
         _current_http_auth = auth
         entry_http_oru_cfgitem.set("LAB RESULT from DGLAB - HTTP")
         entry_http_adt_cfgitem.set("Patient Information from IHE PAM - HTTP")
@@ -1190,7 +1209,7 @@ def _on_namespace_selected(event=None):
     namespace = entry_http_namespace.get().strip()
     if not namespace:
         return
-    base_url_var.set(_compose_http_base_url(get_server_ip(), get_http_port(), namespace))
+    base_url_var.set(_compose_http_base_url(get_server_ip(), get_http_port(), namespace, _get_http_instance_for_env()))
 
 def _on_login_gate_submit(event=None):
     global _is_logged_in, _login_http_auth
@@ -1245,7 +1264,7 @@ def _show_login_gate():
     card.place(relx=0.5, rely=0.5, anchor="center", width=560, height=420)
 
     tk.Label(card, text="Login", bg=_INPUT_BG, fg=_ACCENT, font=("Avenir", 22, "bold")).place(x=24, y=18)
-    tk.Label(card, text="Authenticate with an existing IRIS user.", bg=_INPUT_BG, fg=_LABEL_FG, font=("Avenir", 11)).place(x=24, y=58)
+    tk.Label(card, text="UI-only fake authentication for demo purpose.", bg=_INPUT_BG, fg=_LABEL_FG, font=("Avenir", 11)).place(x=24, y=58)
 
     tk.Label(card, text="Target IRIS instance", bg=_INPUT_BG, fg=_LABEL_FG, font=("Avenir", 13)).place(x=24, y=92)
     login_target_var = tk.StringVar(value=entry_environment.get() if entry_environment.get() in _LOGIN_TARGETS else _LOGIN_TARGETS[0])
@@ -1256,17 +1275,19 @@ def _show_login_gate():
     tk.Label(card, text="Login", bg=_INPUT_BG, fg=_LABEL_FG, font=("Avenir", 13)).place(x=24, y=162)
     entry_gate_user = tk.Entry(card, bg="#d5dde8", fg=_BG, insertbackground=_BG, font=("Avenir", 16))
     entry_gate_user.place(x=24, y=188, width=510, height=40)
+    entry_gate_user.insert(0, "testuser")
 
     tk.Label(card, text="Password", bg=_INPUT_BG, fg=_LABEL_FG, font=("Avenir", 13)).place(x=24, y=238)
     entry_gate_password = tk.Entry(card, show="*", bg="#d5dde8", fg=_BG, insertbackground=_BG, font=("Avenir", 16))
     entry_gate_password.place(x=24, y=264, width=510, height=40)
+    entry_gate_password.insert(0, "IRIS")
 
     btn_gate_login = tk.Button(card, text="Sign in", font=("Avenir", 14, "bold"), bg=_BTN_BG, fg=_BG,
                                activebackground=_ACCENT, activeforeground=_BG, relief="flat", cursor="hand2",
                                command=_on_login_gate_submit)
     btn_gate_login.place(x=24, y=314, width=510, height=38)
 
-    tk.Label(card, text="Credentials are checked against the selected IRIS instance", bg=_INPUT_BG, fg="#d5dde8",
+    tk.Label(card, text="Expected credentials: testuser / IRIS", bg=_INPUT_BG, fg="#d5dde8",
              font=("Avenir", 11, "bold"), anchor="w", justify="left").place(x=24, y=362, width=510)
     label_gate_status = tk.Label(card, text="", bg=_INPUT_BG, fg="#f87171", font=("Avenir", 10))
     label_gate_status.place(x=24, y=384, width=510)
@@ -1365,7 +1386,7 @@ entry_nb_threads.place(x=1455, y=398, width=60)
 
 btn_lang.place(x=0, y=0, width=50)
 btn_logout.place(x=56, y=4, width=78, height=24)
-label_active_environment.place(x=140, y=4, width=320, height=24)
+label_active_environment.place(x=140, y=4, width=180, height=24)
 
 # ── Middle column: raw message override ─────────────────────────────────────
 label_message_override.place(x=790, y=40)
@@ -1402,6 +1423,7 @@ log_response = tk.Text(window, height=18, width=212, bg=_LOG_BG, fg=_RESP_FG,
                        insertbackground=_ACCENT, selectbackground=_ACCENT,
                        selectforeground=_BG, font=("Monaco", 11))
 log_response.tag_config("ack", background="#052e16", foreground="#4ade80")
+log_response.tag_config("error", background="#450a0a", foreground="#f87171")
 log_response.place(x=20, y=685)
 
 # log_text.tag_add("highlight", "1.0", "1.20")  # surligne les 20 premiers caractères de la ligne 3

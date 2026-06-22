@@ -12,17 +12,33 @@ interface LogEntry {
   html?: string;
 }
 
-const ENV_MAP: Record<string, { baseUrl: string; oruCfgItem: string; adtCfgItem: string; username: string; password: string }> = {
+type EnvConfig = { baseUrl: string; oruCfgItem: string; adtCfgItem: string; username: string; password: string };
+
+const CLOUD_ENV_MAP: Record<string, EnvConfig> = {
   // Cloud (served from the AWS webgateway — direct paths, no ng-serve proxy prefix)
-  'cloud-dev':            { baseUrl: '/iris-health-training-dev/csp/healthshare/dglab',          oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: 'testuser', password: 'IRIS' },
-  'cloud-prod':           { baseUrl: '/iris-health-training-prod/csp/healthshare/dglab',         oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: 'testuser', password: 'IRIS' },
+  'dev':            { baseUrl: '/iris-health-training-dev/csp/healthshare/dglab',          oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: 'testuser', password: 'IRIS' },
+  'prod':           { baseUrl: '/iris-health-training-prod/csp/healthshare/dglab',         oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: 'testuser', password: 'IRIS' },
+};
+
+const LOCAL_ENV_MAP: Record<string, EnvConfig> = {
   // Local development (ng serve with proxy — prefixes resolved by proxy.conf.json)
-  'dev-aws':              { baseUrl: '/irisaws/iris-health-training-dev/csp/healthshare/dglab',  oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: 'testuser', password: 'IRIS' },
-  'prod-aws':             { baseUrl: '/irisaws/iris-health-training-prod/csp/healthshare/dglab', oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: 'testuser', password: 'IRIS' },
+  'dev':              { baseUrl: '/irisaws/iris-health-training-dev/csp/healthshare/dglab',  oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: 'testuser', password: 'IRIS' },
+  'prod':             { baseUrl: '/irisaws/iris-health-training-prod/csp/healthshare/dglab', oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: 'testuser', password: 'IRIS' },
   'dev-community':  { baseUrl: '/iris881/iris-health-training-dev/csp/healthshare/dglab',  oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: 'testuser', password: 'IRIS'        },
   'prod-community': { baseUrl: '/iris881/iris-health-training-prod/csp/healthshare/dglab', oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: 'testuser', password: 'IRIS'        },
   'dev-local':            { baseUrl: '/iris80/iris-health-training-dev/csp/healthshare/dglab',   oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: 'testuser', password: 'IRIS' },
   'prod-local':           { baseUrl: '/iris80/iris-health-training-prod/csp/healthshare/dglab',  oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: 'testuser', password: 'IRIS' },
+};
+
+const IS_CLOUD_DEPLOYED = typeof window !== 'undefined' && !/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
+const ENV_MAP: Record<string, EnvConfig> = IS_CLOUD_DEPLOYED ? CLOUD_ENV_MAP : LOCAL_ENV_MAP;
+const DEFAULT_ENV_KEY = ENV_MAP['dev'] ? 'dev' : Object.keys(ENV_MAP)[0];
+const DEFAULT_ENV_CONFIG: EnvConfig = ENV_MAP[DEFAULT_ENV_KEY] ?? {
+  baseUrl: '/csp/healthshare/dglab',
+  oruCfgItem: 'LAB RESULT from DGLAB - HTTP',
+  adtCfgItem: 'Patient Information from IHE PAM - HTTP',
+  username: 'testuser',
+  password: 'IRIS',
 };
 
 type Lang = 'en' | 'fr' | 'es';
@@ -209,13 +225,13 @@ export class AppComponent {
   rawMessage = '';
 
   // Server config
-  environment  = 'cloud-dev';
-  baseUrl      = ENV_MAP['cloud-dev'].baseUrl;
+  environment  = DEFAULT_ENV_KEY;
+  baseUrl      = DEFAULT_ENV_CONFIG.baseUrl;
   namespace    = 'DGLAB';
-  oruCfgItem   = ENV_MAP['cloud-dev'].oruCfgItem;
-  adtCfgItem   = ENV_MAP['cloud-dev'].adtCfgItem;
-  username     = ENV_MAP['cloud-dev'].username;
-  password     = ENV_MAP['cloud-dev'].password;
+  oruCfgItem   = DEFAULT_ENV_CONFIG.oruCfgItem;
+  adtCfgItem   = DEFAULT_ENV_CONFIG.adtCfgItem;
+  username     = DEFAULT_ENV_CONFIG.username;
+  password     = DEFAULT_ENV_CONFIG.password;
 
   readonly namespaceOptions = [
     'Adrian', 'Carl-Jamie', 'Danmark', 'Delphine', 'DGLAB', 'Francois', 'Frederic',
@@ -282,12 +298,11 @@ export class AppComponent {
   private applyNamespaceToBaseUrl(url: string, ns: string): string {
     if (!ns.trim()) return url;
     const normalizedNs = ns.trim().toLowerCase();
-    const m = url.match(/^(\/(?:[^/]+))(?:\/(?:[^/]+))?\/csp\/healthshare\/[^/]+\/?$/);
-    if (m) {
-      return `${m[1]}/csp/healthshare/${normalizedNs}`;
-    }
-    if (/^\/csp\/healthshare\/[^/]+\/?$/.test(url)) {
-      return `/csp/healthshare/${normalizedNs}`;
+    const marker = '/csp/healthshare/';
+    const idx = url.indexOf(marker);
+    if (idx >= 0) {
+      const prefix = url.slice(0, idx);
+      return `${prefix}${marker}${normalizedNs}`;
     }
     return `/csp/healthshare/${normalizedNs}`;
   }

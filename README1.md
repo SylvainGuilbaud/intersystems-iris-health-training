@@ -55,44 +55,11 @@ Both clients can send any pasted message as-is, independently from form fields:
 
 This is useful for replaying real-world payloads and regression tests.
 
-### 3) DGLAB Desktop Client Features
-
-The Python/Tkinter desktop client [iris/python/DGLAB.py](iris/python/DGLAB.py) provides:
-
-- **Login gate** with prefilled demo credentials (testuser / IRIS)
-- **Target IRIS instance selector** (6 options: dev-community, prod-community, dev-local, prod-local, dev, prod)
-- **Logout flow** returning to login gate
-- **Environment-specific URL routing**:
-  - Each environment maps to unique IRIS instance path and superserver port
-  - AWS dev/prod differentiated by instance segment (iris-health-training-dev vs iris-health-training-prod)
-- **Editable namespace dropdown** (default: DGLAB, alphabetically sorted)
-- **Base URL editing** with namespace-aware composition
-- **Active environment badge** in UI + structured logging (TARGET=[env host:port])
-- **Error highlighting** in response log (red background for HTTP errors, FAILED messages)
-- **HL7 message generation** (ORU/ADT) with random patient data or raw message override
-- **MLLP and HTTP senders** with retry logic, threading, and load testing (configurable message count/thread count)
-- **Standardized logging** with environment/target metadata to DGLAB.log
-
-### 4) Angular Web Client Features
-
-The Angular standalone app [iris/angular/src/app/app.component.ts](iris/angular/src/app/app.component.ts) with Vite bundler provides:
-
-- **Dynamic environment selection** (cloud-only or local-only based on deployment hostname)
-- **Namespace dropdown** with alphabetically sorted options
-- **Environment-specific Base URLs**:
-  - Cloud: direct webgateway paths (e.g., `/iris-health-training-dev/csp/healthshare/...`)
-  - Local: proxy-prefixed paths (e.g., `/irisaws/iris-health-training-dev/csp/healthshare/...`)
-  - Community/local: port-based proxies (e.g., `/iris881/...`, `/iris80/...`)
-- **ORU/ADT HTTP senders** with credential-aware requests
-- **Raw message override** for regression testing
-- **Load testing** with configurable message count and concurrency
-- **Real-time response logging** with timestamps and error/success indicators
-
-### 5) ORU Routing and Transform Wiring
+### 3) ORU Routing and Transform Wiring
 
 Router updates in [iris/src/DGLAB/router/HL7.cls](iris/src/DGLAB/router/HL7.cls) apply ORU transcoding before outbound routing targets.
 
-### 6) Cloud Angular Deployment
+### 4) Cloud Angular Deployment
 
 Angular cloud build/deploy is automated by [build-cloud-angular.sh](build-cloud-angular.sh).
 

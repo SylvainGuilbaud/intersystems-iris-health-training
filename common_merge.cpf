@@ -1,0 +1,7 @@
+[Actions]
+CreateNamespace:Name=%ALL,Globals=IRISTEMP,Routines=IRISTEMP
+CreateMapPackage:Namespace=%ALL,Name=adm,Database=COMMON_CODE
+CreateMapPackage:Namespace=%ALL,Name=utils,Database=COMMON_CODE
+CreateMapPackage:Namespace=%ALL,Name=common,Database=COMMON_CODE
+CreateMapRoutine:Namespace=%ALL,Name=common,Database=COMMON_CODE
+CreateMapGlobal:Namespace=%ALL,Name=common*,Database=COMMON_DATA

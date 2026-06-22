@@ -1,0 +1,8 @@
+[Actions]
+CreateResource:Name=%DB_COMMON_DATA,Description="COMMON_DATA database"
+CreateDatabase:Name=COMMON_DATA,Directory=/databases/mgr/COMMON_DATA,Resource=%DB_COMMON_DATA
+CreateResource:Name=%DB_COMMON_CODE,Description="COMMON_CODE database"
+CreateDatabase:Name=COMMON_CODE,Directory=/databases/mgr/COMMON_CODE,Resource=%DB_COMMON_CODE
+CreateNamespace:Name=COMMON,Globals=COMMON_DATA,Routines=COMMON_CODE,Interop=1
+CreateRole:Name=COMMON_ROLE,Description="Role for COMMON namespace",Resources=%DB_COMMON_DATA,%DB_COMMON_CODE
+CreateUser:Name=COMMON,NameSpace=COMMON,FullName=TECHNIDATA,AccountNeverExpires=1,PasswordNeverExpires=1,Roles=%All,COMMON_ROLE,PasswordHash=4c458bac977abcc5c5537edca92bd3789eab4c8bc3af70874966c35a0947f0d358591e85f176d2c6d06b7e41ba439cdd91f0b6f42c541f906656852d1e4456a1,b0da7a46afc5af0d44da87452b85e5cefb9fe02aa01706cf501f1a168babaab78fef063c5a577e8228d6fcc0f3961363c9906d39cc689e5a264c447a0fff3692,10000,SHA512

@@ -1,4 +1,18 @@
 [Actions]
+
+CreateResource:Name=%DB_COMMON_DATA,Description="COMMON_DATA database"
+CreateDatabase:Name=COMMON_DATA,Directory=/usr/irissys/mgr/COMMON_DATA,Resource=%DB_COMMON_DATA
+CreateResource:Name=%DB_COMMON_CODE,Description="COMMON_CODE database"
+CreateDatabase:Name=COMMON_CODE,Directory=/usr/irissys/mgr/COMMON_CODE,Resource=%DB_COMMON_CODE
+CreateNamespace:Name=COMMON,Globals=COMMON_DATA,Routines=COMMON_CODE,Interop=1
+
+CreateNamespace:Name=%ALL,Globals=IRISTEMP,Routines=IRISTEMP
+CreateMapPackage:Namespace=%ALL,Name=adm,Database=COMMON_CODE
+CreateMapPackage:Namespace=%ALL,Name=utils,Database=COMMON_CODE
+CreateMapPackage:Namespace=%ALL,Name=common,Database=COMMON_CODE
+CreateMapRoutine:Namespace=%ALL,Name=common,Database=COMMON_CODE
+CreateMapGlobal:Namespace=%ALL,Name=common*,Database=COMMON_DATA
+
 CreateResource:Name=%DB_TRAINING_DATA,Description="TRAINING_DATA database"
 CreateDatabase:Name=TRAINING_DATA,Directory=/usr/irissys/mgr/TRAINING_DATA,Resource=%DB_TRAINING_DATA
 CreateResource:Name=%DB_TRAINING_CODE,Description="TRAINING_CODE database"
