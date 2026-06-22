@@ -23,43 +23,29 @@ XData ProductionDefinition
     <Setting Target="Host" Name="SaveReplies">All</Setting>
   </Item>
   <Item Name="LAB RESULT from DGLAB - FILE" Category="" ClassName="EnsLib.HL7.Service.FileService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="true" Schedule="">
-    <Setting Target="Host" Name="MessageSchemaCategory">2.3</Setting>
     <Setting Target="Host" Name="TargetConfigNames">HL7</Setting>
-    <Setting Target="Host" Name="ArchiveIO">1</Setting>
     <Setting Target="Host" Name="AddNackERR">1</Setting>
     <Setting Target="Host" Name="NackErrorCode">AllE</Setting>
     <Setting Target="Host" Name="SaveReplies">All</Setting>
-    <Setting Target="Adapter" Name="FilePath">/data/dev/HL7/ORU/in</Setting>
-    <Setting Target="Adapter" Name="WorkPath">/data/dev/HL7/ORU/work/</Setting>
   </Item>
   <Item Name="Patient Information from IHE PAM - MLLP" Category="" ClassName="EnsLib.HL7.Service.TCPService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
-    <Setting Target="Adapter" Name="Port">9002</Setting>
     <Setting Target="Adapter" Name="JobPerConnection">1</Setting>
     <Setting Target="Host" Name="TargetConfigNames">HL7</Setting>
-    <Setting Target="Host" Name="MessageSchemaCategory">HL7v25IHE:ADT_AXX</Setting>
-    <Setting Target="Adapter" Name="QSize">200</Setting>
   </Item>
   <Item Name="Patient Information from IHE PAM - FILE" Category="" ClassName="EnsLib.HL7.Service.FileService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
     <Setting Target="Host" Name="TargetConfigNames">HL7</Setting>
-    <Setting Target="Host" Name="MessageSchemaCategory">HL7v25IHE:ADT_AXX</Setting>
-    <Setting Target="Adapter" Name="FilePath">/data/dev/HL7/ADT/in</Setting>
   </Item>
   <Item Name="forward to LAB RESULT from DGLAB - FILE" Category="" ClassName="EnsLib.HL7.Operation.FileOperation" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="true" Schedule="">
   </Item>
   <Item Name="LAB RESULT from DGLAB - HTTP" Category="" ClassName="EnsLib.HL7.Service.HTTPService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="true" Schedule="">
     <Setting Target="Host" Name="TargetConfigNames">HL7</Setting>
-    <Setting Target="Host" Name="ArchiveIO">1</Setting>
     <Setting Target="Host" Name="AddNackERR">1</Setting>
     <Setting Target="Host" Name="EnableStandardRequests">1</Setting>
-    <Setting Target="Host" Name="MessageSchemaCategory">2.3</Setting>
-    <Setting Target="Adapter" Name="StayConnected">30</Setting>
   </Item>
   <Item Name="Patient Information from IHE PAM - HTTP" Category="" ClassName="EnsLib.HL7.Service.HTTPService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="true" Schedule="">
     <Setting Target="Host" Name="TargetConfigNames">HL7</Setting>
-    <Setting Target="Host" Name="ArchiveIO">1</Setting>
     <Setting Target="Host" Name="AddNackERR">1</Setting>
     <Setting Target="Host" Name="EnableStandardRequests">1</Setting>
-    <Setting Target="Host" Name="MessageSchemaCategory">HL7v25IHE:ADT_AXX</Setting>
     <Setting Target="Adapter" Name="JobPerConnection">1</Setting>
     <Setting Target="Adapter" Name="Port">9981</Setting>
   </Item>
@@ -72,7 +58,6 @@ XData ProductionDefinition
   <Item Name="Patient Information from IHE PAM" Category="" ClassName="EnsLib.HL7.Service.FileService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
     <Setting Target="Host" Name="TargetConfigNames">HL7</Setting>
     <Setting Target="Host" Name="MessageSchemaCategory">HL7v25IHE:ADT_AXX</Setting>
-    <Setting Target="Adapter" Name="FilePath">/data/dev/HL7/ADT/IHEPAM</Setting>
   </Item>
 </Production>
 }
