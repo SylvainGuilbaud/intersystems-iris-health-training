@@ -168,7 +168,7 @@ def generate_adt_message():
 
 # Logger configuration
 logging.basicConfig(
-    filename='send_hl7_tcp.log',
+    filename='DGLAB.log',
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
@@ -648,9 +648,10 @@ def send_hl7_message(message_generator=None, port_getter=None):
     server_port = (port_getter or get_server_port)()
     nb = get_nb_messages()
     nb_threads = get_nb_threads()
+    active_env = entry_environment.get().strip() or "unknown"
 
     msg_type = "ADT" if message_generator is generate_adt_message else "ORU"
-    append_to_response_console(f"▶ {msg_type} → {server_ip}:{server_port}")
+    append_to_response_console(f"▶ [{active_env}] {msg_type} → {server_ip}:{server_port}")
 
     # Truncate Base64 content in OBX|ED segments for display/logging only
     def truncate_ed_base64(msg, max_chars=200):
@@ -709,7 +710,7 @@ def send_hl7_message(message_generator=None, port_getter=None):
 
             for attempt in range(1, MAX_RETRIES + 1):
                 try:
-                    pending = f"⏳ Sending to {server_ip}:{server_port} (attempt {attempt}/{MAX_RETRIES})..."
+                    pending = f"⏳ [{active_env}] Sending to {server_ip}:{server_port} (attempt {attempt}/{MAX_RETRIES})..."
                     window.after(0, lambda m=pending: append_to_response_console(m))
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         s.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
@@ -745,7 +746,7 @@ def send_hl7_message(message_generator=None, port_getter=None):
                             sent_count[0] += 1
                             n_sent = sent_count[0]
                         elapsed = time.time() - start_time
-                        err = f"[{n_sent}/{nb}] FAILED: {e}"
+                        err = f"[{n_sent}/{nb}] [{active_env}] FAILED: {e}"
                         logging.error(err)
                         window.after(0, lambda m=err: append_to_response_console(m))
                         if "timed out" in str(e).lower():
@@ -799,6 +800,7 @@ def send_hl7_http(message_generator=None, cfgitem=""):
     credentials = get_http_credentials()
     nb = get_nb_messages()
     nb_threads = get_nb_threads()
+    active_env = entry_environment.get().strip() or "unknown"
 
     base_url = get_http_base_url()
     csp_path = f"{base_url}/EnsLib.HL7.Service.HTTPService.cls"
@@ -808,7 +810,7 @@ def send_hl7_http(message_generator=None, cfgitem=""):
     auth_header = "Basic " + base64.b64encode(credentials.encode()).decode()
 
     msg_type = "ADT" if message_generator is generate_adt_message else "ORU"
-    append_to_response_console(f"▶ {msg_type} HTTP → {url}")
+    append_to_response_console(f"▶ [{active_env}] {msg_type} HTTP → {url}")
 
     def truncate_ed_base64(msg, max_chars=200):
         def _truncate(m):
@@ -867,7 +869,7 @@ def send_hl7_http(message_generator=None, cfgitem=""):
             for attempt in range(1, MAX_RETRIES + 1):
                 try:
                     display_url = urllib.parse.unquote(url)
-                    pending = f"⏳ HTTP POST → {display_url}" if attempt == 1 else f"⏳ HTTP POST → {display_url} (attempt {attempt}/{MAX_RETRIES})"
+                    pending = f"⏳ [{active_env}] HTTP POST → {display_url}" if attempt == 1 else f"⏳ [{active_env}] HTTP POST → {display_url} (attempt {attempt}/{MAX_RETRIES})"
                     window.after(0, lambda m=pending: append_to_response_console(m))
                     with urllib.request.urlopen(req, timeout=CONNECT_TIMEOUT) as resp:
                         body = resp.read().decode("utf-8", errors="replace")
@@ -898,7 +900,7 @@ def send_hl7_http(message_generator=None, cfgitem=""):
                         fail_count[0] += 1
                         sent_count[0] += 1
                         n_sent = sent_count[0]
-                    err = f"[{n_sent}/{nb}] HTTP {e.code}: {body[:120]}"
+                    err = f"[{n_sent}/{nb}] [{active_env}] HTTP {e.code}: {body[:120]}"
                     logging.error(err)
                     window.after(0, lambda m=err: append_to_response_console(m))
                     break
@@ -911,7 +913,7 @@ def send_hl7_http(message_generator=None, cfgitem=""):
                         sent_count[0] += 1
                         n_sent = sent_count[0]
                     elapsed = time.time() - start_time
-                    err = f"[{n_sent}/{nb}] FAILED HTTP: {e}"
+                    err = f"[{n_sent}/{nb}] [{active_env}] FAILED HTTP: {e}"
                     logging.error(err)
                     window.after(0, lambda m=err: append_to_response_console(m))
                     break
@@ -1111,6 +1113,10 @@ label_environment = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), 
 entry_environment = ttk.Combobox(window, font=("Avenir", 13), state="readonly",
                                  values=list(_ENV_MAP.keys()))
 entry_environment.set("dev-aws")
+active_env_var = tk.StringVar(value=f"Active environment: {entry_environment.get()}")
+label_active_environment = tk.Label(window, textvariable=active_env_var,
+                                    bg="#0f2336", fg="#93c5fd", font=("Avenir", 10, "bold"),
+                                    anchor="w", padx=8)
 
 label_server_ip = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Server IP")
 server_ip_var = tk.StringVar(value=DEFAULT_SERVER_IP)
@@ -1162,6 +1168,7 @@ def _on_env_selected(event):
         tier = "prod" if env.startswith("prod") else "dev"
         new_dest = re.sub(r'^/(dev|prod)/', f'/{tier}/', entry_file_dest.get())
         entry_file_dest.set(new_dest)
+    active_env_var.set(f"Active environment: {env or 'unknown'}")
 
 def _on_login_gate_submit(event=None):
     global _is_logged_in, _login_http_auth
@@ -1331,6 +1338,7 @@ entry_nb_threads.place(x=1455, y=398, width=60)
 
 btn_lang.place(x=0, y=0, width=50)
 btn_logout.place(x=56, y=4, width=78, height=24)
+label_active_environment.place(x=140, y=4, width=320, height=24)
 
 # ── Middle column: raw message override ─────────────────────────────────────
 label_message_override.place(x=790, y=40)
@@ -1375,5 +1383,6 @@ log_response.place(x=20, y=685)
 # highlight_lines_with("OBX")
 
 update_labels()
+_on_env_selected(None)
 _show_login_gate()
 window.mainloop()

@@ -140,7 +140,7 @@ def generate_adt_message():
 
 # Logger configuration
 logging.basicConfig(
-    filename='send_hl7_tcp.log',
+    filename='DGLAB.log',
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'

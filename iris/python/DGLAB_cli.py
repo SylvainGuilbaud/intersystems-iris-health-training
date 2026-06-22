@@ -182,7 +182,7 @@ def main():
     nb_threads = max(1, min(args.nb_threads, 20))
 
     logging.basicConfig(
-        filename='send_hl7_tcp.log',
+        filename='DGLAB.log',
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S')
