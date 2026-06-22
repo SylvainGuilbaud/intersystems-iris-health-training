@@ -14,15 +14,15 @@ interface LogEntry {
 
 const ENV_MAP: Record<string, { baseUrl: string; oruCfgItem: string; adtCfgItem: string; username: string; password: string }> = {
   // Cloud (served from the AWS webgateway — direct paths, no ng-serve proxy prefix)
-  'cloud-dev':            { baseUrl: '/iris-health-training-dev/csp/healthshare/dglab',          oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/' },
-  'cloud-prod':           { baseUrl: '/iris-health-training-prod/csp/healthshare/dglab',         oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/' },
+  'cloud-dev':            { baseUrl: '/iris-health-training-dev/csp/healthshare/dglab',          oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: 'testuser', password: 'IRIS' },
+  'cloud-prod':           { baseUrl: '/iris-health-training-prod/csp/healthshare/dglab',         oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: 'testuser', password: 'IRIS' },
   // Local development (ng serve with proxy — prefixes resolved by proxy.conf.json)
-  'dev-aws':              { baseUrl: '/irisaws/iris-health-training-dev/csp/healthshare/dglab',  oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/' },
-  'prod-aws':             { baseUrl: '/irisaws/iris-health-training-prod/csp/healthshare/dglab', oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/' },
+  'dev-aws':              { baseUrl: '/irisaws/iris-health-training-dev/csp/healthshare/dglab',  oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: 'testuser', password: 'IRIS' },
+  'prod-aws':             { baseUrl: '/irisaws/iris-health-training-prod/csp/healthshare/dglab', oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: 'testuser', password: 'IRIS' },
   'dev-local-community':  { baseUrl: '/iris881/iris-health-training-dev/csp/healthshare/dglab',  oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'SYS'        },
   'prod-local-community': { baseUrl: '/iris881/iris-health-training-prod/csp/healthshare/dglab', oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'SYS'        },
-  'dev-local':            { baseUrl: '/iris80/iris-health-training-dev/csp/healthshare/dglab',   oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/' },
-  'prod-local':           { baseUrl: '/iris80/iris-health-training-prod/csp/healthshare/dglab',  oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: '_system', password: 'IRIS4Good/' },
+  'dev-local':            { baseUrl: '/iris80/iris-health-training-dev/csp/healthshare/dglab',   oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: 'testuser', password: 'IRIS' },
+  'prod-local':           { baseUrl: '/iris80/iris-health-training-prod/csp/healthshare/dglab',  oruCfgItem: 'LAB RESULT from DGLAB - HTTP', adtCfgItem: 'Patient Information from IHE PAM - HTTP', username: 'testuser', password: 'IRIS' },
 };
 
 type Lang = 'en' | 'fr' | 'es';
@@ -180,6 +180,12 @@ const TRANSLATIONS: Record<Lang, Translation> = {
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
+  // Fake UI-only authentication gate
+  isLoggedIn = false;
+  loginUser = '';
+  loginPassword = '';
+  loginError = '';
+
   // Patient fields
   patientId  = '24445670';
   firstName  = 'Anne';
@@ -224,6 +230,23 @@ export class AppComponent {
   cycleLang(): void {
     const order: Lang[] = ['en', 'fr', 'es'];
     this.lang = order[(order.indexOf(this.lang) + 1) % order.length];
+  }
+
+  fakeLogin(): void {
+    if (this.loginUser.trim() === 'testuser' && this.loginPassword === 'IRIS') {
+      this.isLoggedIn = true;
+      this.loginError = '';
+      this.loginPassword = '';
+      return;
+    }
+    this.loginError = 'Invalid credentials. Use testuser / IRIS.';
+  }
+
+  fakeLogout(): void {
+    this.isLoggedIn = false;
+    this.loginUser = '';
+    this.loginPassword = '';
+    this.loginError = '';
   }
 
   readonly envKeys = Object.keys(ENV_MAP);
@@ -405,6 +428,11 @@ export class AppComponent {
   private static readonly CONCURRENCY = 6;
 
   private doSend(type: 'ORU' | 'ADT', cfgItem: string): void {
+    if (!this.isLoggedIn) {
+      this.addResponse('ERROR: Please login first with testuser / IRIS.', 'error');
+      return;
+    }
+
     const count = Math.max(1, Math.min(Math.floor(Number(this.nbMessages)) || 1, 1000));
     const params = this.params();
     const startTime = Date.now();

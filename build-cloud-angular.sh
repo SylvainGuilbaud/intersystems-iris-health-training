@@ -66,8 +66,16 @@ echo "==> Starting nginx container on $PUBLIC_DNS..."
 ssh -i "$ACCESS_KEY_FILENAME" "$CLOUD_USERNAME@$PUBLIC_DNS" \
     "cd $REMOTE_BASE && IRIS_INSTANCE_NAME=\$(grep '^IRIS_INSTANCE_NAME=' .env | cut -d= -f2) && sudo docker compose -p \"\$IRIS_INSTANCE_NAME\" up -d --no-deps nginx 2>&1"
 
-echo "==> Restoring webgateway (remove old Angular mount)..."
+echo "==> Refreshing webgateway if present..."
 ssh -i "$ACCESS_KEY_FILENAME" "$CLOUD_USERNAME@$PUBLIC_DNS" \
-    "sudo docker exec iris-health-training-webgateway-1 apache2ctl graceful 2>&1"
+        "cd $REMOTE_BASE && \
+         IRIS_INSTANCE_NAME=\$(grep '^IRIS_INSTANCE_NAME=' .env | cut -d= -f2) && \
+         WG_CID=\$(sudo docker compose -p \"\$IRIS_INSTANCE_NAME\" ps -q webgateway) && \
+         if [ -n \"\$WG_CID\" ]; then \
+             echo 'Webgateway container found, reloading Apache...' && \
+             sudo docker exec \"\$WG_CID\" apache2ctl graceful 2>&1; \
+         else \
+             echo 'Webgateway container not found in compose project, skipping reload.'; \
+         fi"
 
 echo "==> Done. App accessible at http://$PUBLIC_DNS/app/"

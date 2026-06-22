@@ -56,6 +56,88 @@ $panel-border: #2a4a6c;
 
     &:hover { border-color: $accent; }
   }
+
+  .logout-btn {
+    margin-left: auto;
+    background: transparent;
+    color: $input-fg;
+    border: 1px solid #2a4a6c;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    &:hover { border-color: $accent; color: $accent; }
+  }
+
+  .logout-btn + .lang-btn {
+    margin-left: 8px;
+  }
+}
+
+// ── Fake login gate ───────────────────────────────────────────────────────
+.login-gate {
+  min-height: calc(100vh - 56px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid $panel-border;
+  border-radius: 6px;
+  background: rgba(4, 20, 36, 0.9);
+  padding: 20px;
+  box-sizing: border-box;
+
+  h2 {
+    margin: 0 0 8px;
+    color: $accent;
+    font-size: 20px;
+  }
+}
+
+.login-hint {
+  margin: 0 0 14px;
+  color: $label-fg;
+  font-size: 12px;
+}
+
+.login-form {
+  display: grid;
+  gap: 8px;
+
+  label {
+    color: $label-fg;
+    font-size: 13px;
+  }
+}
+
+.btn-login {
+  margin-top: 8px;
+  background: $btn-bg;
+  color: $btn-fg;
+  border: 1px solid #1a3a5c;
+  border-radius: 3px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  &:hover { filter: brightness(1.1); }
+}
+
+.login-help {
+  margin-top: 12px;
+  color: $label-fg;
+  font-size: 12px;
+}
+
+.login-error {
+  margin-top: 8px;
+  color: #f87171;
+  font-size: 12px;
 }
 
 // ── Three-column main layout ──────────────────────────────────────────────

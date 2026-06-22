@@ -2,9 +2,31 @@
   <!-- Header -->
   <header class="header">
     <span class="header-title">IRIS HEALTH &nbsp;·&nbsp; {{ t.headerTitle }}</span>
+    <button *ngIf="isLoggedIn" class="logout-btn" (click)="fakeLogout()">Logout</button>
     <button class="lang-btn" (click)="cycleLang()" [title]="lang">{{ langFlags[lang] }}</button>
   </header>
 
+  <section class="login-gate" *ngIf="!isLoggedIn; else appBody">
+    <div class="login-card">
+      <h2>Login</h2>
+      <p class="login-hint">UI-only fake authentication for demo purpose.</p>
+
+      <form (ngSubmit)="fakeLogin()" class="login-form">
+        <label for="loginUser">Login</label>
+        <input id="loginUser" name="loginUser" [(ngModel)]="loginUser" autocomplete="username" />
+
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" type="password" name="loginPassword" [(ngModel)]="loginPassword" autocomplete="current-password" />
+
+        <button type="submit" class="btn-login">Sign in</button>
+      </form>
+
+      <div class="login-help">Expected credentials: <strong>testuser</strong> / <strong>IRIS</strong></div>
+      <div class="login-error" *ngIf="loginError">{{ loginError }}</div>
+    </div>
+  </section>
+
+  <ng-template #appBody>
   <!-- Two-column main layout -->
   <div class="main-layout">
 
@@ -173,4 +195,5 @@
 
   <!-- Bottom border accent -->
   <div class="bottom-accent"></div>
+  </ng-template>
 </div>

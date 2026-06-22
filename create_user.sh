@@ -2,10 +2,9 @@
 source .env
 source cloudenv
 
-NAMESPACE=$(echo "$1" | tr '[:lower:]' '[:upper:]')
-NAMESPACE_APP=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+USERNAME=$(echo "$1" | tr '[:lower:]' '[:upper:]')
 TARGET=${2:-dev-aws}
-CPF_FILE="delete_namespace_merge_${NAMESPACE}_$(date +%Y%m%d%H%M%S).cpf"
+CPF_FILE="create_username_merge_${USERNAME}_$(date +%Y%m%d%H%M%S).cpf"
 REMOTE_TMP="/tmp/$CPF_FILE"
 
 AUTO_YES=${3:-}
@@ -24,31 +23,20 @@ case "$TARGET" in
         CONTAINER="iris-health-training-prod"
         ;;
     *)
-        echo "Usage: $0 <Namespace> [dev-aws|prod-aws|dev|prod]"
+        echo "Usage: $0 <Username> [dev-aws|prod-aws|dev|prod] [-y]"
         exit 1
         ;;
 esac
 
-# Generate CPF file dynamically from namespace name
+# Generate CPF file dynamically from username
 cat > $CPF_FILE <<EOF
 [Actions]
-DeleteDatabase:Name=${NAMESPACE}_DATA,Directory=/${ISC_DATA_DIRECTORY}/mgr/${NAMESPACE}_DATA
-DeleteDatabase:Name=${NAMESPACE}_CODE,Directory=/${ISC_DATA_DIRECTORY}/mgr/${NAMESPACE}_CODE
-DeleteNamespace:Name=${NAMESPACE}
-DeleteResource:Name=%DB_${NAMESPACE}_DATA
-DeleteResource:Name=%DB_${NAMESPACE}_CODE
-DeleteApplication:Name=/csp/healthshare/${NAMESPACE_APP}	
-DeleteApplication:Name=/csp/healthshare/${NAMESPACE_APP}/bulkfhir	
-DeleteApplication:Name=/csp/healthshare/${NAMESPACE_APP}/bulkfhir/api	
-DeleteApplication:Name=/csp/healthshare/${NAMESPACE_APP}/services
-DeleteRole:Name=${NAMESPACE}_ROLE
-DeleteUser:Name=${NAMESPACE}
+CreateUser:Name=${USERNAME},AccountNeverExpires=1,PasswordNeverExpires=1,Roles=%All,PasswordHash=4c458bac977abcc5c5537edca92bd3789eab4c8bc3af70874966c35a0947f0d358591e85f176d2c6d06b7e41ba439cdd91f0b6f42c541f906656852d1e4456a1,b0da7a46afc5af0d44da87452b85e5cefb9fe02aa01706cf501f1a168babaab78fef063c5a577e8228d6fcc0f3961363c9906d39cc689e5a264c447a0fff3692,10000,SHA512
 EOF
 
-echo "Generated $CPF_FILE for namespace $NAMESPACE"
+echo "Generated $CPF_FILE for username $USERNAME"
 echo ""
-echo "About to delete namespace '$NAMESPACE' on container '$CONTAINER' (target: $TARGET)"
-
+echo "About to create username '$USERNAME' on container '$CONTAINER' (target: $TARGET)"
 if [[ "$AUTO_YES" != "-y" ]]; then
     read -r -p "Are you sure? [y/N] " confirm
     if [[ ! "$confirm" =~ ^[yY]$ ]]; then
@@ -89,12 +77,6 @@ else
 fi
 
 rm -f "$CPF_FILE"
-
-# Verify the namespace no longer exists in the target IRIS instance
-echo "Verifying namespace '$NAMESPACE' no longer exists in IRIS ..."
-echo "Running check_namespace.sh $NAMESPACE $TARGET ..."
-echo "this should fail with an error message indicating the namespace does not exist."
-./check_namespace.sh $NAMESPACE $TARGET
 
 echo "Done."
 
