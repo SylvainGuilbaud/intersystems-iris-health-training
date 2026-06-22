@@ -112,13 +112,13 @@ Initialization script [iris/iris.script](iris/iris.script) imports and compiles 
 ### Local (Community Edition)
 
 ```bash
-./start-local.sh
+./start-community.sh
 ```
 
 Stop:
 
 ```bash
-./stop-local.sh
+./stop-community.sh
 ```
 
 ### Full Stack (non-local profile)
