@@ -110,7 +110,7 @@ def generate_random_hl7_message():
     # Construction du message HL7
     
     hl7_message = f"""MSH|^~\\&|DGLab|LAB|OpenMedical|KIS|{timestamp}||ORU^R01|{msg_id}|P|2.3|||||CH|8859/1|de
-PID|1||18^^^LAB^PI~{patient_id}^^^ASIP-SANTE-INS-NIA&1.2.250.1.213.1.4.9&ISO^INS-NIA||{last_name}^{first_name}^^^^^L||{dob_formatted}|{gender}|||^^^^^^H||||F|||||||||||||||||VALI
+PID|1||18^^^LAB^PI~{patient_id}^^^ASIP-SANTE-INS-NIA&1.2.250.1.213.1.4.9&ISO^INS-NIA||{last_name}^{first_name}^^^MADAME^^L||{dob_formatted}|{gender}|||^^^^^^H||||F|||||||||||||||||VALI
 PV1|1|I|^^^||||||||||||||||0|||||||||||||||||||||||||202605280000|190001010000|||||17
 ORC|SC|||6100130|IP||||20260610144322|||3|||{timestamp}
 OBR|1|||296^S-Sodium^L|||{timestamp}|20260610141505||||||||3|||||||||F
@@ -158,7 +158,7 @@ def generate_adt_message():
         f"MSH|^~\\&|EMETTEUR|ETABLISSEMENT|DATAMED|LAB|{timestamp}||ADT^A08^ADT_A08|{msg_id}|P|2.5|||NE|AL|FRA|8859/1\n"
         f"EVN|A08|{timestamp}\n"
         f"PID|1||{patient_id}^^^ETABLISSEMENT&1.2.250.1.99.1&ISO^PI~285031512345678^^^INS-NIR&1.2.250.1.213.1.4.8&ISO^INS-NIR"
-        f"||{last_name}^{first_name}^^^^^D~{last_name}^{first_name}^^^^^L||{dob_formatted}|{gender}"
+        f"||{last_name}^{first_name}^^^MADAME^^D~{last_name}^{first_name}^^^^^L||{dob_formatted}|{gender}"
         f"|||15 RUE DE LA PAIX^^PARIS^^75001^FRA^H||||||||||||||||||||75056\n"
         f"PV1|1|N\n"
         f"ZBE|MVT-003^ETABLISSEMENT^1.2.250.1.99.1^ISO|{timestamp}||INSERT|N|A08\n"
@@ -524,6 +524,9 @@ def get_adt_port():
         return DEFAULT_SERVER_PORT + 1
 
 def get_http_namespace():
+    value = entry_http_namespace.get().strip()
+    if value:
+        return value
     env = entry_environment.get()
     if env in _ENV_MAP:
         return _ENV_MAP[env][2]
@@ -537,8 +540,9 @@ def get_http_credentials():
     return _login_http_auth or _current_http_auth or "_system:SYS"
 
 def _compose_http_base_url(server_ip, http_port, namespace):
+    ns = (namespace or "dglab").strip().lower()
     host_part = f"{server_ip}:{http_port}" if http_port not in ("80", "443", "") else server_ip
-    return f"http://{host_part}/{namespace}/csp/healthshare/dglab"
+    return f"http://{host_part}/csp/healthshare/{ns}"
 
 def get_http_base_url():
     try:
@@ -569,12 +573,14 @@ def _resolve_iris_login_target(target_env=None):
 
 def _build_http_service_url(target_env=None):
     if target_env and target_env in _ENV_MAP:
-        server_ip, _port, _namespace, _auth, http_port = _ENV_MAP[target_env]
+        server_ip, _port, namespace, _auth, http_port = _ENV_MAP[target_env]
     else:
         server_ip = get_server_ip()
         http_port = get_http_port()
+        namespace = get_http_namespace()
     host_part = f"{server_ip}:{http_port}" if http_port not in ("80", "443", "") else server_ip
-    return f"http://{host_part}/csp/healthshare/dglab"
+    ns = (namespace or "dglab").strip().lower()
+    return f"http://{host_part}/csp/healthshare/{ns}"
 
 def _validate_iris_credentials(username, password, target_env=None):
     """Validate credentials with a real IRIS login over superserver."""
@@ -1111,12 +1117,20 @@ _ENV_MAP = {
     "dev-local":            ("localhost",        "9001",  "iris-health-training-dev",  "testuser:IRIS", "80"),
     "prod-local":           ("localhost",        "9002",  "iris-health-training-prod", "testuser:IRIS", "80"),
 }
+_NAMESPACE_OPTIONS = [
+    "Adrian", "Carl-Jamie", "Danmark", "Delphine", "DGLAB", "Francois", "Frederic",
+    "Jean-Michel", "Marck-Augustus", "Michael", "Neil", "Olivier", "Philippe",
+    "QA-TESTING", "Rochelle", "Ronald", "Sophie", "STAGE", "Sylvain", "TRAINING", "UAT"
+]
 _current_http_auth = _ENV_MAP["dev-aws"][3]
 
 label_environment = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Environment")
 entry_environment = ttk.Combobox(window, font=("Avenir", 13), state="readonly",
                                  values=list(_ENV_MAP.keys()))
 entry_environment.set("dev-aws")
+label_namespace = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Namespace")
+entry_http_namespace = ttk.Combobox(window, font=("Avenir", 13), values=_NAMESPACE_OPTIONS)
+entry_http_namespace.set("DGLAB")
 active_env_var = tk.StringVar(value=f"Active environment: {entry_environment.get()}")
 label_active_environment = tk.Label(window, textvariable=active_env_var,
                                     bg="#0f2336", fg="#93c5fd", font=("Avenir", 10, "bold"),
@@ -1134,9 +1148,6 @@ entry_server_port.set(str(DEFAULT_SERVER_PORT))
 label_adt_port = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="ADT Port")
 entry_adt_port = ttk.Combobox(window, font=("Avenir", 13), values=["9002", "9003", "9501", "39002", "39502", "6662", "2576"])
 entry_adt_port.set(str(DEFAULT_SERVER_PORT + 1))
-
-entry_http_namespace = ttk.Combobox(window, font=("Avenir", 13), values=["iris-health-training-dev", "iris-health-training-prod"])
-entry_http_namespace.set("iris-health-training-dev")  # kept for namespace logic (derived from environment), not displayed
 
 label_http_port = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="HTTP Port")
 entry_http_port = ttk.Combobox(window, font=("Avenir", 13), values=["80", "881", "443", "884"])
@@ -1165,7 +1176,8 @@ def _on_env_selected(event):
         entry_server_port.set(port)
         entry_adt_port.set(str(int(port) + 1))
         entry_http_port.set(http_port)
-        base_url_var.set(_compose_http_base_url(ip, http_port, namespace))
+        selected_namespace = entry_http_namespace.get().strip() or namespace
+        base_url_var.set(_compose_http_base_url(ip, http_port, selected_namespace))
         _current_http_auth = auth
         entry_http_oru_cfgitem.set("LAB RESULT from DGLAB - HTTP")
         entry_http_adt_cfgitem.set("Patient Information from IHE PAM - HTTP")
@@ -1173,6 +1185,12 @@ def _on_env_selected(event):
         new_dest = re.sub(r'^/(dev|prod)/', f'/{tier}/', entry_file_dest.get())
         entry_file_dest.set(new_dest)
     active_env_var.set(f"Active environment: {env or 'unknown'}")
+
+def _on_namespace_selected(event=None):
+    namespace = entry_http_namespace.get().strip()
+    if not namespace:
+        return
+    base_url_var.set(_compose_http_base_url(get_server_ip(), get_http_port(), namespace))
 
 def _on_login_gate_submit(event=None):
     global _is_logged_in, _login_http_auth
@@ -1258,6 +1276,9 @@ def _show_login_gate():
     entry_gate_user.focus_set()
 
 entry_environment.bind("<<ComboboxSelected>>", _on_env_selected)
+entry_http_namespace.bind("<<ComboboxSelected>>", _on_namespace_selected)
+entry_http_namespace.bind("<Return>", _on_namespace_selected)
+entry_http_namespace.bind("<FocusOut>", _on_namespace_selected)
 
 _CLR_ORU = "#4ade80"   # green border  – ORU
 _CLR_ADT = "#f472b6"   # pink border   – ADT
@@ -1313,6 +1334,8 @@ btn_send_http_oru.place(x=585, y=385, width=175)
 # ── Right column: Server config (panel under TECHNIDATA image) ──────────────────
 label_environment.place(x=1133, y=184)
 entry_environment.place(x=1285, y=182, width=160)
+label_namespace.place(x=1455, y=184)
+entry_http_namespace.place(x=1548, y=182, width=160)
 
 label_server_ip.place(x=1133, y=211)
 entry_server_ip.place(x=1285, y=209, width=418)

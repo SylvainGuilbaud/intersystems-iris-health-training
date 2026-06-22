@@ -65,7 +65,7 @@ def build_hl7_message(patient_id, first_name, last_name, dob, gender, sodium, in
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
     hl7_message = f"""MSH|^~\\&|DGLab|LAB|OpenMedical|KIS|{timestamp}||ORU^R01|{msg_id}|P|2.3|||||CH|8859/1|de
-PID|1||18^^^LAB^PI~{patient_id}^^^ASIP-SANTE-INS-NIA&1.2.250.1.213.1.4.9&ISO^INS-NIA||{last_name}^{first_name}^^^^^L||{dob_formatted}|{gender}|||^^^^^^H||||F|||||||||||||||||VALI
+PID|1||18^^^LAB^PI~{patient_id}^^^ASIP-SANTE-INS-NIA&1.2.250.1.213.1.4.9&ISO^INS-NIA||{last_name}^{first_name}^^^MADAME^^L||{dob_formatted}|{gender}|||^^^^^^H||||F|||||||||||||||||VALI
 PV1|1|I|^^^||||||||||||||||0|||||||||||||||||||||||||202605280000|190001010000|||||17
 ORC|SC|||6100130|IP||||20260610144322|||3|||{timestamp}
 OBR|1|||296^S-Sodium^L|||{timestamp}|20260610141505||||||||3|||||||||F

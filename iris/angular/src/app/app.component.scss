@@ -313,6 +313,11 @@ $panel-border: #2a4a6c;
   margin-left: 12px;
 }
 
+.cfg-label-inline {
+  width: auto;
+  margin-left: 8px;
+}
+
 .cfg-input-full {
   flex: 1;
   background: $input-bg;
@@ -355,6 +360,15 @@ $panel-border: #2a4a6c;
   cursor: pointer;
   &:focus { border-color: $accent; }
   option { background: $input-bg; }
+}
+
+.namespace-combo {
+  width: 180px;
+
+  .cfg-input-sm {
+    width: 100%;
+    padding-right: 30px;
+  }
 }
 
 // ── ISC logo ──────────────────────────────────────────────────────────────

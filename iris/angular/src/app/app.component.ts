@@ -51,6 +51,7 @@ interface Translation {
   clearRaw: string;
   serverConfig: string;
   environment: string;
+  namespace: string;
   baseUrl: string;
   adtCfg: string;
   oruCfg: string;
@@ -88,6 +89,7 @@ const TRANSLATIONS: Record<Lang, Translation> = {
     clearRaw: 'Clear',
     serverConfig: 'SERVER CONFIGURATION',
     environment: 'Environment',
+    namespace: 'Namespace',
     baseUrl: 'Base URL',
     adtCfg: 'ADT Cfg',
     oruCfg: 'ORU Cfg',
@@ -123,6 +125,7 @@ const TRANSLATIONS: Record<Lang, Translation> = {
     clearRaw: 'Effacer',
     serverConfig: 'CONFIGURATION DU SERVEUR',
     environment: 'Environnement',
+    namespace: 'Namespace',
     baseUrl: 'URL de base',
     adtCfg: 'Cfg ADT',
     oruCfg: 'Cfg ORU',
@@ -158,6 +161,7 @@ const TRANSLATIONS: Record<Lang, Translation> = {
     clearRaw: 'Borrar',
     serverConfig: 'CONFIGURACIÓN DEL SERVIDOR',
     environment: 'Entorno',
+    namespace: 'Namespace',
     baseUrl: 'URL base',
     adtCfg: 'Cfg ADT',
     oruCfg: 'Cfg ORU',
@@ -207,10 +211,17 @@ export class AppComponent {
   // Server config
   environment  = 'cloud-dev';
   baseUrl      = ENV_MAP['cloud-dev'].baseUrl;
+  namespace    = 'DGLAB';
   oruCfgItem   = ENV_MAP['cloud-dev'].oruCfgItem;
   adtCfgItem   = ENV_MAP['cloud-dev'].adtCfgItem;
   username     = ENV_MAP['cloud-dev'].username;
   password     = ENV_MAP['cloud-dev'].password;
+
+  readonly namespaceOptions = [
+    'Adrian', 'Carl-Jamie', 'Danmark', 'Delphine', 'DGLAB', 'Francois', 'Frederic',
+    'Jean-Michel', 'Marck-Augustus', 'Michael', 'Neil', 'Olivier', 'Philippe',
+    'QA-TESTING', 'Rochelle', 'Ronald', 'Sophie', 'STAGE', 'Sylvain', 'TRAINING', 'UAT'
+  ];
 
   // Logs
   hl7Log:      LogEntry[] = [];
@@ -259,16 +270,40 @@ export class AppComponent {
     ];
   }
 
-  constructor(private hl7: Hl7Service) {}
+  constructor(private hl7: Hl7Service) {
+    this.onEnvChange();
+  }
+
+  private extractNamespaceFromBaseUrl(url: string): string {
+    const m = url.match(/\/csp\/healthshare\/([^/]+)\/?$/);
+    return m?.[1] ?? 'DGLAB';
+  }
+
+  private applyNamespaceToBaseUrl(url: string, ns: string): string {
+    if (!ns.trim()) return url;
+    const normalizedNs = ns.trim().toLowerCase();
+    const m = url.match(/^(\/(?:[^/]+))(?:\/(?:[^/]+))?\/csp\/healthshare\/[^/]+\/?$/);
+    if (m) {
+      return `${m[1]}/csp/healthshare/${normalizedNs}`;
+    }
+    if (/^\/csp\/healthshare\/[^/]+\/?$/.test(url)) {
+      return `/csp/healthshare/${normalizedNs}`;
+    }
+    return `/csp/healthshare/${normalizedNs}`;
+  }
 
   onEnvChange(): void {
     const e = ENV_MAP[this.environment];
     if (!e) return;
-    this.baseUrl         = e.baseUrl;
+    this.baseUrl         = this.applyNamespaceToBaseUrl(e.baseUrl, this.namespace);
     this.oruCfgItem      = e.oruCfgItem;
     this.adtCfgItem      = e.adtCfgItem;
     this.username        = e.username;
     this.password        = e.password;
+  }
+
+  onNamespaceChange(): void {
+    this.baseUrl = this.applyNamespaceToBaseUrl(this.baseUrl, this.namespace);
   }
 
   private static readonly MALE_NAMES   = new Set(['Danmark','Marck-Augustus','Carl-Jamie','Francois','Neil','Adrian','Philippe','Jean-Michel','Olivier','Michael','Frederic','Ronald','Jean','Nicolas','Pierre']);
@@ -280,6 +315,7 @@ export class AppComponent {
 
   // Editable Nb messages combobox
   nbOpen = false;
+  namespaceOpen = false;
 
   toggleNb(): void { this.nbOpen = !this.nbOpen; }
 
@@ -292,7 +328,16 @@ export class AppComponent {
   onDocumentClick(event: MouseEvent): void {
     if (!(event.target as HTMLElement).closest('.combo')) {
       this.nbOpen = false;
+      this.namespaceOpen = false;
     }
+  }
+
+  toggleNamespace(): void { this.namespaceOpen = !this.namespaceOpen; }
+
+  selectNamespace(ns: string): void {
+    this.namespace = ns;
+    this.onNamespaceChange();
+    this.namespaceOpen = false;
   }
 
   onFirstNameChange(): void {

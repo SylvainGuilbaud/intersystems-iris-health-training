@@ -133,6 +133,16 @@
           <select [(ngModel)]="environment" name="environment" (ngModelChange)="onEnvChange()" class="cfg-select-sm">
             <option *ngFor="let k of envKeys" [value]="k">{{ k }}</option>
           </select>
+          <span class="cfg-label cfg-label-inline">{{ t.namespace }}</span>
+          <div class="combo namespace-combo">
+            <input type="text" [(ngModel)]="namespace" name="namespace" class="cfg-input-sm" autocomplete="off"
+                   (focus)="namespaceOpen = true" (ngModelChange)="onNamespaceChange()" />
+            <button type="button" class="combo-arrow" (click)="toggleNamespace()" tabindex="-1">▾</button>
+            <ul class="combo-list" *ngIf="namespaceOpen">
+              <li *ngFor="let n of namespaceOptions" (click)="selectNamespace(n)"
+                  [class.active]="namespace === n">{{ n }}</li>
+            </ul>
+          </div>
         </div>
 
         <div class="config-row">

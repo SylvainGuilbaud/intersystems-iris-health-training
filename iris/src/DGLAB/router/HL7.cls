@@ -49,9 +49,6 @@ XData RuleDefinition [ XMLNamespace = "http://www.intersystems.com/rule" ]
 <send transform="" target="forward Patient Information to DGLAB - FILE,forward Patient Information to DGLAB - HTTP,forward Patient Information to DGLAB - MLLP"></send>
 <trace value="&quot;Forward ADT to DGLAB FILE/HTTP/MLLP&quot;"></trace>
 </when>
-<otherwise>
-<trace value="&quot;ADT rule no match - DocType=&quot;_HL7.DocType_&quot; Source=&quot;_Source_&quot; MSH9.1=&quot;_HL7.{MSH:9.1}"></trace>
-</otherwise>
 </rule>
 </ruleSet>
 </ruleDefinition>
