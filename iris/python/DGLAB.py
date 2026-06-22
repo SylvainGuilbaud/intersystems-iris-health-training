@@ -536,6 +536,19 @@ def get_http_port():
 def get_http_credentials():
     return _login_http_auth or _current_http_auth or "_system:SYS"
 
+def _compose_http_base_url(server_ip, http_port, namespace):
+    host_part = f"{server_ip}:{http_port}" if http_port not in ("80", "443", "") else server_ip
+    return f"http://{host_part}/{namespace}/csp/healthshare/dglab"
+
+def get_http_base_url():
+    try:
+        value = base_url_var.get().strip()
+        if value:
+            return value.rstrip("/")
+    except Exception:
+        pass
+    return _compose_http_base_url(get_server_ip(), get_http_port(), get_http_namespace())
+
 _IRIS_SUPERSERVER_PORT_MAP = {
     "dev-aws": 1973,
     "prod-aws": 1972,
@@ -783,18 +796,15 @@ def send_hl7_http(message_generator=None, cfgitem=""):
     log_response.delete("1.0", tk.END)
     log_response.configure(state="disabled")
 
-    server_ip = get_server_ip()
-    namespace = get_http_namespace()
     credentials = get_http_credentials()
     nb = get_nb_messages()
     nb_threads = get_nb_threads()
 
-    csp_path = f"/{namespace}/csp/healthshare/dglab/EnsLib.HL7.Service.HTTPService.cls"
+    base_url = get_http_base_url()
+    csp_path = f"{base_url}/EnsLib.HL7.Service.HTTPService.cls"
     if cfgitem:
         csp_path += f"?CfgItem={urllib.parse.quote(cfgitem)}"
-    http_port = get_http_port()
-    host_part = f"{server_ip}:{http_port}" if http_port not in ("80", "443", "") else server_ip
-    url = f"http://{host_part}{csp_path}"
+    url = csp_path
     auth_header = "Basic " + base64.b64encode(credentials.encode()).decode()
 
     msg_type = "ADT" if message_generator is generate_adt_message else "ORU"
@@ -1023,7 +1033,7 @@ canvas.create_line(10, 675, 1718, 675, fill="#1a3a5c", width=1)             # di
 # Raw message override box (middle column)
 canvas.create_rectangle(785, 36, 1118, 402, outline="#2a4a6c", fill="", width=1)
 # Config panel (right side, under TECHNIDATA image)
-canvas.create_rectangle(1126, 158, 1726, 398, outline="#2a4a6c", fill="", width=1)
+canvas.create_rectangle(1126, 158, 1726, 425, outline="#2a4a6c", fill="", width=1)
 canvas.create_text(1426, 166, text="⚙  SERVER CONFIGURATION", fill=_ACCENT, font=("Avenir", 10, "bold"), anchor="center")
 canvas.create_line(1126, 174, 1726, 174, fill="#2a4a6c", width=1)
 
@@ -1122,6 +1132,12 @@ label_http_port = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), te
 entry_http_port = ttk.Combobox(window, font=("Avenir", 13), values=["80", "881", "443", "884"])
 entry_http_port.set("80")
 
+label_base_url = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Base URL")
+base_url_var = tk.StringVar(value=_compose_http_base_url(DEFAULT_SERVER_IP, "80", "iris-health-training-dev"))
+entry_base_url = tk.Entry(window, textvariable=base_url_var,
+                          bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT,
+                          selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 11))
+
 label_http_oru_cfgitem = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="ORU Cfg")
 entry_http_oru_cfgitem = ttk.Combobox(window, font=("Avenir", 13), values=["LAB RESULT from DGLAB - HTTP", "LAB RESULT from DGLAB - MLLP"])
 entry_http_oru_cfgitem.set("LAB RESULT from DGLAB - HTTP")
@@ -1139,6 +1155,7 @@ def _on_env_selected(event):
         entry_server_port.set(port)
         entry_adt_port.set(str(int(port) + 1))
         entry_http_port.set(http_port)
+        base_url_var.set(_compose_http_base_url(ip, http_port, namespace))
         _current_http_auth = auth
         entry_http_oru_cfgitem.set("LAB RESULT from DGLAB - HTTP")
         entry_http_adt_cfgitem.set("Patient Information from IHE PAM - HTTP")
@@ -1298,16 +1315,19 @@ entry_adt_port.place(x=1285, y=263, width=70)
 label_http_port.place(x=1133, y=292)
 entry_http_port.place(x=1285, y=290, width=70)
 
-label_http_adt_cfgitem.place(x=1133, y=319)
-entry_http_adt_cfgitem.place(x=1285, y=317, width=418)
+label_base_url.place(x=1133, y=319)
+entry_base_url.place(x=1285, y=317, width=418)
 
-label_http_oru_cfgitem.place(x=1133, y=346)
-entry_http_oru_cfgitem.place(x=1285, y=344, width=418)
+label_http_adt_cfgitem.place(x=1133, y=346)
+entry_http_adt_cfgitem.place(x=1285, y=344, width=418)
 
-label_nb_messages.place(x=1133, y=373)
-entry_nb_messages.place(x=1285, y=371, width=70)
-label_nb_threads.place(x=1365, y=373)
-entry_nb_threads.place(x=1455, y=371, width=60)
+label_http_oru_cfgitem.place(x=1133, y=373)
+entry_http_oru_cfgitem.place(x=1285, y=371, width=418)
+
+label_nb_messages.place(x=1133, y=400)
+entry_nb_messages.place(x=1285, y=398, width=70)
+label_nb_threads.place(x=1365, y=400)
+entry_nb_threads.place(x=1455, y=398, width=60)
 
 btn_lang.place(x=0, y=0, width=50)
 btn_logout.place(x=56, y=4, width=78, height=24)
