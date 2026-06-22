@@ -23,6 +23,13 @@ services:
       - TZ=Europe/Paris
       - ISC_DATA_DIRECTORY=/${ISC_DATA_DIRECTORY}
       - ISC_CPF_MERGE_FILE=/merge.cpf
+    healthcheck:
+      test: ["CMD", "iris", "session", "iris", "-U", "%SYS", "##class(%Api.Atelier).GetServer()"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
   iris-prod:
     build:
       args:
@@ -46,6 +53,12 @@ services:
       - TZ=Europe/Paris
       - ISC_DATA_DIRECTORY=/${ISC_DATA_DIRECTORY}
       - ISC_CPF_MERGE_FILE=/merge.cpf
+    healthcheck:
+      test: ["CMD", "iris", "session", "iris", "-U", "%SYS", "##class(%Api.Atelier).GetServer()"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
  
   webgateway: # Used for VS Code ObjectScript extension to connect to /api/atelier and for IRIS Administration Portal and Web Services
     image: containers.intersystems.com/intersystems/webgateway:latest-em
