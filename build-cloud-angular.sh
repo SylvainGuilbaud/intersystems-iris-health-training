@@ -2,7 +2,7 @@
 # Build the Angular app for cloud/AWS deployment.
 #
 # Output: iris/angular/dist/hl7-client/browser/
-# Served at: http://<host>:8080/app/   (baseHref=/app/)
+# Served at: http://<host>/app/   (baseHref=/app/)
 # Mounted into the nginx container at /usr/share/nginx/html/app (see docker-compose.yml).
 #
 # Usage:
@@ -70,4 +70,4 @@ echo "==> Restoring webgateway (remove old Angular mount)..."
 ssh -i "$ACCESS_KEY_FILENAME" "$CLOUD_USERNAME@$PUBLIC_DNS" \
     "sudo docker exec iris-health-training-webgateway-1 apache2ctl graceful 2>&1"
 
-echo "==> Done. App accessible at http://$PUBLIC_DNS:8080/app/"
+echo "==> Done. App accessible at http://$PUBLIC_DNS/app/"
