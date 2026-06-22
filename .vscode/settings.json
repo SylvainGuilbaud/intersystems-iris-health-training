@@ -14,15 +14,6 @@
             },
             "username": "superuser"
         },  
-        "iris-health-training-prod-aws": {
-            "webServer": {
-                "scheme": "http",
-                "host": "ec2-63-177-72-122.eu-central-1.compute.amazonaws.com",
-                "port": 80,
-                "pathPrefix": "/iris-health-training-prod"
-            },
-            "username": "superuser"
-        },
         "iris-health-training-dev-local": {
             "webServer": {
                 "scheme": "http",
@@ -33,16 +24,6 @@
             },
             "username": "superuser"
         },
-        "iris-health-training-prod-local": {
-            "webServer": {
-                "scheme": "http",
-                "host": "localhost",
-                // "host": "host.docker.internal",
-                "port": 80,
-                "pathPrefix": "/iris-health-training-prod"
-            },
-            "username": "superuser"
-        },
         "iris-health-training-dev-community": {
              "webServer": {
                 "scheme": "http",
@@ -50,16 +31,6 @@
                 // "host": "host.docker.internal",
                 "port": 881,
                 "pathPrefix": "/iris-health-training-dev"
-            },
-            "username": "superuser"
-        },
-        "iris-health-training-prod-community": {
-             "webServer": {
-                "scheme": "http",
-                "host": "localhost",
-                // "host": "host.docker.internal",
-                "port": 881,
-                "pathPrefix": "/iris-health-training-prod"
             },
             "username": "superuser"
         }
