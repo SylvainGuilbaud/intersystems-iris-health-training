@@ -4,7 +4,7 @@ source cloudenv
 
 
 if [ $# -lt 1 ]; then
-    echo "Usage: $0 NEW_PASSWORD [dev-aws|prod-aws|dev|prod] [-y]"
+    echo "Usage: $0 NEW_PASSWORD [dev-aws|prod-aws|dev|prod|dev-community|prod-community] [-y]"
     exit 1
 fi
 
@@ -29,8 +29,14 @@ case "$TARGET" in
     prod)
         CONTAINER="iris-health-training-prod"
         ;;
+    dev-community)
+        CONTAINER="iris-health-training-dev-community"
+        ;;
+    prod-community)
+        CONTAINER="iris-health-training-prod-community"
+        ;;
     *)
-        echo "Usage: $0 NEW_PASSWORD [dev-aws|prod-aws|dev|prod] [-y]"
+        echo "Usage: $0 NEW_PASSWORD [dev-aws|prod-aws|dev|prod|dev-community|prod-community] [-y]"
         exit 1
         ;;
 esac
@@ -45,7 +51,7 @@ EOF
 
 echo "Generated $CPF_FILE for instance $CONTAINER (target: $TARGET)"
 echo ""
-echo "About to modify users ' on container '$CONTAINER' (target: $TARGET)"
+echo "About to modify users 'Admin', 'SuperUser', and '_SYSTEM' on container '$CONTAINER' (target: $TARGET)"
 if [[ "$AUTO_YES" != "-y" ]]; then
     read -r -p "Are you sure? [y/N] " confirm
     if [[ ! "$confirm" =~ ^[yY]$ ]]; then

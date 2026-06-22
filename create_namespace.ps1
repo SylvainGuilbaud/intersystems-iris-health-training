@@ -22,8 +22,10 @@ switch ($Target) {
     "prod-aws" { $CONTAINER = "iris-health-training" }
     "dev"      { $CONTAINER = "iris-health-training-dev" }
     "prod"     { $CONTAINER = "iris-health-training" }
+    "dev-community" { $CONTAINER = "iris-health-training-dev-community" }
+    "prod-community" { $CONTAINER = "iris-health-training-prod-community" }
     default {
-        Write-Host "Usage: .\create_namespace.ps1 <Namespace> [dev-aws|prod-aws|dev|prod]"
+        Write-Host "Usage: .\create_namespace.ps1 <Namespace> [dev-aws|prod-aws|dev|prod|dev-community|prod-community]"
         exit 1
     }
 }

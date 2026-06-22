@@ -17,7 +17,7 @@ services:
       - dev_WIJ:/WIJ
       - ./iris/src:/code
       - ./data:/data
-      - ./merge-dev-local.cpf:/merge.cpf
+      - ./merge-dev-community.cpf:/merge.cpf
     restart: unless-stopped
     environment:
       - TZ=Europe/Paris
@@ -40,7 +40,7 @@ services:
       - prod_WIJ:/WIJ
       - ./iris/src:/code
       - ./data:/data
-      - ./merge-prod-local.cpf:/merge.cpf
+      - ./merge-prod-community.cpf:/merge.cpf
     restart: unless-stopped
     environment:
       - TZ=Europe/Paris

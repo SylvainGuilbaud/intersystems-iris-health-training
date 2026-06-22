@@ -22,8 +22,20 @@ case "$TARGET" in
     prod)
         CONTAINER="iris-health-training-prod"
         ;;
+    dev-local)
+        CONTAINER="iris-health-training-dev-local"
+        ;;
+    prod-local)
+        CONTAINER="iris-health-training-prod-local"
+        ;;
+    dev-community)
+        CONTAINER="iris-health-training-dev-community"
+        ;;
+    prod-community)
+        CONTAINER="iris-health-training-prod-community"
+        ;;
     *)
-        echo "Usage: $0 <Namespace> [dev-aws|prod-aws|dev|prod] [-y]"
+        echo "Usage: $0 <Namespace> [dev-aws|prod-aws|dev|prod|dev-community|prod-community] [-y]"
         exit 1
         ;;
 esac
