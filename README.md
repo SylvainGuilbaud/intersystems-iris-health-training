@@ -133,7 +133,7 @@ Stop:
 .\stop-community.ps1
 ```
 
-### Full Stack (non-local profile)
+### Full Stack
 
 **Linux/macOS:**
 ```bash
