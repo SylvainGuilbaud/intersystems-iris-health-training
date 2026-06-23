@@ -1130,11 +1130,11 @@ entry_nb_threads.set("1")
 
 _ENV_MAP = {
     "dev":              (DEFAULT_SERVER_IP, "9001",  "iris-health-training-dev",  "testuser:IRIS", "80"),
-    "prod":             (DEFAULT_SERVER_IP, "9500",  "iris-health-training-prod", "testuser:IRIS", "80"),
+    "prod":             (DEFAULT_SERVER_IP, "9501",  "iris-health-training-prod", "testuser:IRIS", "80"),
     "dev-community":  ("localhost",        "39001", "iris-health-training-dev",  "testuser:IRIS",        "881"),
     "prod-community": ("localhost",        "39501", "iris-health-training-prod", "testuser:IRIS",        "881"),
     "dev-local":            ("localhost",        "9001",  "iris-health-training-dev",  "testuser:IRIS", "80"),
-    "prod-local":           ("localhost",        "9002",  "iris-health-training-prod", "testuser:IRIS", "80"),
+    "prod-local":           ("localhost",        "9501",  "iris-health-training-prod", "testuser:IRIS", "80"),
 }
 _NAMESPACE_OPTIONS = [
     "Adrian", "Carl-Jamie", "Danmark", "Delphine", "DGLAB", "Francois", "Frederic",
