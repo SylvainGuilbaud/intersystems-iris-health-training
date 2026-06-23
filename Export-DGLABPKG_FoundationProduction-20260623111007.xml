@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="IRIS" version="26" zv="IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2026.1 (Build 235U)" ts="2026-06-23 11:14:10">
+<Class name="DGLAB.router.HL7">
+<Description>
+</Description>
+<Super>Ens.Rule.Definition</Super>
+<TimeChanged>67743,44810.26571576</TimeChanged>
+<TimeCreated>67738,58398.046889423</TimeCreated>
+
+<Parameter name="RuleAssistClass">
+<Default>EnsLib.HL7.MsgRouter.RuleAssist</Default>
+</Parameter>
+
+<XData name="RuleDefinition">
+<XMLNamespace>http://www.intersystems.com/rule</XMLNamespace>
+<Data><![CDATA[
+<ruleDefinition alias="" context="EnsLib.HL7.MsgRouter.RoutingEngine" production="DGLABPKG.FoundationProduction">
+<ruleSet name="" effectiveBegin="" effectiveEnd="">
+<rule name="ORU to EMR">
+<constraint name="source" value=""></constraint>
+<constraint name="docCategory" value="2.3"></constraint>
+<constraint name="docName" value="ORU_R01"></constraint>
+<when condition="1" comment="">
+<foreach propertypath="HL7.{PIDgrpgrp().ORCgrp().OBXgrp().OBX}">
+<when condition="(Segment.{ObservationIdentifier.identifier}=&quot;PDFREPORT&quot;)&amp;&amp;(Segment.{ValueType}=&quot;ED&quot;)" comment="">
+<send transform="DGLAB.transfo.ORU.transcodage" target="to EMR - FILE"></send>
+<trace value="&quot;Encapsulted Data&quot;"></trace>
+</when>
+<when condition="(Segment.{ObservationIdentifier.identifier}=&quot;PDFREPORT&quot;)&amp;&amp;(Segment.{ValueType}=&quot;RP&quot;)" comment="">
+<send transform="DGLAB.transfo.ORU.transcodage" target="to EMR - FILE"></send>
+<trace value="&quot;Reference Pointer&quot;"></trace>
+</when>
+<otherwise>
+<trace value="&quot;no action&quot;"></trace>
+</otherwise>
+</foreach>
+</when>
+</rule>
+<rule name="ORU to FILE">
+<constraint name="source" value=""></constraint>
+<constraint name="docCategory" value="2.3"></constraint>
+<constraint name="docName" value="ORU_R01"></constraint>
+<when condition="((Source Contains &quot;FILE&quot;)=0)&amp;&amp;(HL7.{MSH:ReceivingFacility.namespaceID}=&quot;FILE&quot;)" comment="">
+<send transform="DGLAB.transfo.ORU.transcodage" target="forward to LAB RESULT from DGLAB - FILE"></send>
+<trace value="&quot;Forward to LAB RESULT from DGLAB - FILE&quot;"></trace>
+</when>
+</rule>
+<rule name="ADT to DGLAB">
+<constraint name="source" value=""></constraint>
+<constraint name="docCategory" value=""></constraint>
+<constraint name="docName" value=""></constraint>
+<when condition="(Source Contains &quot;IHE PAM&quot;)&amp;&amp;(HL7.{MSH:9.1}=&quot;ADT&quot;)" comment="">
+<send transform="DGLAB.transfo.IHEPAM.seances" target="forward Patient Information to DGLAB - MLLP"></send>
+<trace value="&quot;Forward IHE PAM ADT to DGLAB MLLP&quot;"></trace>
+</when>
+<when condition="((Source Contains &quot;FILE&quot;)=0)&amp;&amp;(HL7.{MSH:9.1}=&quot;ADT&quot;)" comment="">
+<send transform="" target="forward Patient Information to DGLAB - FILE,forward Patient Information to DGLAB - HTTP,forward Patient Information to DGLAB - MLLP"></send>
+<trace value="&quot;Forward ADT to DGLAB FILE/HTTP/MLLP&quot;"></trace>
+</when>
+</rule>
+</ruleSet>
+</ruleDefinition>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="DGLAB.transfo.IHEPAM.seances">
+<Super>Ens.DataTransformDTL</Super>
+<TimeChanged>67740,72103.39933759</TimeChanged>
+<TimeCreated>67740,69281.409282798</TimeCreated>
+<DependsOn>EnsLib.HL7.Message</DependsOn>
+
+<Parameter name="GENERATEEMPTYSEGMENTS">
+<Default>0</Default>
+</Parameter>
+
+<Parameter name="IGNOREMISSINGSOURCE">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="REPORTERRORS">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="TREATEMPTYREPEATINGFIELDASNULL">
+<Default>0</Default>
+</Parameter>
+
+<XData name="DTL">
+<XMLNamespace>http://www.intersystems.com/dtl</XMLNamespace>
+<Data><![CDATA[
+<transform sourceClass='EnsLib.HL7.Message' targetClass='EnsLib.HL7.Message' sourceDocType='HL7v25IHE:ADT_AXX' targetDocType='HL7v25IHE:ADT_AXX' create='copy' language='objectscript' >
+<annotation>Session-stay handling: if PV1-51=V (visit) the admission/discharge dates (PV1-44/45) are ignored, hence the stay opening/closing/cancellation is ignored; if PV1-51=A (account) the message is handled normally (copy). Title, gender and patient class are transcoded via the shared tables (Titles, Gender, PatientClasses).</annotation>
+<assign value='..Lookup("Titles",source.{PID:5.5},source.{PID:5.5})' property='target.{PID:5.5}' action='set' >
+<annotation>Title (PID-5.5) normalized via the SHARED Titles table (common to ADT/ORU)</annotation>
+</assign>
+<assign value='..Lookup("Gender",source.{PID:8},source.{PID:8})' property='target.{PID:8}' action='set' >
+<annotation>Gender normalized via the shared Gender table</annotation>
+</assign>
+<if condition='source.{PV1:51}="V"' >
+<annotation>Visit level (session): ignore stay opening, closing and cancellation</annotation>
+<true>
+<assign value='""' property='target.{PV1:44}' action='set' >
+<annotation>Ignore PV1-44 Admission Date/Time</annotation>
+</assign>
+<assign value='""' property='target.{PV1:45}' action='set' >
+<annotation>Ignore PV1-45 Discharge Date/Time</annotation>
+</assign>
+</true>
+</if>
+</transform>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="DGLAB.transfo.ORU.transcodage">
+<Super>Ens.DataTransformDTL</Super>
+<TimeChanged>67740,72049.393113426</TimeChanged>
+<TimeCreated>67740,70861.647041835</TimeCreated>
+<DependsOn>EnsLib.HL7.Message</DependsOn>
+
+<Parameter name="GENERATEEMPTYSEGMENTS">
+<Default>0</Default>
+</Parameter>
+
+<Parameter name="IGNOREMISSINGSOURCE">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="REPORTERRORS">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="TREATEMPTYREPEATINGFIELDASNULL">
+<Default>0</Default>
+</Parameter>
+
+<XData name="DTL">
+<XMLNamespace>http://www.intersystems.com/dtl</XMLNamespace>
+<Data><![CDATA[
+<transform sourceClass='EnsLib.HL7.Message' targetClass='EnsLib.HL7.Message' sourceDocType='2.3:ORU_R01' targetDocType='2.3:ORU_R01' create='copy' language='objectscript' >
+<annotation>ORU transmission: title, gender and patient class transcoded via the SAME shared tables as the ADT reception (Titles, Gender, PatientClasses). Demonstrates sharing a transcoding centralized in the IRIS namespace, which cannot be centralized on the DGLab side.</annotation>
+<assign value='..Lookup("Titles",source.{PIDgrpgrp(1).PIDgrp.PID:PatientName.prefix})' property='target.{PIDgrpgrp().PIDgrp.PID:PatientName.prefix}' action='set' />
+<assign value='..Lookup("Gender",source.{PIDgrpgrp(1).PIDgrp.PID:Sex})' property='target.{PIDgrpgrp(1).PIDgrp.PID:Sex}' action='set' />
+</transform>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="DGLABPKG.FoundationProduction">
+<ProcedureBlock>0</ProcedureBlock>
+<Super>Ens.Production</Super>
+<TimeChanged>67744,30291.886907942</TimeChanged>
+<TimeCreated>67738,58356.378945668</TimeCreated>
+
+<XData name="ProductionDefinition">
+<Data><![CDATA[
+<Production Name="DGLABPKG.FoundationProduction" TestingEnabled="true" LogGeneralTraceEvents="true">
+  <Description></Description>
+  <ActorPoolSize>1</ActorPoolSize>
+  <Setting Target="Adapter" Name="ShutdownTimeout">5</Setting>
+  <Setting Target="Adapter" Name="UpdateTimeout">5</Setting>
+  <Item Name="HL7" Category="" ClassName="EnsLib.HL7.MsgRouter.RoutingEngine" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="true" Schedule="">
+    <Setting Target="Host" Name="BusinessRuleName">DGLAB.router.HL7</Setting>
+  </Item>
+  <Item Name="to EMR - FILE" Category="" ClassName="EnsLib.HL7.Operation.FileOperation" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="true" Schedule="">
+  </Item>
+  <Item Name="LAB RESULT from DGLAB - MLLP" Category="" ClassName="EnsLib.HL7.Service.TCPService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="true" Schedule="">
+    <Setting Target="Host" Name="TargetConfigNames">HL7</Setting>
+    <Setting Target="Adapter" Name="JobPerConnection">1</Setting>
+    <Setting Target="Host" Name="AddNackERR">1</Setting>
+    <Setting Target="Host" Name="NackErrorCode">AllE</Setting>
+    <Setting Target="Host" Name="PreACKTCPClear">1</Setting>
+    <Setting Target="Host" Name="SaveReplies">All</Setting>
+  </Item>
+  <Item Name="LAB RESULT from DGLAB - FILE" Category="" ClassName="EnsLib.HL7.Service.FileService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="true" Schedule="">
+    <Setting Target="Host" Name="TargetConfigNames">HL7</Setting>
+    <Setting Target="Host" Name="AddNackERR">1</Setting>
+    <Setting Target="Host" Name="NackErrorCode">AllE</Setting>
+    <Setting Target="Host" Name="SaveReplies">All</Setting>
+  </Item>
+  <Item Name="Patient Information from IHE PAM - MLLP" Category="" ClassName="EnsLib.HL7.Service.TCPService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+    <Setting Target="Adapter" Name="JobPerConnection">1</Setting>
+    <Setting Target="Host" Name="TargetConfigNames">HL7</Setting>
+  </Item>
+  <Item Name="Patient Information from IHE PAM - FILE" Category="" ClassName="EnsLib.HL7.Service.FileService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+    <Setting Target="Host" Name="TargetConfigNames">HL7</Setting>
+  </Item>
+  <Item Name="forward to LAB RESULT from DGLAB - FILE" Category="" ClassName="EnsLib.HL7.Operation.FileOperation" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="true" Schedule="">
+  </Item>
+  <Item Name="LAB RESULT from DGLAB - HTTP" Category="" ClassName="EnsLib.HL7.Service.HTTPService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="true" Schedule="">
+    <Setting Target="Host" Name="TargetConfigNames">HL7</Setting>
+    <Setting Target="Host" Name="AddNackERR">1</Setting>
+    <Setting Target="Host" Name="EnableStandardRequests">1</Setting>
+  </Item>
+  <Item Name="Patient Information from IHE PAM - HTTP" Category="" ClassName="EnsLib.HL7.Service.HTTPService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="true" Schedule="">
+    <Setting Target="Host" Name="TargetConfigNames">HL7</Setting>
+    <Setting Target="Host" Name="AddNackERR">1</Setting>
+    <Setting Target="Host" Name="EnableStandardRequests">1</Setting>
+    <Setting Target="Adapter" Name="JobPerConnection">1</Setting>
+  </Item>
+  <Item Name="forward Patient Information to DGLAB - MLLP" Category="" ClassName="EnsLib.HL7.Operation.TCPOperation" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+  </Item>
+  <Item Name="forward Patient Information to DGLAB - FILE" Category="" ClassName="EnsLib.HL7.Operation.FileOperation" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+  </Item>
+  <Item Name="forward Patient Information to DGLAB - HTTP" Category="" ClassName="EnsLib.HL7.Operation.HTTPOperation" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+  </Item>
+  <Item Name="Patient Information from IHE PAM" Category="" ClassName="EnsLib.HL7.Service.FileService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+    <Setting Target="Host" Name="TargetConfigNames">HL7</Setting>
+  </Item>
+</Production>
+]]></Data>
+</XData>
+</Class>
+
+
+<Project name="EnsExportProduction_2026-06-23 11-10-07_539+2" LastModified="2026-06-23 11:14:10.590659692">
+  <ProjectDescription>Studio Project generated from Production 'DGLABPKG.FoundationProduction' at 2026-06-23 09:10:07.539 UTC</ProjectDescription>
+  <Items>
+    <ProjectItem name="DGLAB.router.HL7" type="CLS"></ProjectItem>
+    <ProjectItem name="DGLAB.transfo.IHEPAM.seances" type="CLS"></ProjectItem>
+    <ProjectItem name="DGLAB.transfo.ORU.transcodage" type="CLS"></ProjectItem>
+    <ProjectItem name="DGLABPKG.FoundationProduction" type="CLS"></ProjectItem>
+    <ProjectItem name="Ens.Config.DefaultSettings.ESD" type="ESD"></ProjectItem>
+    <ProjectItem name="HL7v25IHE.HL7" type="HL7"></ProjectItem>
+    <ProjectItem name="Gender.LUT" type="LUT"></ProjectItem>
+    <ProjectItem name="Titles.LUT" type="LUT"></ProjectItem>
+    <ProjectItem name="EnsExportNotes.EnsExportProduction_2026-06-23 11-10-07_539+2.PTD" type="PTD"></ProjectItem>
+  </Items>
+</Project>
+
+
+<Document name="Ens.Config.DefaultSettings.ESD">
+<defaultSettings>
+<item production="*" item="*" class="*" setting="ArchiveIO" value="1"><Deployable>true</Deployable></item>
+<item production="*" item="*" class="*" setting="QSize" value="200"><Deployable>true</Deployable></item>
+<item production="*" item="LAB RESULT from DGLAB - FILE" class="*" setting="FilePath" value="/data/dev/TRAINING/HL7/ORU/in/"><Deployable>true</Deployable></item>
+<item production="*" item="LAB RESULT from DGLAB - FILE" class="*" setting="MessageSchemaCategory" value="2.3"><Deployable>true</Deployable></item>
+<item production="*" item="LAB RESULT from DGLAB - FILE" class="*" setting="WorkPath" value="/data/dev/TRAINING/HL7/ORU/work/"><Deployable>true</Deployable></item>
+<item production="*" item="LAB RESULT from DGLAB - HTTP" class="*" setting="MessageSchemaCategory" value="2.3"><Deployable>true</Deployable></item>
+<item production="*" item="LAB RESULT from DGLAB - HTTP" class="*" setting="Port" value="9180"><Deployable>true</Deployable></item>
+<item production="*" item="LAB RESULT from DGLAB - HTTP" class="*" setting="StayConnected" value="30"><Deployable>true</Deployable></item>
+<item production="*" item="LAB RESULT from DGLAB - MLLP" class="*" setting="MessageSchemaCategory" value="2.3"><Deployable>true</Deployable></item>
+<item production="*" item="LAB RESULT from DGLAB - MLLP" class="*" setting="Port" value="9120"><Deployable>true</Deployable></item>
+<item production="*" item="Patient Information from IHE PAM" class="*" setting="FilePath" value="/data/dev/HL7/ADT/IHEPAM"><Deployable>true</Deployable></item>
+<item production="*" item="Patient Information from IHE PAM" class="*" setting="MessageSchemaCategory" value="HL7v25IHE:ADT_AXX"><Deployable>true</Deployable></item>
+<item production="*" item="Patient Information from IHE PAM - FILE" class="*" setting="FilePath" value="/data/dev/TRAINING/HL7/ADT/in/"><Deployable>true</Deployable></item>
+<item production="*" item="Patient Information from IHE PAM - FILE" class="*" setting="MessageSchemaCategory" value="HL7v25IHE:ADT_AXX"><Deployable>true</Deployable></item>
+<item production="*" item="Patient Information from IHE PAM - HTTP" class="*" setting="MessageSchemaCategory" value="HL7v25IHE:ADT_AXX"><Deployable>true</Deployable></item>
+<item production="*" item="Patient Information from IHE PAM - HTTP" class="*" setting="Port" value="9200"><Deployable>true</Deployable></item>
+<item production="*" item="Patient Information from IHE PAM - MLLP" class="*" setting="MessageSchemaCategory" value="HL7v25IHE:ADT_AXX"><Deployable>true</Deployable></item>
+<item production="*" item="Patient Information from IHE PAM - MLLP" class="*" setting="Port" value="9140"><Deployable>true</Deployable></item>
+<item production="*" item="forward Patient Information to DGLAB - FILE" class="*" setting="FilePath" value="data/dev/TRAINING/HL7/ADT/in/"><Deployable>true</Deployable></item>
+<item production="*" item="forward Patient Information to DGLAB - HTTP" class="*" setting="HTTPPort" value="9050"><Deployable>true</Deployable></item>
+<item production="*" item="forward Patient Information to DGLAB - MLLP" class="*" setting="IPAddress" value="iris-health-training-dev"><Deployable>true</Deployable></item>
+<item production="*" item="forward Patient Information to DGLAB - MLLP" class="*" setting="Port" value="9160"><Deployable>true</Deployable></item>
+<item production="*" item="forward to LAB RESULT from DGLAB - FILE" class="*" setting="FilePath" value="/data/dev/TRAINING/HL7/ORU/in/"><Deployable>true</Deployable></item>
+<item production="*" item="to EMR - FILE" class="*" setting="FilePath" value="/data/dev/HL7/ORU/out"><Deployable>true</Deployable></item>
+<item production="*" item="to EMR - FILE" class="*" setting="Filename" value="from_TRAINING_to_EMR_%Q.hl7"><Deployable>true</Deployable></item>
+</defaultSettings>
+</Document>
+
+<Document name="EnsExportNotes.EnsExportProduction_2026-06-23 11-10-07_539+2.PTD"><ProjectTextDocument name="EnsExportNotes.EnsExportProduction_2026-06-23 11-10-07_539+2" description="Export Notes for export EnsExportProduction_2026-06-23 11-10-07_539+2">
+<![CDATA[<Deployment>
+<Creation>
+<Machine>IRIS-HEALTH-TRAINING-DEV</Machine>
+<Instance>IRIS</Instance>
+<Namespace>TRAINING</Namespace>
+<SourceProduction>DGLABPKG.FoundationProduction</SourceProduction>
+<Username>TESTUSER</Username>
+<UTC>2026-06-23 09:14:10.589</UTC>
+</Creation>
+<Notes>
+</Notes>
+<Contents>
+<ExportProject>EnsExportProduction_2026-06-23 11-10-07_539+2</ExportProject>
+<Item num="1">DGLAB.router.HL7.CLS</Item>
+<Item num="2">DGLAB.transfo.IHEPAM.seances.CLS</Item>
+<Item num="3">DGLAB.transfo.ORU.transcodage.CLS</Item>
+<Item num="4">DGLABPKG.FoundationProduction.CLS</Item>
+<Item num="5">Ens.Config.DefaultSettings.ESD</Item>
+<Item num="6">Gender.LUT</Item>
+<Item num="7">HL7v25IHE.HL7</Item>
+<Item num="8">Titles.LUT</Item>
+</Contents>
+<ProductionClassInExport>DGLABPKG.FoundationProduction</ProductionClassInExport>
+</Deployment>
+
+]]></ProjectTextDocument>
+</Document>
+
+<Document name="Gender.LUT">
+<lookupTable>
+<entry table="Gender" key="1">M</entry>
+<entry table="Gender" key="2">F</entry>
+<entry table="Gender" key="9">U</entry>
+<entry table="Gender" key="F">F</entry>
+<entry table="Gender" key="H">M</entry>
+<entry table="Gender" key="M">M</entry>
+<entry table="Gender" key="U">U</entry>
+</lookupTable>
+</Document>
+
+<Document name="HL7v25IHE.HL7">
+<Category name="HL7v25IHE" base="2.5">
+
+<MessageType name='ADT_AXX' structure='ADT_AXX'/>
+<MessageType name='QBP_ZV1' structure='QBP_ZV1' returntype='RSP_ZV2'/>
+<MessageType name='RSP_ZV2' structure='RSP_ZV2'/>
+<MessageType name='SIU_SXX' structure='SIU_SXX'/>
+
+<MessageStructure name='ADT_AXX' definition='base:MSH~[~base:EVN~]~base:PID~[~base:PD1~]~[~base:MRG~]~[~{~base:ROL~}~]~[~{~base:NK1~}~]~[~base:PV1~]~[~base:PV2~]~[~ZBE~]~[~ZFA~]~[~ZFP~]~[~ZFV~]~[~ZFM~]~[~ZFD~]~[~{~ZFS~}~]~[~base:OBX~]~[~{~base:IN1~[~base:IN2~]~[~{~base:IN3~}~]~[~{~base:ROL~}~]~}~]~[~base:ACC~]' description='ADT message'/>
+<MessageStructure name='QBP_ZV1' definition='base:MSH~[~{~base:SFT~}~]~QPD~base:RCP~[~base:DSC~]'/>
+<MessageStructure name='RSP_ZV2' definition='base:MSH~[~{~base:SFT~}~]~base:MSA~[~base:ERR~]~base:QAK~QPD~[~{~base:PID~[~base:PD1~]~[~{~base:NK1~}~]~[~{~base:PV1~}~]~[~base:QRI~]~}~]~[~base:DSC~]'/>
+<MessageStructure name='SIU_SXX' definition='base:MSH~base:SCH~[~{~base:TQ1~}~]~[~{~base:NTE~}~]~base:PID~[~base:PD1~]~[~base:PV1~]~[~base:PV2~]~[~{~base:OBX~}~]~[~{~base:DG1~}~]~{~base:RGS~[~{~base:AIS~[~{~base:NTE~}~]~}~]~[~{~base:AIG~[~{~base:NTE~}~]~}~]~[~{~base:AIL~[~{~base:NTE~}~]~}~]~[~{~base:AIP~[~{~base:NTE~}~]~}~]~}'/>
+
+<SegmentStructure name='QPD' description='Query Parameter Definition'>
+    <SegmentSubStructure piece='1' description='Message Query Name' datatype='base:CE' symbol='!' max_length='250' required='R' ifrepeating='0' codetable='base:471'/>
+    <SegmentSubStructure piece='2' description='Query Tag' datatype='base:ST' symbol='?' max_length='32' required='C' ifrepeating='0'/>
+    <SegmentSubStructure piece='3' description='User Parameters (in successive fields)' symbol='*' max_length='256' required='O' ifrepeating='1'/>
+</SegmentStructure>
+<SegmentStructure name='ZBE' description='Movement Action segment'>
+    <SegmentSubStructure piece='1' description='Movement ID' datatype='base:EI' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='2' description='Start Movement Date/Time' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='3' description='End Movement Date/Time' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='4' description='Movement Action' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='5' description='Historical Movement Indicator' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='6' description='Original trigger event code' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='7' description='Responsible Ward' datatype='base:XON' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='8' description='Responsible Care' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='9' description='Nature Mouvement' max_length='0' required='O' ifrepeating='0'/>
+</SegmentStructure>
+<SegmentStructure name='ZFA' description='DMP'>
+    <SegmentSubStructure piece='1' description='Statut DMP' max_length='20' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='2' description='Date Recueil Statut DMP' max_length='26' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='3' description='Date Fermeture DMP' max_length='26' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='4' description='Autorisation Acces Valide' max_length='1' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='5' description='Date Recueil Etat Autorisation' max_length='26' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='6' description='Opposition Bris Glace' max_length='1' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='7' description='Opposition Centre Regulation' max_length='1' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='8' description='Date Recueil Oppositions' max_length='26' required='O' ifrepeating='0'/>
+</SegmentStructure>
+<SegmentStructure name='ZFD' description='Complement demographique'>
+    <SegmentSubStructure piece='1' description='Date Lunaire' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='2' description='Nombre de semaines de gestation' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='3' description='Consentement SMS' max_length='1' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='4' description='Indicateur de DDN corrige' max_length='1' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='5' description='Mode obtention identite' max_length='8' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='6' description='Date interrogation teleservice INSi' max_length='26' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='7' description='Type justificatif identite' max_length='16' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='8' description='Date fin validite du document' max_length='26' required='O' ifrepeating='0'/>
+</SegmentStructure>
+<SegmentStructure name='ZFM' description='Mouvement PMSI'>
+    <SegmentSubStructure piece='1' description='Mode Entree PMSI' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='2' description='Mode Sortie PMSI' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='3' description='Mode Provenance PMSI' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='4' description='Mode Destination PMSI' max_length='60' required='O' ifrepeating='0'/>
+</SegmentStructure>
+<SegmentStructure name='ZFP' description='Situation professionnelle'>
+    <SegmentSubStructure piece='1' description='Activite sociopro' max_length='60' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='2' description='Categorie sociopro' max_length='60' required='O' ifrepeating='0'/>
+</SegmentStructure>
+<SegmentStructure name='ZFS' description='Mode legal de soins en psychiatrie'>
+    <SegmentSubStructure piece='1' description='Set ID ZFS' max_length='4' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='2' description='Identifiant' datatype='base:EI' max_length='427' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='3' description='Date Heure Debut Mode Legal' datatype='base:TS' max_length='26' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='4' description='Date Heure Fin Mode Legal' datatype='base:TS' max_length='26' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='5' description='Action' max_length='6' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='6' description='Mode Legal' datatype='base:CWE' max_length='250' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='7' description='Code RIMP-P Mode Legal' datatype='base:CNE' max_length='2' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='8' description='Commentaires' max_length='65536' required='O' ifrepeating='0'/>
+</SegmentStructure>
+<SegmentStructure name='ZFV' description='Complements sur la rencontre'>
+    <SegmentSubStructure piece='1' description='Etb provenance' datatype='base:DLD' max_length='47' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='2' description='Mode de transport de sortie' datatype='base:CE' max_length='250' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='3' description='Type de preadmission' max_length='2' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='4' description='Date debut placement psy' datatype='base:TS' max_length='26' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='5' description='Date fin placement psy' datatype='base:TS' max_length='26' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='6' description='Adresse etb provenance ou destination' datatype='base:XAD' max_length='250' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='7' description='NDA etb provenance' datatype='base:CX' max_length='250' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='8' description='Numero archives' datatype='base:CX' max_length='250' required='O' ifrepeating='0'/>
+    <SegmentSubStructure piece='9' description='Mode sortie personnalise' max_length='6' required='O' ifrepeating='0'/>
+</SegmentStructure>
+
+<DataType name='ISC_VERSION' description='$Id: //legacy/fr_products/CCOMTCC/MAIN/schema/hl7/HL7v25IHE.xml#18 $'>
+</DataType>
+
+</Category>
+</Document>
+
+<Document name="Titles.LUT">
+<lookupTable>
+<entry table="Titles" key="1">Mr.</entry>
+<entry table="Titles" key="2">Mrs.</entry>
+<entry table="Titles" key="3">Miss</entry>
+<entry table="Titles" key="DOCTEUR">Dr</entry>
+<entry table="Titles" key="DOCTOR">Dr</entry>
+<entry table="Titles" key="DR">Dr</entry>
+<entry table="Titles" key="M">Mr.</entry>
+<entry table="Titles" key="MADAME">Mrs.</entry>
+<entry table="Titles" key="MADEMOISELLE">Miss</entry>
+<entry table="Titles" key="MISS">Miss</entry>
+<entry table="Titles" key="MISTER">Mr.</entry>
+<entry table="Titles" key="MLLE">Miss</entry>
+<entry table="Titles" key="MME">Mrs.</entry>
+<entry table="Titles" key="MONSIEUR">Mr.</entry>
+<entry table="Titles" key="MR">Mr.</entry>
+<entry table="Titles" key="MRS">Mrs.</entry>
+<entry table="Titles" key="PR">Prof.</entry>
+<entry table="Titles" key="PROF">Prof.</entry>
+<entry table="Titles" key="PROFESSOR">Prof.</entry>
+</lookupTable>
+</Document></Export>

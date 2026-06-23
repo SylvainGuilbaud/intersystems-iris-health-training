@@ -1141,27 +1141,6 @@ _NAMESPACE_OPTIONS = [
     "Jean-Michel", "Marck-Augustus", "Michael", "Neil", "Olivier", "Philippe",
     "QA-TESTING", "Rochelle", "Ronald", "Sophie", "STAGE", "Sylvain", "TRAINING", "UAT"
 ]
-
-# Per-namespace MLLP port map (from training port assignment table)
-# Tuple: (ORU port, ADT port)
-_NAMESPACE_PORT_MAP = {
-    "Delphine":       ("9101", "9121"),
-    "Danmark":        ("9102", "9122"),
-    "Marck-Augustus": ("9103", "9123"),
-    "Carl-Jamie":     ("9104", "9124"),
-    "Francois":       ("9105", "9125"),
-    "Rochelle":       ("9106", "9126"),
-    "Neil":           ("9107", "9127"),
-    "Adrian":         ("9108", "9128"),
-    "Philippe":       ("9109", "9129"),
-    "Jean-Michel":    ("9110", "9130"),
-    "Olivier":        ("9111", "9131"),
-    "Michael":        ("9112", "9132"),
-    "Sophie":         ("9113", "9133"),
-    "Frederic":       ("9114", "9134"),
-    "Ronald":         ("9115", "9135"),
-    "TRAINING":       ("9120", "9140"),
-}
 _current_http_auth = _ENV_MAP["dev"][3]
 
 label_environment = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Environment")
@@ -1231,10 +1210,6 @@ def _on_namespace_selected(event=None):
     if not namespace:
         return
     base_url_var.set(_compose_http_base_url(get_server_ip(), get_http_port(), namespace, _get_http_instance_for_env()))
-    if namespace in _NAMESPACE_PORT_MAP:
-        oru_port, adt_port = _NAMESPACE_PORT_MAP[namespace]
-        entry_server_port.set(oru_port)
-        entry_adt_port.set(adt_port)
 
 def _on_login_gate_submit(event=None):
     global _is_logged_in, _login_http_auth
