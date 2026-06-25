@@ -28,6 +28,19 @@ XData RuleDefinition [ XMLNamespace = "http://www.intersystems.com/rule" ]
 </foreach>
 </when>
 </rule>
+<rule name="High sodium to EMR">
+<constraint name="source" value=""></constraint>
+<constraint name="docCategory" value="2.3"></constraint>
+<constraint name="docName" value="ORU_R01"></constraint>
+<when condition="1" comment="">
+<foreach propertypath="HL7.{PIDgrpgrp().ORCgrp().OBXgrp().OBX}">
+<when condition="(Segment.{ObservationIdentifier.identifier}=&quot;296&quot; || Segment.{ObservationIdentifier.text}=&quot;S-Sodium&quot;)&amp;&amp;(Segment.{ObservationValue}&gt;150)" comment="">
+<send transform="DGLAB.transfo.ORU.transcodage" target="to EMR - FILE"></send>
+<trace value="&quot;High sodium result routed to EMR&quot;"></trace>
+</when>
+</foreach>
+</when>
+</rule>
 <rule name="ORU to FILE">
 <constraint name="source" value=""></constraint>
 <constraint name="docCategory" value="2.3"></constraint>

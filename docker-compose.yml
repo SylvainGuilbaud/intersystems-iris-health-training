@@ -101,8 +101,29 @@ services:
     restart: unless-stopped
     networks:
       - default
- 
+  postgres:
+    container_name: training-postgres
+    hostname: training-postgres
+    image: postgres:17
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./postgreSQL:/docker-entrypoint-initdb.d/
+      - databases_postgreSQL:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    restart: unless-stopped
+    healthcheck:
+        test: ["CMD", "pg_isready", "-U", "postgres"]
+        interval: 30s
+        timeout: 30s
+        retries: 3
+    networks:
+      - default 
 volumes:
+  databases_postgreSQL:
+    external: true
+    name: ${IRIS_INSTANCE_NAME}_databases_postgreSQL
   dev_databases:
     external: true
     name: ${IRIS_INSTANCE_NAME}_dev_databases  

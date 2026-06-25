@@ -2,12 +2,14 @@
 # Start script for iris-training
 # This script is used to start the IRIS container and ensure that the correct permissions are set on the persistent volumes.
 
+set -euo pipefail
+
 # Copy the .env.test file to .env to ensure that the correct environment variables are used for the training instance
 source .env
 
 # Set permissions on the persistent volumes
 echo "Setting permissions on persistent volumes..."
-create_volumes_with_permissions.sh
+./create_volumes_with_permissions.sh
 
 # Start the containers
 echo "Starting the containers..."

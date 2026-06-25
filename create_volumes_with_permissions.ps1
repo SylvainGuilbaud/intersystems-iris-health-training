@@ -19,6 +19,19 @@ $volumePrefix = if ($args.Count -gt 0) { $args[0] } else { $env:IRIS_INSTANCE_NA
 
 Write-Host "Setting permissions on persistent volumes for instance: $volumePrefix"
 
+function Ensure-VolumeExists {
+    param([string]$volumeName)
+
+    & docker volume inspect "$volumeName" *> $null
+    if ($LASTEXITCODE -ne 0) {
+        & docker volume create "$volumeName" *> $null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "ERROR: Failed to create volume $volumeName" -ForegroundColor Red
+            exit 1
+        }
+    }
+}
+
 function Set-VolumePermissions {
     param([string]$suffix)
     
@@ -26,6 +39,7 @@ function Set-VolumePermissions {
     $mountPoint = "/$suffix"
     
     Write-Host "Setting permissions for volume: $volumeName"
+    Ensure-VolumeExists $volumeName
     
     & docker run --rm -v "${volumeName}:${mountPoint}" alpine sh -c `
         "chown -R 51773:51773 ${mountPoint} && chmod -R u+rwX,g+rwX ${mountPoint}"
@@ -45,5 +59,8 @@ Set-VolumePermissions "prod_databases"
 Set-VolumePermissions "prod_journal"
 Set-VolumePermissions "prod_journal2"
 Set-VolumePermissions "prod_WIJ"
+
+# Postgres volume is declared as external in docker-compose.yml; create it if missing.
+Ensure-VolumeExists "${volumePrefix}_databases_postgreSQL"
 
 Write-Host "Permissions set successfully." -ForegroundColor Green

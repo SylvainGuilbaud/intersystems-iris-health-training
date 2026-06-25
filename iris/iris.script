@@ -13,6 +13,56 @@
     set appProperties("DeepSeeEnabled")=1
     set sc = ##class(Security.Applications).Modify(app,.appProperties)
 
+     set SQLGateway = ##class(%SQLConnection).%New()
+    set SQLGateway.Name = "iris"
+    set SQLGateway.isJDBC = 1
+    set SQLGateway.driver = "com.intersystems.jdbc.IRISDriver"
+    set SQLGateway.URL = "jdbc:IRIS://host.docker.internal:11972/IRISAPP"
+    set SQLGateway.classpath = "/jdbc/intersystems-jdbc-3.10.5.jar"
+    set SQLGateway.Usr = "_SYSTEM"
+    set SQLGateway.pwd = "SYS"
+    set sc = SQLGateway.%Save()
+
+    set SQLGateway = ##class(%SQLConnection).%New()
+    set SQLGateway.Name = "mysql"
+    set SQLGateway.isJDBC = 1
+    set SQLGateway.driver = "com.mysql.cj.jdbc.Driver"
+    set SQLGateway.URL = "jdbc:mysql://host.docker.internal:3306/formation"
+    set SQLGateway.classpath = "/jdbc/mysql-connector-java-8.0.26.jar"
+    set SQLGateway.Usr = "formation"
+    set SQLGateway.pwd = "formation"
+    set sc = SQLGateway.%Save()
+
+    set SQLGateway = ##class(%SQLConnection).%New()
+    set SQLGateway.Name = "oracle"
+    set SQLGateway.isJDBC = 1
+    set SQLGateway.driver = "oracle.jdbc.driver.OracleDriver"
+    set SQLGateway.URL = "jdbc:oracle:thin:@host.docker.internal:1521:orcl"
+    set SQLGateway.classpath = "/jdbc/ojdbc11.jar"
+    set SQLGateway.Usr = "oracle"
+    set SQLGateway.pwd = "oracle"
+    set sc = SQLGateway.%Save()
+
+    set SQLGateway = ##class(%SQLConnection).%New()
+    set SQLGateway.Name = "mssql"
+    set SQLGateway.isJDBC = 1
+    set SQLGateway.driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+    set SQLGateway.URL = "jdbc:sqlserver://mssql:1433;databaseName=master;encrypt=false"
+    set SQLGateway.classpath = "/jdbc/mssql-jdbc-13.2.1.jre11.jar"
+    set SQLGateway.Usr = "sa"
+    set SQLGateway.pwd = "sa"
+    set sc = SQLGateway.%Save()
+
+    set SQLGateway = ##class(%SQLConnection).%New()
+    set SQLGateway.Name = "postgres"
+    set SQLGateway.isJDBC = 1
+    set SQLGateway.driver = "org.postgresql.Driver"
+    set SQLGateway.URL = "jdbc:postgresql://host.docker.internal:52004/postgres"
+    set SQLGateway.classpath = "/jdbc/postgresql-42.6.0.jar"
+    set SQLGateway.Usr = "postgres"
+    set SQLGateway.pwd = "postgres"
+    set sc = SQLGateway.%Save()
+
     zn "DGLAB"
 
     set sc = $SYSTEM.OBJ.Import("/home/irisowner/dev/src","ck")
