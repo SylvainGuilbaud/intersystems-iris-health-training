@@ -117,6 +117,8 @@ h
                         "production": "",
                         "status": "unknown",
                         "result": "success",
+                        "roles": "",
+                        "fullname": "",
                         "actions": []
                     }
                 
@@ -127,19 +129,26 @@ h
                         namespace_results[namespace]["production"] = prod_match.group(1)
                 
                 if "Status:" in line:
+                    # Only inspect the text after "Status:" so keywords in the
+                    # [namespace]/[user] bracket (e.g. "interop_operator") are not matched.
+                    status_text = line.split("Status:")[-1].lower()
                     # Extract status (running, stopped, suspended, need recover, etc.)
-                    if "need recover" in line.lower():
+                    if "need recover" in status_text:
                         namespace_results[namespace]["status"] = "need recover"
-                    elif "running" in line.lower():
+                    elif "running" in status_text:
                         namespace_results[namespace]["status"] = "running"
-                    elif "stopped" in line.lower():
+                    elif "stopped" in status_text:
                         namespace_results[namespace]["status"] = "stopped"
-                    elif "suspended" in line.lower():
+                    elif "suspended" in status_text:
                         namespace_results[namespace]["status"] = "suspended"
-                    elif "error" in line.lower():
+                    elif "error" in status_text:
                         namespace_results[namespace]["status"] = "error"
-                    elif "interop" in line.lower():
+                    elif "interop" in status_text:
                         namespace_results[namespace]["status"] = "interop"
+                    elif "disabled" in status_text:
+                        namespace_results[namespace]["status"] = "disabled"
+                    elif "enabled" in status_text:
+                        namespace_results[namespace]["status"] = "enabled"
                     
                     # Detect message count (messages command)
                     msg_match = re.search(r'(\d+)\s+recent MLLP/HTTP messages', line)
@@ -150,6 +159,21 @@ h
                     audit_match = re.search(r'Status:\s*(.+?)\s+last action', line)
                     if audit_match:
                         namespace_results[namespace]["status"] = audit_match.group(1).strip()
+
+                # Detect audit event lines (audit command): "[user] Event: <ts> | <desc>"
+                ev_match = re.search(r'Event:\s*(.+)', line)
+                if ev_match:
+                    event_desc = ev_match.group(1).strip()
+                    if event_desc and event_desc not in namespace_results[namespace]["actions"]:
+                        namespace_results[namespace]["actions"].append(event_desc)
+
+                # Detect user roles / full name (listusers command)
+                roles_match = re.search(r'Roles:\s*(.+)', line)
+                if roles_match:
+                    namespace_results[namespace]["roles"] = roles_match.group(1).strip()
+                fullname_match = re.search(r'FullName:\s*(.+)', line)
+                if fullname_match:
+                    namespace_results[namespace]["fullname"] = fullname_match.group(1).strip()
 
                     # Add meaningful action messages only (skip pure status repeats)
                     action_msg = line.split("Status:")[-1].strip()
@@ -231,9 +255,19 @@ h
         return ProductionUtils.run_iris_command("ListRecentMLLPHTTPMessages", f"{int(min_days)},{int(max_days)}")
 
     @staticmethod
-    def list_users_last_audit():
-        """Last audit action timestamp for each Security.Users user"""
-        return ProductionUtils.run_iris_command("ListUsersLastAudit")
+    def list_users_last_audit(n=5):
+        """Last n audit events (with descriptions) for each Security.Users user"""
+        return ProductionUtils.run_iris_command("ListUsersLastAudit", str(int(n)))
+
+    @staticmethod
+    def list_users():
+        """List every Security.Users user with enabled state and roles"""
+        return ProductionUtils.run_iris_command("ListUsers")
+
+    @staticmethod
+    def setup_interop_profiles():
+        """Create/update interop security roles (viewer/operator) and their test users"""
+        return ProductionUtils.run_iris_command("SetupInteropProfiles")
 
 
 def main():
@@ -247,10 +281,22 @@ def main():
         print("  stop     - Stop all productions")
         print("  clean    - Clean all productions")
         print("  messages [spec] - Count MLLP/HTTP messages. spec: n (single day), *n (before n days ago), n* (n days ago to today), n-m (m..n days ago); default 0")
-        print("  audit    - Last audit action date per Security.Users user")
+        print("  audit [n] - Last n audit events (with descriptions) per Security.Users user; default 5")
+        print("  listusers - List all users with their enabled state and roles")
+        print("  setup    - Create/update interop security profiles and test users")
         return 1
     
     command = sys.argv[1].lower()
+
+    if command == "audit":
+        n = 5
+        if len(sys.argv) > 2 and sys.argv[2].strip() != "":
+            try:
+                n = int(sys.argv[2])
+            except ValueError:
+                print(f"ERROR: invalid audit count '{sys.argv[2]}' (expected an integer)")
+                return 1
+        return ProductionUtils.list_users_last_audit(n)
     
     if command == "messages":
         spec = sys.argv[2] if len(sys.argv) > 2 and sys.argv[2].strip() != "" else "0"
@@ -281,7 +327,8 @@ def main():
         "start": ProductionUtils.start_all_productions,
         "stop": ProductionUtils.stop_all_productions,
         "clean": ProductionUtils.clean_all_productions,
-        "audit": ProductionUtils.list_users_last_audit,
+        "listusers": ProductionUtils.list_users,
+        "setup": ProductionUtils.setup_interop_profiles,
     }
     
     if command in commands:
