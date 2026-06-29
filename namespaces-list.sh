@@ -1,0 +1,1 @@
+docker exec -ti iris-health-training-dev /code/shell/utils.sh list

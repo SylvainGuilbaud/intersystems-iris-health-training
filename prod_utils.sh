@@ -284,6 +284,7 @@ print_help() {
     echo "  stop    - Stop all productions"
     echo "  clean   - Clean all production queues"
     echo "  messages [day] - Count MLLP/HTTP messages for a target day (0=today, 1=yesterday, 7=a week ago; default 0)"
+    echo "  audit   - Last audit action date per Security.Users user"
     echo ""
     echo "Examples:"
     echo "  $0 list"
@@ -298,12 +299,12 @@ print_help() {
 # Validate command
 validate_command() {
     case "$1" in
-        list|recover|start|stop|clean|messages)
+        list|recover|start|stop|clean|messages|audit)
             return 0
             ;;
         *)
             echo -e "${RED}ERROR: Unknown command '$1'${NC}"
-            echo "Valid commands: list, recover, start, stop, clean, messages"
+            echo "Valid commands: list, recover, start, stop, clean, messages, audit"
             return 1
             ;;
     esac
@@ -432,7 +433,7 @@ determine_args() {
             help|--help|-h)
                 print_help
                 ;;
-            list|recover|start|stop|clean|messages)
+            list|recover|start|stop|clean|messages|audit)
                 ENVIRONMENT="local-dev"
                 COMMAND="${arg1}"
                 ;;
@@ -450,7 +451,7 @@ determine_args() {
     else
         # If arg1 is a command, treat as: <command> [day] (default local-dev)
         case "${arg1}" in
-            list|recover|start|stop|clean|messages)
+            list|recover|start|stop|clean|messages|audit)
                 ENVIRONMENT="local-dev"
                 COMMAND="${arg1}"
                 COMMAND_ARG="${arg2}"

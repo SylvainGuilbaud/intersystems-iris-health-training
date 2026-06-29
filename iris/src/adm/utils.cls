@@ -381,4 +381,41 @@ ClassMethod GetRecentMLLPHTTPMessages(pNamespace As %String, pMinDays As %Intege
     Return tCount
 }
 
+ClassMethod ListUsersLastAudit() As %Status
+{
+    Set tSC = $$$OK
+
+    Try {
+        Set tCurrentNS = $Namespace
+        New $Namespace
+        Set $Namespace = "%SYS"
+
+        // Last audit action timestamp per user defined in Security.Users
+        Set tQuery = "SELECT u.Name AS Name, MAX(a.UTCTimeStamp) AS LastAction "
+            _"FROM Security.Users u "
+            _"LEFT JOIN %SYS.Audit a ON a.UserName = u.Name "
+            _"GROUP BY u.Name ORDER BY u.Name"
+
+        Set tStmt = ##class(%SQL.Statement).%New()
+        Set tStatus = tStmt.%Prepare(tQuery)
+        If $$$ISOK(tStatus) {
+            Set tRS = tStmt.%Execute()
+            While tRS.%Next() {
+                Set tUser = tRS.%Get("Name")
+                Set tLast = tRS.%Get("LastAction")
+                If tLast = "" { Set tLast = "never" }
+                Write !,"[",tUser,"] Status: ",tLast," last action",!
+            }
+        }
+
+        Set $Namespace = tCurrentNS
+    }
+    Catch tException {
+        Set $Namespace = tCurrentNS
+        Set tSC = tException.AsStatus()
+    }
+
+    Return tSC
+}
+
 }

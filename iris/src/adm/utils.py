@@ -106,7 +106,7 @@ h
         
         for line in lines:
             # Extract namespace from [NAMESPACE] pattern
-            ns_match = re.search(r'\[([A-Z0-9_\-]+)\]', line)
+            ns_match = re.search(r'\[([A-Za-z0-9_\-]+)\]', line)
             if ns_match:
                 namespace = ns_match.group(1)
                 current_namespace = namespace
@@ -143,10 +143,15 @@ h
                     msg_match = re.search(r'(\d+)\s+recent MLLP/HTTP messages', line)
                     if msg_match:
                         namespace_results[namespace]["status"] = f"{msg_match.group(1)} messages"
-                    
+
+                    # Detect last audit action (audit command)
+                    audit_match = re.search(r'Status:\s*(.+?)\s+last action', line)
+                    if audit_match:
+                        namespace_results[namespace]["status"] = audit_match.group(1).strip()
+
                     # Add meaningful action messages only (skip pure status repeats)
                     action_msg = line.split("Status:")[-1].strip()
-                    if action_msg and ("OK" in action_msg or "Recover" in action_msg or "successfully" in action_msg or "NEED" in action_msg or "messages" in action_msg):
+                    if action_msg and ("OK" in action_msg or "Recover" in action_msg or "successfully" in action_msg or "NEED" in action_msg or "messages" in action_msg or "last action" in action_msg):
                         if action_msg not in namespace_results[namespace]["actions"]:
                             namespace_results[namespace]["actions"].append(action_msg)
                 
@@ -206,6 +211,11 @@ h
         """Count MLLP/HTTP messages within a day-window (min_days=recent bound, max_days=oldest bound; -1 = unbounded)"""
         return ProductionUtils.run_iris_command("ListRecentMLLPHTTPMessages", f"{int(min_days)},{int(max_days)}")
 
+    @staticmethod
+    def list_users_last_audit():
+        """Last audit action timestamp for each Security.Users user"""
+        return ProductionUtils.run_iris_command("ListUsersLastAudit")
+
 
 def main():
     """Main entry point for command-line usage"""
@@ -218,6 +228,7 @@ def main():
         print("  stop     - Stop all productions")
         print("  clean    - Clean all productions")
         print("  messages [spec] - Count MLLP/HTTP messages. spec: n (single day), *n (before n days ago), n* (n days ago to today), n-m (m..n days ago); default 0")
+        print("  audit    - Last audit action date per Security.Users user")
         return 1
     
     command = sys.argv[1].lower()
@@ -251,6 +262,7 @@ def main():
         "start": ProductionUtils.start_all_productions,
         "stop": ProductionUtils.stop_all_productions,
         "clean": ProductionUtils.clean_all_productions,
+        "audit": ProductionUtils.list_users_last_audit,
     }
     
     if command in commands:
