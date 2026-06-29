@@ -1,0 +1,13 @@
+{
+  "hooks": [
+    {
+      "id": "enforce-english-comments",
+      "description": "Ensure all code comments are in English",
+      "trigger": "PreToolUse",
+      "on": ["replace_string_in_file", "create_file"],
+      "action": "warn",
+      "script": "validate-english-comments.sh",
+      "enabled": true
+    }
+  ]
+}

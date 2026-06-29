@@ -2,7 +2,7 @@
     "objectscript.conn": {
         "active": true,
         "server": "iris-health-training-dev-aws",
-        "ns": "DELPHINE"
+        "ns": "TRAINING"
     },
     "intersystems.servers": {
         "iris-health-training-dev-aws": {
