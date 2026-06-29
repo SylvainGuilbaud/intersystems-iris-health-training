@@ -253,7 +253,7 @@ def main():
     command = sys.argv[1].lower()
     
     if command == "messages":
-        spec = sys.argv[2] if len(sys.argv) > 2 else "0"
+        spec = sys.argv[2] if len(sys.argv) > 2 and sys.argv[2].strip() != "" else "0"
         try:
             # Parse window spec:
             #   n    -> single day n days ago (min=n, max=n)
