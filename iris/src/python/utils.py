@@ -138,6 +138,8 @@ h
                         namespace_results[namespace]["status"] = "suspended"
                     elif "error" in line.lower():
                         namespace_results[namespace]["status"] = "error"
+                    elif "interop" in line.lower():
+                        namespace_results[namespace]["status"] = "interop"
                     
                     # Detect message count (messages command)
                     msg_match = re.search(r'(\d+)\s+recent MLLP/HTTP messages', line)
@@ -154,6 +156,23 @@ h
                     if action_msg and ("OK" in action_msg or "Recover" in action_msg or "successfully" in action_msg or "NEED" in action_msg or "messages" in action_msg or "last action" in action_msg):
                         if action_msg not in namespace_results[namespace]["actions"]:
                             namespace_results[namespace]["actions"].append(action_msg)
+
+                # Operation result lines (no "Status:" prefix), e.g. "[NS] Stopped successfully"
+                if "Stopped successfully" in line:
+                    namespace_results[namespace]["status"] = "stopped"
+                    namespace_results[namespace]["actions"].append("Stopped successfully")
+                elif "Already stopped" in line:
+                    namespace_results[namespace]["status"] = "stopped"
+                    namespace_results[namespace]["actions"].append("Stop not needed (already stopped)")
+                elif "Started successfully" in line:
+                    namespace_results[namespace]["status"] = "running"
+                    namespace_results[namespace]["actions"].append("Started successfully")
+                elif "Already running" in line:
+                    namespace_results[namespace]["status"] = "running"
+                    namespace_results[namespace]["actions"].append("Start not needed (already running)")
+                elif "Cleaned successfully" in line:
+                    namespace_results[namespace]["status"] = "cleaned"
+                    namespace_results[namespace]["actions"].append("Cleaned successfully")
                 
                 # Detect recover result
                 if "Recover executed successfully" in line:

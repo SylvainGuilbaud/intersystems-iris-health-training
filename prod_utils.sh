@@ -39,7 +39,7 @@ AWS_DEV_HOST="${AWS_DEV_HOST:-}"
 AWS_DEV_USER="${AWS_DEV_USER:-ubuntu}"
 AWS_PROD_HOST="${AWS_PROD_HOST:-}"
 AWS_PROD_USER="${AWS_PROD_USER:-ubuntu}"
-IRIS_CODE_PATH="${IRIS_CODE_PATH:-/code/adm/utils.py}"
+IRIS_CODE_PATH="${IRIS_CODE_PATH:-/code/python/utils.py}"
 
 # Container names per stage
 LOCAL_DEV_CONTAINER="${LOCAL_DEV_CONTAINER:-${IRIS_INSTANCE_NAME}-dev}"

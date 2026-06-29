@@ -15,7 +15,7 @@ ClassMethod ListInteropNamespaces() As %Status
             Set tNamespace = tRS.%Get("Nsp")
             Continue:..IsExcludedInteropNamespace(tNamespace)
             Continue:'##class(%EnsembleMgr).IsEnsembleNamespace(tNamespace)
-            Write tNamespace,!
+            Write !,"[",tNamespace,"] Status: interop namespace",!
         }
     }
     Catch tException {
@@ -134,6 +134,27 @@ ClassMethod GetProductionStatus(pNamespace As %String) As %String
     Return tStatus
 }
 
+ClassMethod GetProductionState(pNamespace As %String) As %Integer
+{
+    Set tState = 0
+
+    Try {
+        Set tCurrentNS = $Namespace
+        New $Namespace
+        Set $Namespace = pNamespace
+
+        Do ##class(Ens.Director).GetProductionStatus(.tProductionName, .tProductionState)
+        Set tState = +tProductionState
+
+        Set $Namespace = tCurrentNS
+    }
+    Catch tException {
+        Set $Namespace = tCurrentNS
+    }
+
+    Return tState
+}
+
 ClassMethod RecoverProduction(pNamespace As %String) As %Status
 {
     Set tSC = $$$OK
@@ -230,14 +251,19 @@ ClassMethod StartAllProductions() As %Status
             
             Set i = i + 1
             Write !,i," Starting namespace: ",tNamespace,!
+            // Check if a production is already running before attempting start
+            Set tPriorState = ..GetProductionState(tNamespace)
+            If tPriorState = 1 {
+                Write !,"[",tNamespace,"] Already running (start not needed)",!
+                Continue
+            }
             Set tStartSC = ..StartProduction(tNamespace)
             If $$$ISERR(tStartSC) {
                 Write !,"ERROR starting production on ",tNamespace,!
                 Set tSC = $$$ADDSC(tSC, tStartSC)
             } Else {
                 Write !,"[",tNamespace,"] Started successfully",!
-            }
-        }
+            }        }
     }
     Catch tException {
         Set tSC = tException.AsStatus()
@@ -262,6 +288,12 @@ ClassMethod StopAllProductions(pTimeout As %Integer = 0, pForce As %Boolean = 1)
             
             Set i = i + 1
             Write !,i," Stopping namespace: ",tNamespace,!
+            // Check if a production is already stopped before attempting stop
+            Set tPriorState = ..GetProductionState(tNamespace)
+            If tPriorState '= 1 {
+                Write !,"[",tNamespace,"] Already stopped (stop not needed)",!
+                Continue
+            }
             Set tStopSC = ..StopProduction(tNamespace, pTimeout, pForce)
             If $$$ISERR(tStopSC) {
                 Write !,"ERROR stopping production on ",tNamespace,!
