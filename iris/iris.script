@@ -1,5 +1,9 @@
     
     zn "USER"
+    
+    // Import and compile adm.utils class
+    do $system.OBJ.Import("/home/irisowner/dev/src/adm/utils.cls")
+    
     #; do $SYSTEM.OBJ.Load("/home/irisowner/dev/zpm-0.10.7.xml","ck")
     set r=##class(%Net.HttpRequest).%New(),r.Server="pm.community.intersystems.com",r.SSLConfiguration="ISC.FeatureTracker.SSL.Config" d r.Get("/packages/zpm/latest/installer"),$system.OBJ.LoadStream(r.HttpResponse.Data,"c")
 
