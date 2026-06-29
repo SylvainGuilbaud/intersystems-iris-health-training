@@ -1,6 +1,6 @@
 {
     "objectscript.conn": {
-        "active": true,
+        "active": false,
         "server": "iris-health-training-dev-aws",
         "ns": "TRAINING"
     },

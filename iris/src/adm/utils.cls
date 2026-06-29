@@ -8,14 +8,28 @@ Parameter VIEWERROLE = "Interop_Viewer_Role";
 
 Parameter OPERATORROLE = "Interop_Operator_Role";
 
-/// Interoperability resource grants for the read-only viewer profile (USE only).
-Parameter ENSVIEWERRESOURCES = "%Ens_Portal:U,%Ens_MessageHeader:U,%Ens_MessageContent:U,%Ens_Alerts:U,%Ens_Queues:U,%Ens_ProductionConfig:U";
+/// Interoperability resource grants for the read-only viewer profile.
+/// Grants the VIEW (READ/USE) permission of every Interoperability portal page's RESOURCE
+/// (enumerated from the RESOURCE/EDITRESOURCE params of all EnsPortal.* pages), so the viewer
+/// can OPEN every menu item read-only. NO operational permissions (no start/stop, resend, purge,
+/// test, edit). Most of the "Build" menu is EXCLUDED for interop users (BPL/DTL/Record Map editors
+/// and CSV/Complex wizards are gated by %Ens_BPL/%Ens_DTL/%Ens_RecordMap/%Ens_Code, none granted).
+/// EXCEPTION: rule VIEWING is allowed (%Ens_Rules/%Ens_RoutingRules/%Ens_BusinessRules :R) so the
+/// Rule Log rule-info panel and read-only Business Rules viewer work; this is the ONLY Build item
+/// that stays visible. FilterExistingResources drops any resource absent on a given instance.
+Parameter ENSVIEWERRESOURCES = "%Ens_Portal:U,%Ens_Dashboard:U,%Ens_EventLog:U,%Ens_RuleLog:U,%Ens_ProductionConfig:R,%Ens_ProductionDocumentation:U,%Ens_MessageHeader:U,%Ens_MessageContent:U,%Ens_MessageTrace:U,%Ens_Alerts:R,%Ens_Queues:R,%Ens_Jobs:R,%Ens_Agents:R,%Ens_Credentials:R,%Ens_LookupTables:R,%Ens_EDISchema:R,%Ens_Rules:R,%Ens_RoutingRules:R,%Ens_BusinessRules:R,%Ens_WorkflowConfig:R,%Ens_PubSub:R,%Ens_ArchiveManager:R,%Ens_MsgBankConfig:R,%Ens_PortSettingsReport:R,%Ens_SettingsReportConfig:R,%Ens_SystemDefaultConfig:R,%Ens_ViewFileSystem:U";
 
-/// Interoperability resource grants for the operator profile:
-/// viewer rights + start/stop business hosts (BS/BP/BO/routers) + job control + lookup table editing.
-/// %Ens_ConfigItemRun grants start/stop/enable/disable of individual config items from the
-/// Production Configuration page (%Ens_ProductionRun only covers the whole production).
-Parameter ENSOPERATORRESOURCES = "%Ens_Portal:U,%Ens_MessageHeader:U,%Ens_MessageContent:U,%Ens_Alerts:U,%Ens_Queues:U,%Ens_ProductionConfig:U,%Ens_ProductionRun:U,%Ens_ConfigItemRun:U,%Ens_Jobs:U,%Ens_LookupTables:U";
+/// Interoperability resource grants for the operator profile.
+/// Viewer's VIEW access on every portal page PLUS the operational permissions an operator needs:
+/// start/stop production & individual hosts (%Ens_ProductionRun:U + %Ens_ConfigItemRun:U), resend/
+/// edit-resend/export/suspend messages, purge, run tests (%Ens_TestingService/%Ens_DTLTest:U),
+/// deploy packages, manage alerts (%Ens_Alerts:RW) and edit lookup tables (%Ens_LookupTables:RW).
+/// %Ens_ProductionConfig stays :R (operators start/stop but do NOT edit the config structure).
+/// Most of the "Build" menu (BPL/DTL/Record Map editors + wizards) is EXCLUDED: %Ens_BPL/%Ens_DTL/
+/// %Ens_RecordMap/%Ens_Code are NOT granted. EXCEPTION: rule VIEWING is allowed read-only
+/// (%Ens_Rules/%Ens_RoutingRules/%Ens_BusinessRules :R) so rules can be seen; "Business Rules" is
+/// therefore the only Build item that stays visible (read-only, no editing without %Ens_Code).
+Parameter ENSOPERATORRESOURCES = "%Ens_Portal:U,%Ens_Dashboard:U,%Ens_EventLog:U,%Ens_RuleLog:U,%Ens_ProductionConfig:R,%Ens_ProductionRun:U,%Ens_ConfigItemRun:U,%Ens_ProductionDocumentation:U,%Ens_DeploymentPkg:U,%Ens_MessageHeader:U,%Ens_MessageContent:U,%Ens_MessageTrace:U,%Ens_MessageResend:U,%Ens_MessageEditResend:U,%Ens_MessageExport:U,%Ens_MessageSuspend:U,%Ens_Purge:U,%Ens_TestingService:U,%Ens_DTLTest:U,%Ens_Alerts:RW,%Ens_Queues:R,%Ens_Jobs:R,%Ens_Agents:R,%Ens_Credentials:R,%Ens_LookupTables:RW,%Ens_EDISchema:R,%Ens_Rules:R,%Ens_RoutingRules:R,%Ens_BusinessRules:R,%Ens_WorkflowConfig:R,%Ens_PubSub:R,%Ens_ArchiveManager:R,%Ens_MsgBankConfig:R,%Ens_PortSettingsReport:R,%Ens_SettingsReportConfig:R,%Ens_SystemDefaultConfig:R,%Ens_ViewFileSystem:U";
 
 /// Database that stores the Ens.LookupTable global (mapped to every namespace in this repo).
 Parameter LOOKUPTABLEDB = "COMMON_DATA";
@@ -595,8 +609,10 @@ ClassMethod CreateInteropOperatorRole() As %Status
         New $Namespace
         Set $Namespace = "%SYS"
 
-        // RW on the lookup-table database so lookup tables can be edited
-        Set tRes = ..FilterExistingResources(..BuildInteropDBResources("R", "RW"))
+        // RW on COMMON_DATA so lookup tables can be edited, and RW on each namespace CODE
+        // database because starting/stopping a host recompiles the production class (writes ^oddDEF
+        // in <NS>_CODE) — otherwise the Production Config start/stop fails with <PROTECT>.
+        Set tRes = ..FilterExistingResources(..BuildInteropDBResources("R", "RW", "RW"))
         Set tEns = ..FilterExistingResources(..#ENSOPERATORRESOURCES)
         If tEns '= "" { Set tRes = tRes_$Select(tRes="":"", 1:",")_tEns }
         Set tPortal = ..FilterExistingResources(..#PORTALRESOURCES)
@@ -614,10 +630,13 @@ ClassMethod CreateInteropOperatorRole() As %Status
 }
 
 /// Build a candidate "resource:permission" list granting access to every interop namespace database.
-/// pNsPerm    = permission on each interop namespace DATA database (CODE is always read-only)
+/// pNsPerm    = permission on each interop namespace DATA database
 /// pCommonPerm = permission on the shared COMMON_DATA database (where lookup tables live)
+/// pCodePerm  = permission on each interop namespace CODE database. Operators need "RW" here:
+///              starting/stopping a host from the Production Config page recompiles the production
+///              class (writes ^oddDEF in <NS>_CODE), which fails with <PROTECT> on read-only CODE.
 /// The returned list is NOT existence-checked (call FilterExistingResources on it).
-ClassMethod BuildInteropDBResources(pNsPerm As %String = "R", pCommonPerm As %String = "R") As %String
+ClassMethod BuildInteropDBResources(pNsPerm As %String = "R", pCommonPerm As %String = "R", pCodePerm As %String = "R") As %String
 {
     // Shared COMMON databases first (Ens.LookupTable global is mapped from COMMON_DATA)
     Set tList = "%DB_COMMON_DATA:"_pCommonPerm_",%DB_COMMON_CODE:R"
@@ -629,7 +648,7 @@ ClassMethod BuildInteropDBResources(pNsPerm As %String = "R", pCommonPerm As %St
         Continue:..IsExcludedInteropNamespace(tNamespace)
         Continue:'##class(%EnsembleMgr).IsEnsembleNamespace(tNamespace)
         Continue:(tNamespace = "COMMON")
-        Set tList = tList_",%DB_"_tNamespace_"_DATA:"_pNsPerm_",%DB_"_tNamespace_"_CODE:R"
+        Set tList = tList_",%DB_"_tNamespace_"_DATA:"_pNsPerm_",%DB_"_tNamespace_"_CODE:"_pCodePerm
     }
 
     Return tList
