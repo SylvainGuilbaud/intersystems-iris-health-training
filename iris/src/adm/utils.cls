@@ -571,6 +571,70 @@ ClassMethod SetupInteropProfiles(pPassword As %String = {..#DEFAULTTESTPASSWORD}
     Set tSC = $$$ADDSC(tSC, ..EnsureUserWithRole("interop_viewer", ..#VIEWERROLE, pPassword))
     Set tSC = $$$ADDSC(tSC, ..EnsureUserWithRole("interop_operator", ..#OPERATORROLE, pPassword))
 
+    // 4. SQL SELECT table privileges in every interop namespace (Message Viewer results table)
+    Set tSC = $$$ADDSC(tSC, ..GrantInteropSQLPrivileges())
+
+    Return tSC
+}
+
+/// Grant the SQL SELECT table privilege the interop roles need so the Management Portal
+/// Message Viewer / Message Bank results table does NOT fail with
+/// "SQLCODE -99: User <x> is not privileged for the operation".
+/// The %Ens_* resource grants only control PORTAL PAGE access; the results table is a
+/// %ZEN.Component.tablePane that runs "SELECT ... FROM Ens.MessageHeader" AS THE LOGGED-IN USER,
+/// so each role also needs a namespace-scoped SQL SELECT privilege. SQL privileges are stored
+/// PER NAMESPACE (not in %SYS), so this iterates every interop namespace and grants there.
+/// Granted to the ROLE (never the user) so both test users and any future member inherit it.
+/// SELECT-only keeps the roles read-only at the SQL layer too.
+ClassMethod GrantInteropSQLPrivileges() As %Status
+{
+    Set tSC = $$$OK
+    Try {
+        Set tCurrentNS = $Namespace
+        New $Namespace
+
+        Set tSQL = ..#NAMESPACESLISTQUERY
+        Set tRS = ##class(%SQL.Statement).%ExecDirect(, tSQL)
+        While tRS.%Next() {
+            Set tNamespace = tRS.%Get("Nsp")
+            Continue:..IsExcludedInteropNamespace(tNamespace)
+            Continue:'##class(%EnsembleMgr).IsEnsembleNamespace(tNamespace)
+
+            Set $Namespace = tNamespace
+            Set tSC = $$$ADDSC(tSC, ..GrantSelectAllTables(..#VIEWERROLE, tNamespace))
+            Set tSC = $$$ADDSC(tSC, ..GrantSelectAllTables(..#OPERATORROLE, tNamespace))
+        }
+
+        Set $Namespace = tCurrentNS
+    }
+    Catch tException {
+        Set $Namespace = tCurrentNS
+        Set tSC = tException.AsStatus()
+    }
+    Return tSC
+}
+
+/// GRANT SELECT ON * TO <role> in the CURRENT namespace: covers Ens.MessageHeader plus every
+/// message body / search table the Message Viewer queries. Idempotent - re-granting an existing
+/// privilege is a harmless no-op (SQLCODE 0). Must run in the target interop namespace.
+ClassMethod GrantSelectAllTables(pRole As %String, pNamespace As %String) As %Status
+{
+    Set tSC = $$$OK
+    Set tStmt = ##class(%SQL.Statement).%New()
+    Set tPrep = tStmt.%Prepare("GRANT SELECT ON * TO """_pRole_"""")
+    If $$$ISERR(tPrep) {
+        Write !,"[",pNamespace,"] Status: ERROR preparing SQL grant for ",pRole," ",$System.Status.GetErrorText(tPrep),!
+        Return tPrep
+    }
+
+    Set tResult = tStmt.%Execute()
+    If tResult.%SQLCODE < 0 {
+        Set tSC = $$$ERROR($$$GeneralError, "GRANT SELECT failed for "_pRole_" in "_pNamespace_": SQLCODE "_tResult.%SQLCODE_" "_tResult.%Message)
+        Write !,"[",pNamespace,"] Status: ERROR SQL grant for ",pRole," SQLCODE ",tResult.%SQLCODE,!
+    }
+    Else {
+        Write !,"[",pNamespace,"] Status: SQL SELECT granted to ",pRole,!
+    }
     Return tSC
 }
 
