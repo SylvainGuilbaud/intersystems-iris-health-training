@@ -17,7 +17,7 @@
     set appProperties("DeepSeeEnabled")=1
     set sc = ##class(Security.Applications).Modify(app,.appProperties)
 
-     set SQLGateway = ##class(%SQLConnection).%New()
+    set SQLGateway = ##class(%SQLConnection).%New()
     set SQLGateway.Name = "iris"
     set SQLGateway.isJDBC = 1
     set SQLGateway.driver = "com.intersystems.jdbc.IRISDriver"
