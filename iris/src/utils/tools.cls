@@ -1,6 +1,7 @@
 Class utils.tools Extends Ens.Rule.FunctionSet
 {
-classmethod hasEncapsulatedData(pHL7 As EnsLib.HL7.Message) As %Boolean
+
+ClassMethod hasEncapsulatedData(pHL7 As EnsLib.HL7.Message) As %Boolean
 {
     set hasED = 0
     for i=1:1:pHL7.SegCount {
@@ -15,11 +16,8 @@ classmethod hasEncapsulatedData(pHL7 As EnsLib.HL7.Message) As %Boolean
     }
     quit hasED
 }
-ClassMethod DecodeOBX5Document(
-    pHL7 As EnsLib.HL7.Message,
-    pOBXIndex As %Integer = 1,
-    pOutputFile As %String = "/tmp/oru-document.pdf"
-) As %Status
+
+ClassMethod DecodeOBX5Document(pHL7 As EnsLib.HL7.Message, pOBXIndex As %Integer = 1, pOutputFile As %String = "/tmp/oru-document.pdf") As %Status
 {
     set sc = $$$OK
 
@@ -76,4 +74,5 @@ ClassMethod DecodeOBX5Document(
 
     return sc
 }
+
 }

@@ -1,5 +1,5 @@
 /// 
-Class adm.ref Extends (%Persistent,%XML.Adaptor) [ ClassType = persistent, DdlAllowed, Final, Owner = {_SYSTEM}, ProcedureBlock, SqlRowIdPrivate, SqlTableName = ref ]
+Class adm.ref Extends (%Persistent, %XML.Adaptor) [ ClassType = persistent, DdlAllowed, Final, Owner = {_SYSTEM}, ProcedureBlock, SqlRowIdPrivate, SqlTableName = ref ]
 {
 
 Property k As %Library.String(MAXLEN = 5) [ SqlColumnNumber = 2 ];

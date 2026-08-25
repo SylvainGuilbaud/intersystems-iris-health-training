@@ -1,7 +1,7 @@
 Class adm.py.utils Extends %RegisteredObject
 {
 
-Parameter NAMESPACESLISTQUERY =   "SELECT Nsp FROM %SYS.Namespace_List() WHERE remote = 0 AND status = 1";
+Parameter NAMESPACESLISTQUERY = "SELECT Nsp FROM %SYS.Namespace_List() WHERE remote = 0 AND status = 1";
 
 ClassMethod ListInteropNamespaces() As %Status
 {
@@ -44,6 +44,7 @@ ClassMethod IsSystemNamespace(pNamespace As %String) As %Boolean
 
     Quit isSystem
 }
+
 ClassMethod IsExcludedInteropNamespace(pNamespace As %String) As %Boolean
 {
     Set pNamespace = $ZCONVERT(pNamespace, "U")
@@ -175,7 +176,6 @@ ClassMethod RecoverProduction(pNamespace As %String) As %Status
     Return tSC
 }
 
-
 /// Start Production on a namespace
 ClassMethod StartProduction(pNamespace As %String) As %Status
 {
@@ -199,7 +199,7 @@ ClassMethod StartProduction(pNamespace As %String) As %Status
 }
 
 /// Stop Production on a namespace
-ClassMethod StopProduction(pNamespace As %String, timeout as %Integer=1, force as %Boolean=1) As %Status
+ClassMethod StopProduction(pNamespace As %String, timeout As %Integer = 1, force As %Boolean = 1) As %Status
 {
     Set tSC = $$$OK
     
@@ -221,7 +221,7 @@ ClassMethod StopProduction(pNamespace As %String, timeout as %Integer=1, force a
 }
 
 /// Clean Production on a namespace
-ClassMethod CleanProduction(pNamespace As %String, killdata as %Boolean=1) As %Status
+ClassMethod CleanProduction(pNamespace As %String, killdata As %Boolean = 1) As %Status
 {
     Set tSC = $$$OK
     
@@ -295,7 +295,7 @@ ClassMethod StartAllProductions() As %Status
 }
 
 /// Stop all productions in all Interop namespaces, executing Recover on those that need it
-ClassMethod StopAllProductions(timeout as %Integer=0, force as %Boolean=1) As %Status
+ClassMethod StopAllProductions(timeout As %Integer = 0, force As %Boolean = 1) As %Status
 {
     Set tSC = $$$OK
     
@@ -347,7 +347,7 @@ ClassMethod StopAllProductions(timeout as %Integer=0, force as %Boolean=1) As %S
 }
 
 /// Clean all productions in all Interop namespaces, executing Recover on those that need it
-ClassMethod CleanAllProductions(killdata as %Boolean=1) As %Status
+ClassMethod CleanAllProductions(killdata As %Boolean = 1) As %Status
 {
     Set tSC = $$$OK
     
@@ -394,4 +394,5 @@ ClassMethod CleanAllProductions(killdata as %Boolean=1) As %Status
     
     Return tSC
 }
+
 }

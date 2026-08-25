@@ -28,18 +28,6 @@ XData RuleDefinition [ XMLNamespace = "http://www.intersystems.com/rule" ]
 </foreach>
 </when>
 </rule>
-<rule name="Softway" disabled="false">
-<constraint name="source" value="from PAM - Softway"></constraint>
-<when condition="1" comment="">
-<send transform="DGLAB.transfo.IHEPAM.Softway" target="HL7"></send>
-</when>
-</rule>
-<rule name="Docaposte" disabled="false">
-<constraint name="source" value="from PAM - Docaposte"></constraint>
-<when condition="1" comment="">
-<send transform="DGLAB.transfo.IHEPAM.Docaposte" target="HL7"></send>
-</when>
-</rule>
 <rule name="ORU to FILE">
 <constraint name="source" value=""></constraint>
 <constraint name="docCategory" value="2.3"></constraint>
