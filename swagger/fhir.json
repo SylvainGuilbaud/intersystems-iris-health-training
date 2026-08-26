@@ -122,6 +122,26 @@
           "500": { "$ref": "#/responses/InternalError" },
           "502": { "$ref": "#/responses/FHIRGatewayError" }
         }
+      },
+      "delete": {
+        "operationId": "DeletePatient",
+        "summary": "Delete the Patient from the FHIR repository",
+        "description": "Finds the target Patient by the source patient's IPP and deletes it. The data.patient source record is preserved.",
+        "produces": ["application/fhir+json"],
+        "parameters": [
+          { "$ref": "#/parameters/PatientSourceId" }
+        ],
+        "responses": {
+          "204": {
+            "description": "FHIR Patient deleted",
+            "headers": {
+              "X-FHIR-HTTP-Method": { "type": "string", "enum": ["DELETE"] },
+              "Content-Location": { "type": "string" }
+            }
+          },
+          "404": { "$ref": "#/responses/NotFound" },
+          "502": { "$ref": "#/responses/FHIRGatewayError" }
+        }
       }
     }
   },
