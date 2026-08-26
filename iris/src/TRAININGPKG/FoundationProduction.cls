@@ -1,3 +1,4 @@
+/// Production definition for the Foundation Production, which is used to run the FHIR training project.
 Class TRAININGPKG.FoundationProduction Extends Ens.Production [ Not ProcedureBlock ]
 {
 
