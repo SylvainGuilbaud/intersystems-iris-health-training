@@ -13,6 +13,77 @@ Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
 
 < ./docs/1-ADT.hl7
 
+
+### IRIS instance details and timestamp
+GET http://localhost/iris-health-training-dev/foch/version HTTP/1.1
+Accept: application/json
+Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+
+### IRIS instance details and timestamp
+GET http://localhost/iris-health-training-dev/specfirst/foch/version HTTP/1.1
+Accept: application/json
+Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+
+### IRIS instance details and timestamp
+GET http://localhost/iris-health-training-dev/fhir/version HTTP/1.1
+Accept: application/json
+Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+
+### IRIS instance details and timestamp - Embedded Python
+GET http://localhost/iris-health-training-dev/fhir/versionpy HTTP/1.1
+Accept: application/json
+Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+
+### FHIR facade - project data.patient ID 1 without persisting it
+GET http://localhost/iris-health-training-dev/fhir/Patient/1 HTTP/1.1
+Accept: application/fhir+json
+Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+
+### FHIR synchronization - POST when IPP is absent, PUT when it already exists
+POST http://localhost/iris-health-training-dev/fhir/Patient/1 HTTP/1.1
+Accept: application/fhir+json
+Content-Type: application/fhir+json
+Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+
+{
+	"resourceType": "Patient",
+	"id": "J7720",
+	"identifier": [
+		{
+			"system": "urn:oid:1.2.250.1.999.1.ipp",
+			"value": "J7720"
+		}
+	]
+}
+
+### FHIR synchronization - force an idempotent PUT
+PUT http://localhost/iris-health-training-dev/fhir/Patient/1 HTTP/1.1
+Accept: application/fhir+json
+Content-Type: application/fhir+json
+Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+
+{
+	"resourceType": "Patient",
+	"id": "J7720",
+	"identifier": [
+		{
+			"system": "urn:oid:1.2.250.1.999.1.ipp",
+			"value": "J7720"
+		}
+	],
+	"address": [
+		{
+			"use": "home",
+			"line": [
+				"25 avenue de la Republique"
+			],
+			"city": "Paris",
+			"postalCode": "75011",
+			"country": "FR"
+		}
+	]
+}
+
 ### DEV COMMUNITY - ORU
 POST http://localhost:881/iris-health-training-dev/csp/healthshare/dglab/EnsLib.HL7.Service.HTTPService.cls?CfgItem=LAB RESULT from DGLAB - HTTP HTTP/1.1
 Content-Type: text/plain; charset=utf-8

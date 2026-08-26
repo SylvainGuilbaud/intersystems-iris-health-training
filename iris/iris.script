@@ -67,14 +67,38 @@
     set SQLGateway.pwd = "postgres"
     set sc = SQLGateway.%Save()
 
+    set sourceRoot = "/home/irisowner/dev/src"
+
     zn "DGLAB"
 
-    set sc = $SYSTEM.OBJ.Import("/home/irisowner/dev/src","ck")
+    // Import DGLAB sources without compiling the TRAINING-only FHIR module.
+    kill sourceEntries
+    set sourceEntry = $ZSearch(sourceRoot _ "/*"), sourceCount = 0
+    while sourceEntry '= "" {
+        set sourceName = $Piece(sourceEntry, "/", $Length(sourceEntry, "/"))
+        if (sourceName '= "training") && (sourceName '= "TRAININGPKG") && (sourceName '= ".DS_Store") {
+            set sourceCount = sourceCount + 1
+            set sourceEntries(sourceCount) = sourceEntry
+        }
+        set sourceEntry = $ZSearch("")
+    }
+    for sourceIndex = 1:1:sourceCount {
+        set sc = $SYSTEM.OBJ.Import(sourceEntries(sourceIndex), "ck")
+    }
     do ##class(EnsLib.HL7.SchemaXML).Import("/home/irisowner/dev/src/HL7v2/HL7v25IHE.HL7")
 
     #; Shared transcoding lookup tables reused by both ADT and ORU
     do $SYSTEM.OBJ.Load("/home/irisowner/dev/src/DGLAB/lookup/Titles.xml","ck")
     do $SYSTEM.OBJ.Load("/home/irisowner/dev/src/DGLAB/lookup/PatientClasses.xml","ck")
     do $SYSTEM.OBJ.Load("/home/irisowner/dev/src/DGLAB/lookup/Gender.xml","ck")
+
+    zn "TRAINING"
+
+    set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/data/address.cls", "ck")
+    set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/data/users.cls", "ck")
+    set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/data/patient.cls", "ck")
+    set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/training/fhir", "ck")
+    set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/TRAININGPKG/FoundationProduction.cls", "ck")
+    set sc = ##class(training.fhir.PatientREST).Install("/fhir", "TRAINING")
 
     halt

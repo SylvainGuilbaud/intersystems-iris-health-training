@@ -1,0 +1,226 @@
+ROUTINE fhirfoch.disp.1 [Type=INT,Generated]
+ ;fhirfoch.disp.1
+ ;Generated for class fhirfoch.disp.  Do NOT edit. 08/26/2026 02:35:03PM
+ ;;452B6B4D;fhirfoch.disp
+ ;
+DeletePatient(pid) methodimpl {
+    Try {
+        Do ##class(%REST.Impl).%SetContentType("application/fhir+json")
+        If '##class(%REST.Impl).%CheckAccepts("application/fhir+json") {
+            Try {
+                Do ##class(fhirfoch.impl).%ReportRESTError(..#HTTP406NOTACCEPTABLE,$$Error^%apiOBJ(8757))
+            } Catch {
+                Do ##class(%REST.Impl).%ReportRESTError(..#HTTP406NOTACCEPTABLE,$$Error^%apiOBJ(8757))
+            }
+            Quit
+        }
+        Set response=##class(fhirfoch.impl).DeletePatient(pid)
+        Do ##class(fhirfoch.impl).%WriteResponse(response)
+    } Catch (ex) {
+        Try {
+            Do ##class(fhirfoch.impl).%ReportRESTError(..#HTTP500INTERNALSERVERERROR,ex.AsStatus(),$parameter("fhirfoch.impl","ExposeServerExceptions"))
+        } Catch {
+            Do ##class(%REST.Impl).%ReportRESTError(..#HTTP500INTERNALSERVERERROR,ex.AsStatus(),$parameter("fhirfoch.impl","ExposeServerExceptions"))
+        }
+    }
+    Quit 1 }
+DispatchMap(url,method,verbsMatched="",args) methodimpl {
+ Set searchMethod=","_method_","
+ Do {
+   Set matcher = ##class(%Regex.Matcher).%New("/version")
+   If matcher.Match(url) {
+     If ",GET,OPTIONS," [ searchMethod Set route=$lb("R","GetVersion",$classname(),"false",url),regex=1 Quit
+     Set verbsMatched=verbsMatched_",GET,OPTIONS"
+   }
+   Set matcher.Pattern="/versionpy"
+   If matcher.Match(url) {
+     If ",GET,OPTIONS," [ searchMethod Set route=$lb("R","GetVersionPyResponse",$classname(),"false",url),regex=1 Quit
+     Set verbsMatched=verbsMatched_",GET,OPTIONS"
+   }
+   Set matcher.Pattern="/Patient/([^/]+)"
+   If matcher.Match(url) {
+     If ",GET,OPTIONS," [ searchMethod Set route=$lb("R","GetPatient",$classname(),"false",url),regex=1 Quit
+     Set verbsMatched=verbsMatched_",GET,OPTIONS"
+   }
+   Set matcher.Pattern="/Patient/([^/]+)"
+   If matcher.Match(url) {
+     If ",POST,OPTIONS," [ searchMethod Set route=$lb("R","SyncPatient",$classname(),"false",url),regex=1 Quit
+     Set verbsMatched=verbsMatched_",POST,OPTIONS"
+   }
+   Set matcher.Pattern="/Patient/([^/]+)"
+   If matcher.Match(url) {
+     If ",PUT,OPTIONS," [ searchMethod Set route=$lb("R","PutPatient",$classname(),"false",url),regex=1 Quit
+     Set verbsMatched=verbsMatched_",PUT,OPTIONS"
+   }
+   Set matcher.Pattern="/Patient/([^/]+)"
+   If matcher.Match(url) {
+     If ",DELETE,OPTIONS," [ searchMethod Set route=$lb("R","DeletePatient",$classname(),"false",url),regex=1 Quit
+     Set verbsMatched=verbsMatched_",DELETE,OPTIONS"
+   }
+   Return ""
+ } While 0
+ If regex && matcher.GroupCount {
+   For i=1:1:matcher.GroupCount Set args($i(args))=matcher.Group(i)
+ }
+ If $li(route,1)="R" { 
+   Return route 
+ } Else { 
+   Set continue=1
+   Set sc=$classmethod($list(route,2),"OnPreDispatch", args(args), method, .continue) Throw:('sc) ##class(%Exception.StatusException).ThrowIfInterrupt(sc)
+   If 'continue Return route
+   Return $classmethod($list(route,2), "DispatchMap", args($i(args,-1)+1), method, .verbsMatched, .args)
+ } }
+GetPatient(pid) methodimpl {
+    Try {
+        Do ##class(%REST.Impl).%SetContentType("application/fhir+json")
+        If '##class(%REST.Impl).%CheckAccepts("application/fhir+json") {
+            Try {
+                Do ##class(fhirfoch.impl).%ReportRESTError(..#HTTP406NOTACCEPTABLE,$$Error^%apiOBJ(8757))
+            } Catch {
+                Do ##class(%REST.Impl).%ReportRESTError(..#HTTP406NOTACCEPTABLE,$$Error^%apiOBJ(8757))
+            }
+            Quit
+        }
+        Set response=##class(fhirfoch.impl).GetPatient(pid)
+        Do ##class(fhirfoch.impl).%WriteResponse(response)
+    } Catch (ex) {
+        Try {
+            Do ##class(fhirfoch.impl).%ReportRESTError(..#HTTP500INTERNALSERVERERROR,ex.AsStatus(),$parameter("fhirfoch.impl","ExposeServerExceptions"))
+        } Catch {
+            Do ##class(%REST.Impl).%ReportRESTError(..#HTTP500INTERNALSERVERERROR,ex.AsStatus(),$parameter("fhirfoch.impl","ExposeServerExceptions"))
+        }
+    }
+    Quit 1 }
+GetVersion() methodimpl {
+    Try {
+        Do ##class(%REST.Impl).%SetContentType("application/json")
+        If '##class(%REST.Impl).%CheckAccepts("application/json") {
+            Try {
+                Do ##class(fhirfoch.impl).%ReportRESTError(..#HTTP406NOTACCEPTABLE,$$Error^%apiOBJ(8757))
+            } Catch {
+                Do ##class(%REST.Impl).%ReportRESTError(..#HTTP406NOTACCEPTABLE,$$Error^%apiOBJ(8757))
+            }
+            Quit
+        }
+        Set response=##class(fhirfoch.impl).GetVersion()
+        Do ##class(fhirfoch.impl).%WriteResponse(response)
+    } Catch (ex) {
+        Try {
+            Do ##class(fhirfoch.impl).%ReportRESTError(..#HTTP500INTERNALSERVERERROR,ex.AsStatus(),$parameter("fhirfoch.impl","ExposeServerExceptions"))
+        } Catch {
+            Do ##class(%REST.Impl).%ReportRESTError(..#HTTP500INTERNALSERVERERROR,ex.AsStatus(),$parameter("fhirfoch.impl","ExposeServerExceptions"))
+        }
+    }
+    Quit 1 }
+GetVersionPyResponse() methodimpl {
+    Try {
+        Do ##class(%REST.Impl).%SetContentType("application/json")
+        If '##class(%REST.Impl).%CheckAccepts("application/json") {
+            Try {
+                Do ##class(fhirfoch.impl).%ReportRESTError(..#HTTP406NOTACCEPTABLE,$$Error^%apiOBJ(8757))
+            } Catch {
+                Do ##class(%REST.Impl).%ReportRESTError(..#HTTP406NOTACCEPTABLE,$$Error^%apiOBJ(8757))
+            }
+            Quit
+        }
+        Set response=##class(fhirfoch.impl).GetVersionPyResponse()
+        Do ##class(fhirfoch.impl).%WriteResponse(response)
+    } Catch (ex) {
+        Try {
+            Do ##class(fhirfoch.impl).%ReportRESTError(..#HTTP500INTERNALSERVERERROR,ex.AsStatus(),$parameter("fhirfoch.impl","ExposeServerExceptions"))
+        } Catch {
+            Do ##class(%REST.Impl).%ReportRESTError(..#HTTP500INTERNALSERVERERROR,ex.AsStatus(),$parameter("fhirfoch.impl","ExposeServerExceptions"))
+        }
+    }
+    Quit 1 }
+PutPatient(pid) methodimpl {
+    Try {
+        If $case(%request.ContentType,"application/fhir+json":0,"application/json":0,:1) {
+            Try {
+                Do ##class(fhirfoch.impl).%ReportRESTError(..#HTTP415UNSUPPORTEDMEDIATYPE,$$Error^%apiOBJ(8726,%request.ContentType))
+            } Catch {
+                Do ##class(%REST.Impl).%ReportRESTError(..#HTTP415UNSUPPORTEDMEDIATYPE,$$Error^%apiOBJ(8726,%request.ContentType))
+            }
+            Quit
+        }
+        Do ##class(%REST.Impl).%SetContentType("application/fhir+json")
+        If '##class(%REST.Impl).%CheckAccepts("application/fhir+json") {
+            Try {
+                Do ##class(fhirfoch.impl).%ReportRESTError(..#HTTP406NOTACCEPTABLE,$$Error^%apiOBJ(8757))
+            } Catch {
+                Do ##class(%REST.Impl).%ReportRESTError(..#HTTP406NOTACCEPTABLE,$$Error^%apiOBJ(8757))
+            }
+            Quit
+        }
+        If '$isobject(%request.Content) Do ##class(%REST.Impl).%ReportRESTError(..#HTTP400BADREQUEST,$$Error^%apiOBJ(8727,"body")) Quit
+        Set pbody=%request.Content
+        Set response=##class(fhirfoch.impl).PutPatient(pid,pbody)
+        Do ##class(fhirfoch.impl).%WriteResponse(response)
+    } Catch (ex) {
+        Try {
+            Do ##class(fhirfoch.impl).%ReportRESTError(..#HTTP500INTERNALSERVERERROR,ex.AsStatus(),$parameter("fhirfoch.impl","ExposeServerExceptions"))
+        } Catch {
+            Do ##class(%REST.Impl).%ReportRESTError(..#HTTP500INTERNALSERVERERROR,ex.AsStatus(),$parameter("fhirfoch.impl","ExposeServerExceptions"))
+        }
+    }
+    Quit 1 }
+SupportedVerbs(pUrl,pVerbs) methodimpl {
+ If '$isobject($get(pVerbs)) Set pVerbs = {}
+ Set pMatcher = ##class(%Regex.Matcher).%New("/version")
+ If pMatcher.Match(pUrl) {
+   If 'pVerbs.%IsDefined("GET") Do pVerbs.%Set("GET", 1, "boolean")
+   If 'pVerbs.%IsDefined("OPTIONS") Do pVerbs.%Set("OPTIONS", 1, "boolean")
+ }
+ Set pMatcher.Pattern="/versionpy"
+ If pMatcher.Match(pUrl) {
+   If 'pVerbs.%IsDefined("GET") Do pVerbs.%Set("GET", 1, "boolean")
+   If 'pVerbs.%IsDefined("OPTIONS") Do pVerbs.%Set("OPTIONS", 1, "boolean")
+ }
+ Set pMatcher.Pattern="/Patient/([^/]+)"
+ If pMatcher.Match(pUrl) {
+   If 'pVerbs.%IsDefined("GET") Do pVerbs.%Set("GET", 1, "boolean")
+   If 'pVerbs.%IsDefined("OPTIONS") Do pVerbs.%Set("OPTIONS", 1, "boolean")
+ }
+ Set pMatcher.Pattern="/Patient/([^/]+)"
+ If pMatcher.Match(pUrl) {
+   If 'pVerbs.%IsDefined("POST") Do pVerbs.%Set("POST", 1, "boolean")
+   If 'pVerbs.%IsDefined("OPTIONS") Do pVerbs.%Set("OPTIONS", 1, "boolean")
+ }
+ Set pMatcher.Pattern="/Patient/([^/]+)"
+ If pMatcher.Match(pUrl) {
+   If 'pVerbs.%IsDefined("PUT") Do pVerbs.%Set("PUT", 1, "boolean")
+   If 'pVerbs.%IsDefined("OPTIONS") Do pVerbs.%Set("OPTIONS", 1, "boolean")
+ }
+ Set pMatcher.Pattern="/Patient/([^/]+)"
+ If pMatcher.Match(pUrl) {
+   If 'pVerbs.%IsDefined("DELETE") Do pVerbs.%Set("DELETE", 1, "boolean")
+   If 'pVerbs.%IsDefined("OPTIONS") Do pVerbs.%Set("OPTIONS", 1, "boolean")
+ }
+ Set it=pVerbs.%GetIterator()
+ Set value=""
+ While it.%GetNext(.verb) {
+   Set value=value_verb_","
+ }
+ Set pVerbs = $extract(value,1,*-1)
+ Return 1 }
+SyncPatient(pid) methodimpl {
+    Try {
+        Do ##class(%REST.Impl).%SetContentType("application/fhir+json")
+        If '##class(%REST.Impl).%CheckAccepts("application/fhir+json") {
+            Try {
+                Do ##class(fhirfoch.impl).%ReportRESTError(..#HTTP406NOTACCEPTABLE,$$Error^%apiOBJ(8757))
+            } Catch {
+                Do ##class(%REST.Impl).%ReportRESTError(..#HTTP406NOTACCEPTABLE,$$Error^%apiOBJ(8757))
+            }
+            Quit
+        }
+        Set response=##class(fhirfoch.impl).SyncPatient(pid)
+        Do ##class(fhirfoch.impl).%WriteResponse(response)
+    } Catch (ex) {
+        Try {
+            Do ##class(fhirfoch.impl).%ReportRESTError(..#HTTP500INTERNALSERVERERROR,ex.AsStatus(),$parameter("fhirfoch.impl","ExposeServerExceptions"))
+        } Catch {
+            Do ##class(%REST.Impl).%ReportRESTError(..#HTTP500INTERNALSERVERERROR,ex.AsStatus(),$parameter("fhirfoch.impl","ExposeServerExceptions"))
+        }
+    }
+    Quit 1 }
