@@ -179,6 +179,63 @@
 
   <div class="divider"></div>
 
+  <section class="fhir-section" aria-labelledby="fhir-search-title">
+    <button type="button" class="fhir-toggle" (click)="fhirSearchExpanded = !fhirSearchExpanded"
+            [attr.aria-expanded]="fhirSearchExpanded" aria-controls="fhir-search-content">
+      <span class="fhir-chevron" [class.expanded]="fhirSearchExpanded" aria-hidden="true"></span>
+      <span>
+        <span id="fhir-search-title" class="fhir-toggle-title">{{ t.fhirSearch }}</span>
+        <span class="fhir-endpoint">GET {{ fhirBaseUrl }}/Patient/:ipp</span>
+      </span>
+    </button>
+
+    <div id="fhir-search-content" class="fhir-content" *ngIf="fhirSearchExpanded">
+      <div class="fhir-heading">
+      <form class="fhir-search-form" (ngSubmit)="searchFhirPatient()">
+        <label for="fhirIpp">{{ t.ipp }}</label>
+        <div class="fhir-search-controls">
+          <input id="fhirIpp" name="fhirIpp" [(ngModel)]="fhirIpp" autocomplete="off"
+                 spellcheck="false" placeholder="G7809" [disabled]="fhirLoading" />
+          <button type="submit" class="btn-fhir-search" [disabled]="fhirLoading || !fhirIpp.trim()">
+            {{ fhirLoading ? t.searching : t.search }}
+          </button>
+        </div>
+      </form>
+      </div>
+
+      <div *ngIf="fhirError" class="fhir-error" role="alert">{{ fhirError }}</div>
+
+      <div *ngIf="fhirPatient" class="fhir-result">
+        <article class="patient-summary">
+          <div class="patient-summary-header">
+            <div>
+              <span class="resource-label">{{ fhirPatient.resourceType }}</span>
+              <h3>{{ fhirPatientName || fhirPatient.id }}</h3>
+            </div>
+            <span class="patient-status" [class.inactive]="fhirPatient.active === false">
+              {{ fhirPatient.active === false ? 'inactive' : 'active' }}
+            </span>
+          </div>
+
+          <dl class="patient-facts">
+            <div><dt>FHIR ID</dt><dd>{{ fhirPatient.id || '—' }}</dd></div>
+            <div><dt>IPP</dt><dd>{{ fhirIpp }}</dd></div>
+            <div><dt>{{ t.dob }}</dt><dd>{{ fhirPatient.birthDate || '—' }}</dd></div>
+            <div><dt>{{ t.gender }}</dt><dd>{{ fhirPatient.gender || '—' }}</dd></div>
+            <div class="address-fact"><dt>Address</dt><dd>{{ fhirPatientAddress || '—' }}</dd></div>
+          </dl>
+        </article>
+
+        <section class="fhir-json" aria-labelledby="fhir-json-title">
+          <div id="fhir-json-title" class="fhir-json-title">{{ t.patientResult }}</div>
+          <pre>{{ fhirPatientJson }}</pre>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
   <!-- HL7 log -->
   <section class="log-section">
     <div class="log-label">{{ t.hl7Generated }}</div>

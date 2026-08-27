@@ -1,8 +1,10 @@
 import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { catchError, from, mergeMap, of } from 'rxjs';
+import { catchError, finalize, from, mergeMap, of, Subscription } from 'rxjs';
 import { Hl7Service } from './hl7.service';
+import { FhirPatient, FhirPatientService } from './fhir-patient.service';
 import { generateOruMessage, generateAdtMessage, Hl7Params } from './hl7-generator';
 
 interface LogEntry {
@@ -78,6 +80,12 @@ interface Translation {
   sending: string;
   failed: string;
   total: string;
+  fhirSearch: string;
+  ipp: string;
+  search: string;
+  searching: string;
+  patientResult: string;
+  noPatient: string;
 }
 
 const TRANSLATIONS: Record<Lang, Translation> = {
@@ -116,6 +124,12 @@ const TRANSLATIONS: Record<Lang, Translation> = {
     sending: 'Sending',
     failed: 'failed',
     total: 'total',
+    fhirSearch: 'FHIR PATIENT SEARCH',
+    ipp: 'Patient IPP',
+    search: 'Search',
+    searching: 'Searching...',
+    patientResult: 'FHIR Patient result',
+    noPatient: 'Enter an IPP to search for a Patient.',
   },
   fr: {
     headerTitle: 'OUTIL DE TEST HL7 HTTP',
@@ -152,6 +166,12 @@ const TRANSLATIONS: Record<Lang, Translation> = {
     sending: 'Envoi',
     failed: 'échoué(s)',
     total: 'au total',
+    fhirSearch: 'RECHERCHE PATIENT FHIR',
+    ipp: 'IPP du patient',
+    search: 'Rechercher',
+    searching: 'Recherche...',
+    patientResult: 'Résultat Patient FHIR',
+    noPatient: 'Saisissez un IPP pour rechercher un Patient.',
   },
   es: {
     headerTitle: 'HERRAMIENTA DE PRUEBA HL7 HTTP',
@@ -188,6 +208,12 @@ const TRANSLATIONS: Record<Lang, Translation> = {
     sending: 'Enviando',
     failed: 'fallido(s)',
     total: 'en total',
+    fhirSearch: 'BÚSQUEDA DE PACIENTE FHIR',
+    ipp: 'IPP del paciente',
+    search: 'Buscar',
+    searching: 'Buscando...',
+    patientResult: 'Resultado Patient FHIR',
+    noPatient: 'Introduzca un IPP para buscar un Patient.',
   },
 };
 
@@ -246,6 +272,15 @@ export class AppComponent {
 
   sending = false;
 
+  // FHIR Patient search
+  fhirIpp = 'G7809';
+  fhirPatient: FhirPatient | null = null;
+  fhirPatientJson = '';
+  fhirError = '';
+  fhirLoading = false;
+  fhirSearchExpanded = true;
+  private fhirSearchSubscription?: Subscription;
+
   // i18n — runtime language switch (EN / FR / ES)
   lang: Lang = 'en';
   readonly langFlags: Record<Lang, string> = { en: '🇬🇧', fr: '🇫🇷', es: '🇪🇸' };
@@ -286,8 +321,54 @@ export class AppComponent {
     ];
   }
 
-  constructor(private hl7: Hl7Service) {
+  constructor(private hl7: Hl7Service, private fhirPatientService: FhirPatientService) {
     this.onEnvChange();
+  }
+
+  get fhirBaseUrl(): string {
+    const marker = '/csp/healthshare/';
+    const markerIndex = this.baseUrl.indexOf(marker);
+    const instanceRoot = markerIndex >= 0 ? this.baseUrl.slice(0, markerIndex) : this.baseUrl.replace(/\/$/, '');
+    return `${instanceRoot}/specfirst/foch`;
+  }
+
+  get fhirPatientName(): string {
+    const name = this.fhirPatient?.name?.find(item => item.use === 'official') ?? this.fhirPatient?.name?.[0];
+    return [...(name?.given ?? []), name?.family].filter(Boolean).join(' ');
+  }
+
+  get fhirPatientAddress(): string {
+    const address = this.fhirPatient?.address?.find(item => item.use === 'home') ?? this.fhirPatient?.address?.[0];
+    if (!address) return '';
+    return [...(address.line ?? []), address.postalCode, address.city, address.country].filter(Boolean).join(', ');
+  }
+
+  searchFhirPatient(): void {
+    const ipp = this.fhirIpp.trim();
+    this.fhirSearchSubscription?.unsubscribe();
+    this.fhirPatient = null;
+    this.fhirPatientJson = '';
+    this.fhirError = '';
+
+    if (!ipp) {
+      this.fhirError = this.t.noPatient;
+      return;
+    }
+
+    this.fhirLoading = true;
+    this.fhirSearchSubscription = this.fhirPatientService
+      .findByIpp(this.fhirBaseUrl, ipp, this.username, this.password)
+      .pipe(finalize(() => this.fhirLoading = false))
+      .subscribe({
+        next: patient => {
+          this.fhirPatient = patient;
+          this.fhirPatientJson = JSON.stringify(patient, null, 2);
+        },
+        error: (error: HttpErrorResponse) => {
+          const diagnostics = error.error?.issue?.[0]?.diagnostics;
+          this.fhirError = diagnostics || error.message || `HTTP ${error.status}`;
+        },
+      });
   }
 
   private extractNamespaceFromBaseUrl(url: string): string {

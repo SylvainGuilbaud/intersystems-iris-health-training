@@ -30,7 +30,7 @@ Accept: application/json
 Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
 
 @specFirstFochBaseUrl = http://localhost/iris-health-training-dev/specfirst/foch
-@specFirstFochPatientIPP = G7809
+@specFirstFochPatientIPP = H3178
 @specFirstFochTarget = fhir
 @specFirstFochAuthorization = Basic X3N5c3RlbTpJUklTNEdvb2Qv
 
