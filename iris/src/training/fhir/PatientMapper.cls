@@ -94,6 +94,28 @@ ClassMethod ToResource(pPatientId As %String, pIncludeId As %Boolean = 0, Output
     return res
 }
 
+/// Resolve the internal data.patient id for an IPP.
+/// Returns an empty string when no patient matches.
+ClassMethod FindPatientIdByIPP(pIPP As %String, Output pStatus As %Status) As %String
+{
+    Set pStatus = $$$OK
+    If pIPP = "" Quit ""
+
+    Set result = ##class(%SQL.Statement).%ExecDirect(, "SELECT ID FROM data.patient WHERE IPP = ?", pIPP)
+    If result.%SQLCODE < 0 {
+        Set pStatus = $$$ERROR($$$GeneralError, "Unable to find Patient by IPP: "_result.%Message)
+        Quit ""
+    }
+    If 'result.%Next() Quit ""
+
+    Set patientId = result.ID
+    If result.%Next() {
+        Set pStatus = $$$ERROR($$$GeneralError, "Multiple data.patient rows found for IPP '"_pIPP_"'")
+        Quit ""
+    }
+    Quit patientId
+}
+
 /// Convert a data.address into a FHIR Address %DynamicObject (or "" when empty).
 ClassMethod AddressToFHIR(pAddress As data.address, pUse As %String = "") As %DynamicObject
 {

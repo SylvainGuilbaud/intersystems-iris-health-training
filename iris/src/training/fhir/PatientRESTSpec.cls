@@ -81,14 +81,14 @@ XData OpenAPI [ MimeType = application/json ]
         }
       }
     },
-    "/Patient/{id}": {
+    "/Patient/{ipp}": {
       "get": {
         "operationId": "GetPatient",
         "summary": "Project a source patient as an R4 FHIR Patient",
         "description": "Returns the mapped Patient without persisting it to the FHIR repository.",
         "produces": ["application/fhir+json"],
         "parameters": [
-          { "$ref": "#/parameters/PatientSourceId" }
+          { "$ref": "#/parameters/PatientIPP" }
         ],
         "responses": {
           "200": {
@@ -106,7 +106,7 @@ XData OpenAPI [ MimeType = application/json ]
         "consumes": ["application/fhir+json", "application/json"],
         "produces": ["application/fhir+json"],
         "parameters": [
-          { "$ref": "#/parameters/PatientSourceId" },
+          { "$ref": "#/parameters/PatientIPP" },
           {
             "name": "body",
             "in": "body",
@@ -146,7 +146,7 @@ XData OpenAPI [ MimeType = application/json ]
         "description": "Finds the target Patient by the source patient's IPP and deletes it. The data.patient source record is preserved.",
         "produces": ["application/fhir+json"],
         "parameters": [
-          { "$ref": "#/parameters/PatientSourceId" }
+          { "$ref": "#/parameters/PatientIPP" }
         ],
         "responses": {
           "204": {
@@ -163,12 +163,12 @@ XData OpenAPI [ MimeType = application/json ]
     }
   },
   "parameters": {
-    "PatientSourceId": {
-      "name": "id",
+    "PatientIPP": {
+      "name": "ipp",
       "in": "path",
       "required": true,
       "type": "string",
-      "description": "Internal data.patient source identifier"
+      "description": "Patient IPP (Identifiant Permanent du Patient)"
     },
     "Target": {
       "name": "target",

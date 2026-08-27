@@ -30,7 +30,7 @@ Accept: application/json
 Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
 
 @specFirstFochBaseUrl = http://localhost/iris-health-training-dev/specfirst/foch
-@specFirstFochPatientId = 2
+@specFirstFochPatientIPP = G7809
 @specFirstFochTarget = fhir
 @specFirstFochAuthorization = Basic X3N5c3RlbTpJUklTNEdvb2Qv
 
@@ -45,7 +45,7 @@ Accept: application/json
 Authorization: {{specFirstFochAuthorization}}
 
 ### SPEC FIRST FOCH - project the source patient as FHIR without persisting it
-GET {{specFirstFochBaseUrl}}/Patient/{{specFirstFochPatientId}} HTTP/1.1
+GET {{specFirstFochBaseUrl}}/Patient/{{specFirstFochPatientIPP}} HTTP/1.1
 Accept: application/fhir+json
 Authorization: {{specFirstFochAuthorization}}
 
@@ -140,15 +140,20 @@ Authorization: {{specFirstFochAuthorization}}
 }
 
 ### SPEC FIRST FOCH - update the home address and force an idempotent FHIR PUT
-PUT {{specFirstFochBaseUrl}}/Patient/{{specFirstFochPatientId}}?target={{specFirstFochTarget}} HTTP/1.1
+PUT {{specFirstFochBaseUrl}}/Patient/{{specFirstFochPatientIPP}}?target={{specFirstFochTarget}} HTTP/1.1
 Accept: application/fhir+json
 Content-Type: application/fhir+json
 Authorization: {{specFirstFochAuthorization}}
 
 {
 	"resourceType": "Patient",
-  "id": "{{specFirstFochPatientId}}",
-  "identifier": [],
+  "id": "{{specFirstFochPatientIPP}}",
+  "identifier": [
+    {
+      "system": "urn:oid:1.2.250.1.999.1",
+      "value": "{{specFirstFochPatientIPP}}"
+    }
+  ],
   "active": true,
   "name": [],
   "telecom": [],
@@ -167,7 +172,7 @@ Authorization: {{specFirstFochAuthorization}}
 }
 
 ### SPEC FIRST FOCH - delete the target FHIR Patient and preserve data.patient
-DELETE {{specFirstFochBaseUrl}}/Patient/{{specFirstFochPatientId}} HTTP/1.1
+DELETE {{specFirstFochBaseUrl}}/Patient/{{specFirstFochPatientIPP}} HTTP/1.1
 Accept: application/fhir+json
 Authorization: {{specFirstFochAuthorization}}
 

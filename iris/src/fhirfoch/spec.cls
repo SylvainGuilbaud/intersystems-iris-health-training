@@ -129,7 +129,7 @@ XData OpenAPI [ MimeType = application/json ]
         }
       }
     },
-    "/Patient/{id}":{
+    "/Patient/{ipp}":{
       "get":{
         "operationId":"GetPatient",
         "summary":"Project a source patient as an R4 FHIR Patient",
@@ -139,7 +139,7 @@ XData OpenAPI [ MimeType = application/json ]
         ],
         "parameters":[
           {
-            "$ref":"#/parameters/PatientSourceId"
+            "$ref":"#/parameters/PatientIPP"
           }
         ],
         "responses":{
@@ -170,7 +170,7 @@ XData OpenAPI [ MimeType = application/json ]
         ],
         "parameters":[
           {
-            "$ref":"#/parameters/PatientSourceId"
+            "$ref":"#/parameters/PatientIPP"
           },
           {
             "name":"body",
@@ -246,7 +246,7 @@ XData OpenAPI [ MimeType = application/json ]
         ],
         "parameters":[
           {
-            "$ref":"#/parameters/PatientSourceId"
+            "$ref":"#/parameters/PatientIPP"
           }
         ],
         "responses":{
@@ -275,12 +275,12 @@ XData OpenAPI [ MimeType = application/json ]
     }
   },
   "parameters":{
-    "PatientSourceId":{
-      "name":"id",
+    "PatientIPP":{
+      "name":"ipp",
       "in":"path",
       "required":true,
       "type":"string",
-      "description":"Internal data.patient source identifier"
+      "description":"Patient IPP (Identifiant Permanent du Patient)"
     },
     "Target":{
       "name":"target",

@@ -16,10 +16,10 @@ XData UrlMap [ XMLNamespace = "http://www.intersystems.com/urlmap" ]
 <Routes>
   <Route Url="/version" Method="GET" Call="GetVersion" />
   <Route Url="/versionpy" Method="GET" Call="GetVersionPyResponse" />
-  <Route Url="/Patient/:id" Method="GET" Call="GetPatient" />
+    <Route Url="/Patient/:ipp" Method="GET" Call="GetPatient" />
   <Route Url="/Patient" Method="POST" Call="SyncPatient" />
-  <Route Url="/Patient/:id" Method="PUT" Call="PutPatient" />
-    <Route Url="/Patient/:id" Method="DELETE" Call="DeletePatient" />
+    <Route Url="/Patient/:ipp" Method="PUT" Call="PutPatient" />
+    <Route Url="/Patient/:ipp" Method="DELETE" Call="DeletePatient" />
 </Routes>
 }
 
@@ -79,14 +79,19 @@ return json.dumps(details)
 }
 
 /// Project a data.patient record as an R4 FHIR Patient without persisting it.
-ClassMethod GetPatient(id As %String) As %Status
+ClassMethod GetPatient(ipp As %String) As %Status
 {
-    If '##class(data.patient).%ExistsId(id) {
-        Do ..WriteError(404, "not-found", "data.patient '"_id_"' not found")
+    Set patientId = ##class(training.fhir.PatientMapper).FindPatientIdByIPP(ipp, .findStatus)
+    If $$$ISERR(findStatus) {
+        Do ..WriteError(500, "exception", $System.Status.GetErrorText(findStatus))
+        Quit $$$OK
+    }
+    If patientId = "" {
+        Do ..WriteError(404, "not-found", "Patient with IPP '"_ipp_"' not found")
         Quit $$$OK
     }
 
-    Set resource = ##class(training.fhir.PatientMapper).ToResource(id, 1, .sc)
+    Set resource = ##class(training.fhir.PatientMapper).ToResource(patientId, 1, .sc)
     If $$$ISERR(sc) {
         Do ..WriteError(500, "exception", $System.Status.GetErrorText(sc))
         Quit $$$OK
@@ -105,36 +110,46 @@ ClassMethod SyncPatient(id As %String) As %Status
 }
 
 /// Force an idempotent PUT of a source patient to the FHIR target.
-ClassMethod PutPatient(id As %String) As %Status
+ClassMethod PutPatient(ipp As %String) As %Status
 {
-    If '##class(data.patient).%ExistsId(id) {
-        Do ..WriteError(404, "not-found", "data.patient '"_id_"' not found")
+    Set patientId = ##class(training.fhir.PatientMapper).FindPatientIdByIPP(ipp, .findStatus)
+    If $$$ISERR(findStatus) {
+        Do ..WriteError(500, "exception", $System.Status.GetErrorText(findStatus))
+        Quit $$$OK
+    }
+    If patientId = "" {
+        Do ..WriteError(404, "not-found", "Patient with IPP '"_ipp_"' not found")
         Quit $$$OK
     }
 
-    Set sc = ..UpdateAddressFromPayload(id, .httpStatus)
+    Set sc = ..UpdateAddressFromPayload(patientId, .httpStatus)
     If $$$ISERR(sc) {
         Do ..WriteError(httpStatus, "invalid", $System.Status.GetErrorText(sc))
         Quit $$$OK
     }
-    Quit ..SendPatient(id, "PUT")
+    Quit ..SendPatient(patientId, "PUT")
 }
 
 /// Delete the Patient mapped from the source patient in the FHIR target.
-ClassMethod DeletePatient(id As %String) As %Status
+ClassMethod DeletePatient(ipp As %String) As %Status
 {
-    If '##class(data.patient).%ExistsId(id) {
-        Do ..WriteError(404, "not-found", "data.patient '"_id_"' not found")
+    Set patientId = ##class(training.fhir.PatientMapper).FindPatientIdByIPP(ipp, .findStatus)
+    If $$$ISERR(findStatus) {
+        Do ..WriteError(500, "exception", $System.Status.GetErrorText(findStatus))
+        Quit $$$OK
+    }
+    If patientId = "" {
+        Do ..WriteError(404, "not-found", "Patient with IPP '"_ipp_"' not found")
         Quit $$$OK
     }
 
-    Set sc = ##class(training.fhir.PatientService).SendPatientDetails(id, "DELETE", .details)
+    Set sc = ##class(training.fhir.PatientService).SendPatientDetails(patientId, "DELETE", .details)
     If $$$ISERR(sc) {
         Do ..WriteError(502, "exception", $System.Status.GetErrorText(sc))
         Quit $$$OK
     }
     If +details.HTTPStatus = 404 {
-        Do ..WriteError(404, "not-found", "FHIR Patient for data.patient '"_id_"' not found")
+        Do ..WriteError(404, "not-found", "FHIR Patient with IPP '"_ipp_"' not found")
         Quit $$$OK
     }
 

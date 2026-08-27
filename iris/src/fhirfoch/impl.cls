@@ -41,14 +41,14 @@ ClassMethod GetVersionPyResponse() As %DynamicObject
 
 /// Returns the mapped Patient without persisting it to the FHIR repository.<br/>
 /// The method arguments hold values for:<br/>
-///     id, Internal data.patient source identifier<br/>
-ClassMethod GetPatient(id As %String) As %Stream.Object
+///     ipp, Patient IPP<br/>
+ClassMethod GetPatient(ipp As %String) As %Stream.Object
 {
-    If '##class(data.patient).%ExistsId(id) {
-        Quit ..ErrorResponse(404, "not-found", "data.patient '"_id_"' not found")
-    }
+    Set patientId = ##class(training.fhir.PatientMapper).FindPatientIdByIPP(ipp, .findStatus)
+    If $$$ISERR(findStatus) Quit ..ErrorResponse(500, "exception", $System.Status.GetErrorText(findStatus))
+    If patientId = "" Quit ..ErrorResponse(404, "not-found", "Patient with IPP '"_ipp_"' not found")
 
-    Set resource = ##class(training.fhir.PatientMapper).ToResource(id, 1, .sc)
+    Set resource = ##class(training.fhir.PatientMapper).ToResource(patientId, 1, .sc)
     If $$$ISERR(sc) {
         Quit ..ErrorResponse(500, "exception", $System.Status.GetErrorText(sc))
     }
@@ -85,10 +85,10 @@ ClassMethod SyncPatient(body As %Stream.Object, target As %String = "fhir") As %
 
 /// Updates the FHIR resource or data.patient according to target.<br/>
 /// The method arguments hold values for:<br/>
-///     id, Internal data.patient source identifier<br/>
+///     ipp, Patient IPP<br/>
 ///     body, FHIR Patient to update.<br/>
 ///     target, Persistence target: fhir (default) or data.<br/>
-ClassMethod PutPatient(id As %String, body As %Stream.Object, target As %String = "fhir") As %Stream.Object
+ClassMethod PutPatient(ipp As %String, body As %Stream.Object, target As %String = "fhir") As %Stream.Object
 {
     Set resource = ..ParsePatient(body, .parseStatus)
     If $$$ISERR(parseStatus) Quit ..ErrorResponse(400, "invalid", $System.Status.GetErrorText(parseStatus))
@@ -98,36 +98,42 @@ ClassMethod PutPatient(id As %String, body As %Stream.Object, target As %String 
     If (target '= "fhir") && (target '= "data") Quit ..ErrorResponse(400, "invalid", "target must be 'fhir' or 'data'")
 
     If target = "data" {
-        If '##class(data.patient).%ExistsId(id) Quit ..ErrorResponse(404, "not-found", "data.patient '"_id_"' not found")
-        Set sc = ##class(training.fhir.PatientMapper).SaveToData(resource, id, .patientId)
+        Set patientId = ##class(training.fhir.PatientMapper).FindPatientIdByIPP(ipp, .findStatus)
+        If $$$ISERR(findStatus) Quit ..ErrorResponse(500, "exception", $System.Status.GetErrorText(findStatus))
+        If patientId = "" Quit ..ErrorResponse(404, "not-found", "Patient with IPP '"_ipp_"' not found")
+        Set sc = ##class(training.fhir.PatientMapper).SaveToData(resource, patientId, .patientId)
         If $$$ISERR(sc) Quit ..ErrorResponse(400, "invalid", $System.Status.GetErrorText(sc))
         Set response = ##class(training.fhir.PatientMapper).ToResource(patientId, 1, .mapStatus)
         If $$$ISERR(mapStatus) Quit ..ErrorResponse(500, "exception", $System.Status.GetErrorText(mapStatus))
         Do ..%SetStatusCode(200)
-        Do ..%SetHeader("Content-Location", "Patient/"_patientId)
+        Do ..%SetHeader("Content-Location", "Patient/"_ipp)
         Quit response.%ToJSON()
     }
 
-    If (resource.id '= "") && (resource.id '= id) Quit ..ErrorResponse(409, "invalid", "Patient id must match the path id '"_id_"'")
-    Set resource.id = id
+    Set resourceIPP = ##class(training.fhir.PatientMapper).IdentifierValue(resource, $Parameter("training.fhir.PatientMapper", "IPPSYSTEM"))
+    If resourceIPP = "" Quit ..ErrorResponse(400, "invalid", "The Patient IPP identifier is required")
+    If resourceIPP '= ipp Quit ..ErrorResponse(409, "invalid", "Patient IPP must match the path IPP '"_ipp_"'")
+    Set logicalId = ##class(training.fhir.PatientMapper).LogicalId(ipp)
+    If (resource.id '= "") && (resource.id '= logicalId) Quit ..ErrorResponse(409, "invalid", "Patient id must match the logical id '"_logicalId_"'")
+    Set resource.id = logicalId
     Quit ..SendFHIRResource(resource, "PUT")
 }
 
 /// Finds the target Patient by the source patient's IPP and deletes it. The data.patient source record is preserved.<br/>
 /// The method arguments hold values for:<br/>
-///     id, Internal data.patient source identifier<br/>
-ClassMethod DeletePatient(id As %String) As %Stream.Object
+///     ipp, Patient IPP<br/>
+ClassMethod DeletePatient(ipp As %String) As %Stream.Object
 {
-    If '##class(data.patient).%ExistsId(id) {
-        Quit ..ErrorResponse(404, "not-found", "data.patient '"_id_"' not found")
-    }
+    Set patientId = ##class(training.fhir.PatientMapper).FindPatientIdByIPP(ipp, .findStatus)
+    If $$$ISERR(findStatus) Quit ..ErrorResponse(500, "exception", $System.Status.GetErrorText(findStatus))
+    If patientId = "" Quit ..ErrorResponse(404, "not-found", "Patient with IPP '"_ipp_"' not found")
 
-    Set sc = ##class(training.fhir.PatientService).SendPatientDetails(id, "DELETE", .details)
+    Set sc = ##class(training.fhir.PatientService).SendPatientDetails(patientId, "DELETE", .details)
     If $$$ISERR(sc) {
         Quit ..ErrorResponse(502, "exception", $System.Status.GetErrorText(sc))
     }
     If +details.HTTPStatus = 404 {
-        Quit ..ErrorResponse(404, "not-found", "FHIR Patient for data.patient '"_id_"' not found")
+        Quit ..ErrorResponse(404, "not-found", "FHIR Patient with IPP '"_ipp_"' not found")
     }
 
     Do ..%SetStatusCode(204)

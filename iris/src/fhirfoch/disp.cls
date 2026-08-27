@@ -22,11 +22,11 @@ XData UrlMap [ XMLNamespace = "http://www.intersystems.com/urlmap" ]
   <!-- Synchronize a Patient with the FHIR repository -->
   <Route Url="/Patient" Method="post" Call="SyncPatient" />
   <!-- Project a source patient as an R4 FHIR Patient -->
-  <Route Url="/Patient/:id" Method="get" Call="GetPatient" />
+    <Route Url="/Patient/:ipp" Method="get" Call="GetPatient" />
   <!-- Update the home address and upsert the Patient in FHIR -->
-  <Route Url="/Patient/:id" Method="put" Call="PutPatient" />
+    <Route Url="/Patient/:ipp" Method="put" Call="PutPatient" />
   <!-- Delete the Patient from the FHIR repository -->
-  <Route Url="/Patient/:id" Method="delete" Call="DeletePatient" />
+    <Route Url="/Patient/:ipp" Method="delete" Call="DeletePatient" />
 </Routes>
 }
 
@@ -117,7 +117,7 @@ ClassMethod SyncPatient() As %Status
 }
 
 /// Project a source patient as an R4 FHIR Patient
-ClassMethod GetPatient(pid As %String) As %Status
+ClassMethod GetPatient(pipp As %String) As %Status
 {
     Try {
         Do ##class(%REST.Impl).%SetContentType("application/fhir+json")
@@ -129,7 +129,7 @@ ClassMethod GetPatient(pid As %String) As %Status
             }
             Quit
         }
-        Set response=##class(fhirfoch.impl).GetPatient(pid)
+        Set response=##class(fhirfoch.impl).GetPatient(pipp)
         Do ##class(fhirfoch.impl).%WriteResponse(response)
     } Catch (ex) {
         Try {
@@ -142,7 +142,7 @@ ClassMethod GetPatient(pid As %String) As %Status
 }
 
 /// Update the home address and upsert the Patient in FHIR
-ClassMethod PutPatient(pid As %String) As %Status
+ClassMethod PutPatient(pipp As %String) As %Status
 {
     Try {
         If $case(%request.ContentType,"application/fhir+json":0,"application/json":0,:1) {
@@ -165,7 +165,7 @@ ClassMethod PutPatient(pid As %String) As %Status
         If '$isobject(%request.Content) Do ##class(%REST.Impl).%ReportRESTError(..#HTTP400BADREQUEST,$$$ERROR($$$RESTRequired,"body")) Quit
         Set pbody=%request.Content
         Set ptarget=$Get(%request.Data("target",1))
-        Set response=##class(fhirfoch.impl).PutPatient(pid,pbody,ptarget)
+        Set response=##class(fhirfoch.impl).PutPatient(pipp,pbody,ptarget)
         Do ##class(fhirfoch.impl).%WriteResponse(response)
     } Catch (ex) {
         Try {
@@ -178,7 +178,7 @@ ClassMethod PutPatient(pid As %String) As %Status
 }
 
 /// Delete the Patient from the FHIR repository
-ClassMethod DeletePatient(pid As %String) As %Status
+ClassMethod DeletePatient(pipp As %String) As %Status
 {
     Try {
         Do ##class(%REST.Impl).%SetContentType("application/fhir+json")
@@ -190,7 +190,7 @@ ClassMethod DeletePatient(pid As %String) As %Status
             }
             Quit
         }
-        Set response=##class(fhirfoch.impl).DeletePatient(pid)
+        Set response=##class(fhirfoch.impl).DeletePatient(pipp)
         Do ##class(fhirfoch.impl).%WriteResponse(response)
     } Catch (ex) {
         Try {
