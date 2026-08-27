@@ -1,6 +1,6 @@
-/// Business process: converts a data.patient into a FHIR Patient resource and
-/// pushes it to the local FHIR server (FHIRTRAINING) through the standard
-/// HS.FHIRServer.Interop.Operation. Supports create, upsert, and delete.
+/// Business process: accepts a mapped data.patient or a supplied FHIR Patient
+/// resource and pushes it to the local FHIR server (FHIRTRAINING) through the
+/// standard HS.FHIRServer.Interop.Operation. Supports create, upsert, and delete.
 Class training.fhir.PatientProcess Extends Ens.BusinessProcess [ ClassType = persistent ]
 {
 
@@ -22,11 +22,27 @@ Method OnRequest(pRequest As training.fhir.msg.PatientRequest, Output pResponse 
 
     Set method = $ZConvert($Select(pRequest.HTTPMethod '= "": pRequest.HTTPMethod, 1: ..DefaultHTTPMethod), "U")
 
-    // Always derive the logical id first so automatic mode can test target existence.
-    Set resource = ##class(training.fhir.PatientMapper).ToResource(pRequest.PatientId, 1, .sc)
-    Quit:$$$ISERR(sc) sc
+    If pRequest.ResourceStreamId '= "" {
+        Set sourceStream = ##class(HS.SDA3.QuickStream).%OpenId(pRequest.ResourceStreamId, , .sc)
+        Quit:$$$ISERR(sc) sc
+        If '$IsObject(sourceStream) Quit $$$ERROR($$$GeneralError, "FHIR Patient request stream is unavailable")
+        Do sourceStream.Rewind()
+        Set parseStatus = $$$OK
+        Try {
+            Set resource = {}.%FromJSON(sourceStream)
+        } Catch exception {
+            Set parseStatus = $$$ERROR($$$GeneralError, "Invalid FHIR JSON: "_exception.DisplayString())
+        }
+        Quit:$$$ISERR(parseStatus) parseStatus
+        If resource.resourceType '= "Patient" Quit $$$ERROR($$$GeneralError, "resourceType must be Patient")
+        If method = "" Set method = "POST"
+    } Else {
+        If pRequest.PatientId = "" Quit $$$ERROR($$$GeneralError, "PatientId or ResourceStreamId is required")
+        Set resource = ##class(training.fhir.PatientMapper).ToResource(pRequest.PatientId, 1, .sc)
+        Quit:$$$ISERR(sc) sc
+    }
 
-    If (method = "") || (method = "DELETE") {
+    If (pRequest.ResourceStreamId = "") && ((method = "") || (method = "DELETE")) {
         Set ipp = resource.identifier.%Get(0).value
         Set sc = ..FindResourceByIPP(ipp, .exists, .targetResourceId)
         Quit:$$$ISERR(sc) sc

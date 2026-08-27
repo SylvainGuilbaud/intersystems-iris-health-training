@@ -1,5 +1,5 @@
-/// Business service that reads data.patient rows and pushes each one, as a FHIR
-/// Patient resource, to the FHIR server via training.fhir.PatientProcess.
+/// Business service that pushes mapped data.patient rows or supplied FHIR Patient
+/// resources to the FHIR server via training.fhir.PatientProcess.
 /// Adapterless: trigger it on demand with SendAll() / SendOne().
 Class training.fhir.PatientService Extends Ens.BusinessService
 {
@@ -57,9 +57,9 @@ Method SendOne(pPatientId As %String, pMethod As %String = "", Output pStatus As
 /// Convenience: create the service on demand and feed all patients.
 ClassMethod SendAll(pMethod As %String = "", pFilter As %String = "", pConfigName As %String = "training.fhir.PatientService") As %Status
 {
-    Set sc = ##class(Ens.Director).CreateBusinessService(pConfigName, .service)
+    Set sc = ##class(Ens.Director).CreateBusinessService("toto", .service)
     Quit:$$$ISERR(sc) sc
-    Quit service.Feed(pMethod, pFilter)
+    Quit service.ProcessInput(pMethod, pFilter)
 }
 
 /// Convenience: create the service on demand and send a single patient.
@@ -79,6 +79,27 @@ ClassMethod SendPatientDetails(pPatientId As %String, pMethod As %String = "", O
     Set request = ##class(training.fhir.msg.PatientRequest).%New()
     Set request.PatientId = pPatientId
     Set:(pMethod '= "") request.HTTPMethod = pMethod
+    Quit service.SendRequestSync(service.TargetConfigName, request, .pResponse)
+}
+
+/// Send a supplied FHIR Patient resource without reading data.patient.
+ClassMethod SendFHIRPatientDetails(pResource As %DynamicObject, Output pResponse As training.fhir.msg.PatientResponse, pMethod As %String = "POST", pConfigName As %String = "training.fhir.PatientService") As %Status
+{
+    Set pResponse = ""
+    If '$IsObject(pResource) Quit $$$ERROR($$$GeneralError, "A FHIR Patient resource is required")
+
+    Set quickStream = ##class(HS.SDA3.QuickStream).%New()
+    Do quickStream.Write(pResource.%ToJSON())
+    Do quickStream.Flush()
+    Set sc = quickStream.%Save()
+    Quit:$$$ISERR(sc) sc
+
+    Set sc = ##class(Ens.Director).CreateBusinessService(pConfigName, .service)
+    Quit:$$$ISERR(sc) sc
+
+    Set request = ##class(training.fhir.msg.PatientRequest).%New()
+    Set request.ResourceStreamId = quickStream.%Id()
+    Set request.HTTPMethod = pMethod
     Quit service.SendRequestSync(service.TargetConfigName, request, .pResponse)
 }
 

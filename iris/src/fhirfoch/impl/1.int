@@ -1,54 +1,83 @@
 ROUTINE fhirfoch.impl.1 [Type=INT,Generated]
  ;fhirfoch.impl.1
- ;Generated for class fhirfoch.impl.  Do NOT edit. 08/26/2026 02:35:03PM
- ;;7A4E7065;fhirfoch.impl
+ ;Generated for class fhirfoch.impl.  Do NOT edit. 08/26/2026 04:24:36PM
+ ;;514F4E35;fhirfoch.impl
  ;
 DeletePatient(id) methodimpl {
-    //(Place business logic here)
-    //Do ..%SetStatusCode(<HTTP_status_code>)
-    //Do ..%SetHeader(<name>,<value>)
-    //Quit (Place response here) ; response may be a string, stream or dynamic object
-}
+    If '##class(data.patient).%ExistsId(id) {
+        Quit ..ErrorResponse(404, "not-found", "data.patient '"_id_"' not found")
+    }
+    Set sc = ##class(training.fhir.PatientService).SendPatientDetails(id, "DELETE", .details)
+    If ('sc) {
+        Quit ..ErrorResponse(502, "exception", $System.Status.GetErrorText(sc))
+    }
+    If +details.HTTPStatus = 404 {
+        Quit ..ErrorResponse(404, "not-found", "FHIR Patient for data.patient '"_id_"' not found")
+    }
+    Do ..%SetStatusCode(204)
+    Do ..%SetHeader("X-FHIR-HTTP-Method", "DELETE")
+    If details.ResourceId '= "" Do ..%SetHeader("Content-Location", "Patient/"_details.ResourceId)
+    Quit "" }
+ErrorResponse(httpStatus,code,diagnostics) methodimpl {
+    Set outcome = {"resourceType":"OperationOutcome","issue":[]}
+    Do outcome.issue.%Push({"severity":"error","code":(code),"diagnostics":(diagnostics)})
+    Do ..%SetStatusCode(httpStatus)
+    Quit outcome.%ToJSON() }
 GetPatient(id) methodimpl {
-    //(Place business logic here)
-    //Do ..%SetStatusCode(<HTTP_status_code>)
-    //Do ..%SetHeader(<name>,<value>)
-    //Quit (Place response here) ; response may be a string, stream or dynamic object
-}
+    If '##class(data.patient).%ExistsId(id) {
+        Quit ..ErrorResponse(404, "not-found", "data.patient '"_id_"' not found")
+    }
+    Set resource = ##class(training.fhir.PatientMapper).ToResource(id, 1, .sc)
+    If ('sc) {
+        Quit ..ErrorResponse(500, "exception", $System.Status.GetErrorText(sc))
+    }
+    Do ..%SetStatusCode(200)
+    Quit resource.%ToJSON() }
 GetVersion() methodimpl {
-        Set details = {}
-        Set details.system = $System
-        Set details.instance = $System.Util.GetEnviron("ISC_PACKAGE_INSTANCENAME")
-        Set details.hostname = $System.Util.GetEnviron("HOSTNAME")
-        Set details.namespace = $Namespace
-        Set details.version = $ZVersion
-        Set details.timestamp = $ZDateTime($Horolog, 3, 1, 3)
-        //set details.uptime = $ZDateTime($System.Process.GetUptime(), 3, 1, 3)
-        set details.username = $USERNAME
-        set namespaces = []
-        do namespaces.%Push("toto")
-        do namespaces.%Push("tata")
-        do namespaces.%Push("titi")
-        set details.namespaces = namespaces
-        Set %response.Status = 200
-        Set %response.ContentType = "application/json"
-        Write details.%ToJSON()
-        return details }
+    Set details = {}
+    Set details.system = $System
+    Set details.instance = $System.Util.GetEnviron("ISC_PACKAGE_INSTANCENAME")
+    Set details.hostname = $System.Util.GetEnviron("HOSTNAME")
+    Set details.namespace = $Namespace
+    Set details.version = $ZVersion
+    Set details.timestamp = $ZDateTime($Horolog, 3, 1, 3)
+    Set details.username = $Username
+    Set namespaces = []
+    Do namespaces.%Push("toto")
+    Do namespaces.%Push("tata")
+    Do namespaces.%Push("titi")
+    Set details.namespaces = namespaces
+    Do ..%SetStatusCode(200)
+    Quit details }
 GetVersionPyResponse() methodimpl {
-    //(Place business logic here)
-    //Do ..%SetStatusCode(<HTTP_status_code>)
-    //Do ..%SetHeader(<name>,<value>)
-    //Quit (Place response here) ; response may be a string, stream or dynamic object
-}
+    Set details = {}.%FromJSON(##class(training.fhir.PatientREST).GetVersionPy($Username))
+    Do ..%SetStatusCode(200)
+    Quit details }
 PutPatient(id,body) methodimpl {
-    //(Place business logic here)
-    //Do ..%SetStatusCode(<HTTP_status_code>)
-    //Do ..%SetHeader(<name>,<value>)
-    //Quit (Place response here) ; response may be a string, stream or dynamic object
-}
-SyncPatient(id) methodimpl {
-    //(Place business logic here)
-    //Do ..%SetStatusCode(<HTTP_status_code>)
-    //Do ..%SetHeader(<name>,<value>)
-    //Quit (Place response here) ; response may be a string, stream or dynamic object
-}
+    If '##class(data.patient).%ExistsId(id) {
+        Quit ..ErrorResponse(404, "not-found", "data.patient '"_id_"' not found")
+    }
+    Set sc = ##class(training.fhir.PatientREST).UpdateAddressFromStream(id, body, .httpStatus)
+    If ('sc) {
+        Quit ..ErrorResponse(httpStatus, "invalid", $System.Status.GetErrorText(sc))
+    }
+    Quit ..SendPatient(id, "PUT") }
+SendPatient(id,method) methodimpl {
+    If '##class(data.patient).%ExistsId(id) {
+        Quit ..ErrorResponse(404, "not-found", "data.patient '"_id_"' not found")
+    }
+    Set sc = ##class(training.fhir.PatientService).SendPatientDetails(id, method, .details)
+    If ('sc) {
+        Quit ..ErrorResponse(502, "exception", $System.Status.GetErrorText(sc))
+    }
+    Set resource = ##class(training.fhir.PatientMapper).ToResource(id, 1, .mapSC)
+    If ('mapSC) {
+        Quit ..ErrorResponse(500, "exception", $System.Status.GetErrorText(mapSC))
+    }
+    If details.ResourceId '= "" Set resource.id = details.ResourceId
+    Do ..%SetStatusCode($Select(+details.HTTPStatus > 0: +details.HTTPStatus, 1: 200))
+    Do ..%SetHeader("X-FHIR-HTTP-Method", details.HTTPMethod)
+    If details.ResourceId '= "" Do ..%SetHeader("Content-Location", "Patient/"_details.ResourceId)
+    Quit resource.%ToJSON() }
+SyncPatient(body) methodimpl {
+    Quit ..SendPatient(id, "") }

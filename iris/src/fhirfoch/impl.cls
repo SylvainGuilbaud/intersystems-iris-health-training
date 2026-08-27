@@ -1,6 +1,8 @@
+Include %occStatus
+
 /// REST facade over data.patient with R4 FHIR Patient representations.<br/>
 /// Business logic class defined by OpenAPI in fhirfoch.spec<br/>
-/// Updated Aug 26, 2026 14:35:03
+/// Updated Aug 26, 2026 16:24:36
 Class fhirfoch.impl Extends %REST.Impl [ ProcedureBlock ]
 {
 
@@ -10,40 +12,31 @@ Parameter ExposeServerExceptions = 0;
 /// Get IRIS instance details
 ClassMethod GetVersion() As %DynamicObject
 {
-        Set details = {}
-        Set details.system = $System
-        Set details.instance = $System.Util.GetEnviron("ISC_PACKAGE_INSTANCENAME")
-        Set details.hostname = $System.Util.GetEnviron("HOSTNAME")
-        Set details.namespace = $Namespace
-        Set details.version = $ZVersion
-        Set details.timestamp = $ZDateTime($Horolog, 3, 1, 3)
-        //set details.uptime = $ZDateTime($System.Process.GetUptime(), 3, 1, 3)
-        set details.username = $USERNAME
+    Set details = {}
+    Set details.system = $System
+    Set details.instance = $System.Util.GetEnviron("ISC_PACKAGE_INSTANCENAME")
+    Set details.hostname = $System.Util.GetEnviron("HOSTNAME")
+    Set details.namespace = $Namespace
+    Set details.version = $ZVersion
+    Set details.timestamp = $ZDateTime($Horolog, 3, 1, 3)
+    Set details.username = $Username
 
-        set namespaces = []
-        
-        do namespaces.%Push("toto")
+    Set namespaces = []
+    Do namespaces.%Push("toto")
+    Do namespaces.%Push("tata")
+    Do namespaces.%Push("titi")
+    Set details.namespaces = namespaces
 
-        do namespaces.%Push("tata")
-
-        do namespaces.%Push("titi")
-
-        set details.namespaces = namespaces
-        
-
-        Set %response.Status = 200
-        Set %response.ContentType = "application/json"
-        Write details.%ToJSON()
-        return details
+    Do ..%SetStatusCode(200)
+    Quit details
 }
 
 /// Get IRIS instance details from Embedded Python
 ClassMethod GetVersionPyResponse() As %DynamicObject
 {
-    //(Place business logic here)
-    //Do ..%SetStatusCode(<HTTP_status_code>)
-    //Do ..%SetHeader(<name>,<value>)
-    //Quit (Place response here) ; response may be a string, stream or dynamic object
+    Set details = {}.%FromJSON(##class(training.fhir.PatientREST).GetVersionPy($Username))
+    Do ..%SetStatusCode(200)
+    Quit details
 }
 
 /// Returns the mapped Patient without persisting it to the FHIR repository.<br/>
@@ -51,33 +44,73 @@ ClassMethod GetVersionPyResponse() As %DynamicObject
 ///     id, Internal data.patient source identifier<br/>
 ClassMethod GetPatient(id As %String) As %Stream.Object
 {
-    //(Place business logic here)
-    //Do ..%SetStatusCode(<HTTP_status_code>)
-    //Do ..%SetHeader(<name>,<value>)
-    //Quit (Place response here) ; response may be a string, stream or dynamic object
+    If '##class(data.patient).%ExistsId(id) {
+        Quit ..ErrorResponse(404, "not-found", "data.patient '"_id_"' not found")
+    }
+
+    Set resource = ##class(training.fhir.PatientMapper).ToResource(id, 1, .sc)
+    If $$$ISERR(sc) {
+        Quit ..ErrorResponse(500, "exception", $System.Status.GetErrorText(sc))
+    }
+
+    Do ..%SetStatusCode(200)
+    Quit resource.%ToJSON()
 }
 
-/// Selects POST or PUT according to whether the target Patient already exists.<br/>
+/// Creates or updates the target Patient from the supplied FHIR resource.<br/>
 /// The method arguments hold values for:<br/>
-///     id, Internal data.patient source identifier<br/>
-ClassMethod SyncPatient(id As %String) As %Stream.Object
+///     body, FHIR Patient to synchronize.<br/>
+///     target, Persistence target: fhir (default) or data.<br/>
+ClassMethod SyncPatient(body As %Stream.Object, target As %String = "fhir") As %Stream.Object
 {
-    //(Place business logic here)
-    //Do ..%SetStatusCode(<HTTP_status_code>)
-    //Do ..%SetHeader(<name>,<value>)
-    //Quit (Place response here) ; response may be a string, stream or dynamic object
+    Set resource = ..ParsePatient(body, .parseStatus)
+    If $$$ISERR(parseStatus) Quit ..ErrorResponse(400, "invalid", $System.Status.GetErrorText(parseStatus))
+
+    Set target = $ZConvert(target, "L")
+    If target = "" Set target = "fhir"
+    If (target '= "fhir") && (target '= "data") Quit ..ErrorResponse(400, "invalid", "target must be 'fhir' or 'data'")
+
+    If target = "data" {
+        Set sc = ##class(training.fhir.PatientMapper).SaveToData(resource, "", .patientId)
+        If $$$ISERR(sc) Quit ..ErrorResponse(400, "invalid", $System.Status.GetErrorText(sc))
+        Set response = ##class(training.fhir.PatientMapper).ToResource(patientId, 1, .mapStatus)
+        If $$$ISERR(mapStatus) Quit ..ErrorResponse(500, "exception", $System.Status.GetErrorText(mapStatus))
+        Do ..%SetStatusCode(201)
+        Do ..%SetHeader("Content-Location", "Patient/"_patientId)
+        Quit response.%ToJSON()
+    }
+
+    Quit ..SendFHIRResource(resource, "POST")
 }
 
-/// The source id and IPP identifier are immutable. The first home address is imported into data.patient before an idempotent FHIR PUT.<br/>
+/// Updates the FHIR resource or data.patient according to target.<br/>
 /// The method arguments hold values for:<br/>
 ///     id, Internal data.patient source identifier<br/>
-///     body, FHIR Patient carrying the editable home address.<br/>
-ClassMethod PutPatient(id As %String, body As %Stream.Object) As %Stream.Object
+///     body, FHIR Patient to update.<br/>
+///     target, Persistence target: fhir (default) or data.<br/>
+ClassMethod PutPatient(id As %String, body As %Stream.Object, target As %String = "fhir") As %Stream.Object
 {
-    //(Place business logic here)
-    //Do ..%SetStatusCode(<HTTP_status_code>)
-    //Do ..%SetHeader(<name>,<value>)
-    //Quit (Place response here) ; response may be a string, stream or dynamic object
+    Set resource = ..ParsePatient(body, .parseStatus)
+    If $$$ISERR(parseStatus) Quit ..ErrorResponse(400, "invalid", $System.Status.GetErrorText(parseStatus))
+
+    Set target = $ZConvert(target, "L")
+    If target = "" Set target = "fhir"
+    If (target '= "fhir") && (target '= "data") Quit ..ErrorResponse(400, "invalid", "target must be 'fhir' or 'data'")
+
+    If target = "data" {
+        If '##class(data.patient).%ExistsId(id) Quit ..ErrorResponse(404, "not-found", "data.patient '"_id_"' not found")
+        Set sc = ##class(training.fhir.PatientMapper).SaveToData(resource, id, .patientId)
+        If $$$ISERR(sc) Quit ..ErrorResponse(400, "invalid", $System.Status.GetErrorText(sc))
+        Set response = ##class(training.fhir.PatientMapper).ToResource(patientId, 1, .mapStatus)
+        If $$$ISERR(mapStatus) Quit ..ErrorResponse(500, "exception", $System.Status.GetErrorText(mapStatus))
+        Do ..%SetStatusCode(200)
+        Do ..%SetHeader("Content-Location", "Patient/"_patientId)
+        Quit response.%ToJSON()
+    }
+
+    If (resource.id '= "") && (resource.id '= id) Quit ..ErrorResponse(409, "invalid", "Patient id must match the path id '"_id_"'")
+    Set resource.id = id
+    Quit ..SendFHIRResource(resource, "PUT")
 }
 
 /// Finds the target Patient by the source patient's IPP and deletes it. The data.patient source record is preserved.<br/>
@@ -85,10 +118,82 @@ ClassMethod PutPatient(id As %String, body As %Stream.Object) As %Stream.Object
 ///     id, Internal data.patient source identifier<br/>
 ClassMethod DeletePatient(id As %String) As %Stream.Object
 {
-    //(Place business logic here)
-    //Do ..%SetStatusCode(<HTTP_status_code>)
-    //Do ..%SetHeader(<name>,<value>)
-    //Quit (Place response here) ; response may be a string, stream or dynamic object
+    If '##class(data.patient).%ExistsId(id) {
+        Quit ..ErrorResponse(404, "not-found", "data.patient '"_id_"' not found")
+    }
+
+    Set sc = ##class(training.fhir.PatientService).SendPatientDetails(id, "DELETE", .details)
+    If $$$ISERR(sc) {
+        Quit ..ErrorResponse(502, "exception", $System.Status.GetErrorText(sc))
+    }
+    If +details.HTTPStatus = 404 {
+        Quit ..ErrorResponse(404, "not-found", "FHIR Patient for data.patient '"_id_"' not found")
+    }
+
+    Do ..%SetStatusCode(204)
+    Do ..%SetHeader("X-FHIR-HTTP-Method", "DELETE")
+    If details.ResourceId '= "" Do ..%SetHeader("Content-Location", "Patient/"_details.ResourceId)
+    Quit ""
+}
+
+/// Synchronize one source patient and return its mapped FHIR representation.
+ClassMethod SendPatient(id As %String, method As %String) As %Stream.Object
+{
+    If '##class(data.patient).%ExistsId(id) {
+        Quit ..ErrorResponse(404, "not-found", "data.patient '"_id_"' not found")
+    }
+
+    Set sc = ##class(training.fhir.PatientService).SendPatientDetails(id, method, .details)
+    If $$$ISERR(sc) {
+        Quit ..ErrorResponse(502, "exception", $System.Status.GetErrorText(sc))
+    }
+
+    Set resource = ##class(training.fhir.PatientMapper).ToResource(id, 1, .mapSC)
+    If $$$ISERR(mapSC) {
+        Quit ..ErrorResponse(500, "exception", $System.Status.GetErrorText(mapSC))
+    }
+    If details.ResourceId '= "" Set resource.id = details.ResourceId
+
+    Do ..%SetStatusCode($Select(+details.HTTPStatus > 0: +details.HTTPStatus, 1: 200))
+    Do ..%SetHeader("X-FHIR-HTTP-Method", details.HTTPMethod)
+    If details.ResourceId '= "" Do ..%SetHeader("Content-Location", "Patient/"_details.ResourceId)
+    Quit resource.%ToJSON()
+}
+
+/// Send a supplied Patient resource directly to the FHIR repository.
+ClassMethod SendFHIRResource(resource As %DynamicObject, method As %String) As %Stream.Object
+{
+    Set sc = ##class(training.fhir.PatientService).SendFHIRPatientDetails(resource, .details, method)
+    If $$$ISERR(sc) Quit ..ErrorResponse(502, "exception", $System.Status.GetErrorText(sc))
+
+    If details.ResourceId '= "" Set resource.id = details.ResourceId
+    Do ..%SetStatusCode($Select(+details.HTTPStatus > 0: +details.HTTPStatus, method = "POST": 201, 1: 200))
+    Do ..%SetHeader("X-FHIR-HTTP-Method", details.HTTPMethod)
+    If details.ResourceId '= "" Do ..%SetHeader("Content-Location", "Patient/"_details.ResourceId)
+    Quit resource.%ToJSON()
+}
+
+/// Parse and validate a FHIR Patient request body.
+ClassMethod ParsePatient(body As %Stream.Object, Output status As %Status) As %DynamicObject
+{
+    Set status = $$$OK
+    Try {
+        Set resource = {}.%FromJSON(body)
+    } Catch exception {
+        Set status = $$$ERROR($$$GeneralError, "Invalid FHIR JSON: "_exception.DisplayString())
+        Quit
+    }
+    If resource.resourceType '= "Patient" Set status = $$$ERROR($$$GeneralError, "resourceType must be Patient")
+    Quit resource
+}
+
+/// Build a FHIR OperationOutcome and apply its HTTP status.
+ClassMethod ErrorResponse(httpStatus As %Integer, code As %String, diagnostics As %String) As %Stream.Object
+{
+    Set outcome = {"resourceType":"OperationOutcome","issue":[]}
+    Do outcome.issue.%Push({"severity":"error","code":(code),"diagnostics":(diagnostics)})
+    Do ..%SetStatusCode(httpStatus)
+    Quit outcome.%ToJSON()
 }
 
 }

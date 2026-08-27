@@ -17,7 +17,7 @@ XData UrlMap [ XMLNamespace = "http://www.intersystems.com/urlmap" ]
   <Route Url="/version" Method="GET" Call="GetVersion" />
   <Route Url="/versionpy" Method="GET" Call="GetVersionPyResponse" />
   <Route Url="/Patient/:id" Method="GET" Call="GetPatient" />
-  <Route Url="/Patient/:id" Method="POST" Call="SyncPatient" />
+  <Route Url="/Patient" Method="POST" Call="SyncPatient" />
   <Route Url="/Patient/:id" Method="PUT" Call="PutPatient" />
     <Route Url="/Patient/:id" Method="DELETE" Call="DeletePatient" />
 </Routes>
@@ -147,10 +147,16 @@ ClassMethod DeletePatient(id As %String) As %Status
 /// Import the editable home address while keeping the source id and IPP immutable.
 ClassMethod UpdateAddressFromPayload(id As %String, Output httpStatus As %Integer) As %Status
 {
+    Quit ..UpdateAddressFromStream(id, %request.Content, .httpStatus)
+}
+
+/// Import an editable home address from the supplied FHIR JSON stream.
+ClassMethod UpdateAddressFromStream(id As %String, content As %Stream.Object, Output httpStatus As %Integer) As %Status
+{
     Set httpStatus = 400
     Set parseStatus = $$$OK
     Try {
-        Set payload = {}.%FromJSON(%request.Content)
+        Set payload = {}.%FromJSON(content)
     } Catch exception {
         Set parseStatus = $$$ERROR($$$GeneralError, "Invalid FHIR JSON: "_exception.DisplayString())
     }

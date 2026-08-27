@@ -1,7 +1,7 @@
 ROUTINE fhirfoch.disp.1 [Type=INT,Generated]
  ;fhirfoch.disp.1
- ;Generated for class fhirfoch.disp.  Do NOT edit. 08/26/2026 02:35:03PM
- ;;452B6B4D;fhirfoch.disp
+ ;Generated for class fhirfoch.disp.  Do NOT edit. 08/26/2026 04:24:36PM
+ ;;31517969;fhirfoch.disp
  ;
 DeletePatient(pid) methodimpl {
     Try {
@@ -37,15 +37,15 @@ DispatchMap(url,method,verbsMatched="",args) methodimpl {
      If ",GET,OPTIONS," [ searchMethod Set route=$lb("R","GetVersionPyResponse",$classname(),"false",url),regex=1 Quit
      Set verbsMatched=verbsMatched_",GET,OPTIONS"
    }
+   Set matcher.Pattern="/Patient"
+   If matcher.Match(url) {
+     If ",POST,OPTIONS," [ searchMethod Set route=$lb("R","SyncPatient",$classname(),"false",url),regex=1 Quit
+     Set verbsMatched=verbsMatched_",POST,OPTIONS"
+   }
    Set matcher.Pattern="/Patient/([^/]+)"
    If matcher.Match(url) {
      If ",GET,OPTIONS," [ searchMethod Set route=$lb("R","GetPatient",$classname(),"false",url),regex=1 Quit
      Set verbsMatched=verbsMatched_",GET,OPTIONS"
-   }
-   Set matcher.Pattern="/Patient/([^/]+)"
-   If matcher.Match(url) {
-     If ",POST,OPTIONS," [ searchMethod Set route=$lb("R","SyncPatient",$classname(),"false",url),regex=1 Quit
-     Set verbsMatched=verbsMatched_",POST,OPTIONS"
    }
    Set matcher.Pattern="/Patient/([^/]+)"
    If matcher.Match(url) {
@@ -176,14 +176,14 @@ SupportedVerbs(pUrl,pVerbs) methodimpl {
    If 'pVerbs.%IsDefined("GET") Do pVerbs.%Set("GET", 1, "boolean")
    If 'pVerbs.%IsDefined("OPTIONS") Do pVerbs.%Set("OPTIONS", 1, "boolean")
  }
- Set pMatcher.Pattern="/Patient/([^/]+)"
+ Set pMatcher.Pattern="/Patient"
  If pMatcher.Match(pUrl) {
-   If 'pVerbs.%IsDefined("GET") Do pVerbs.%Set("GET", 1, "boolean")
+   If 'pVerbs.%IsDefined("POST") Do pVerbs.%Set("POST", 1, "boolean")
    If 'pVerbs.%IsDefined("OPTIONS") Do pVerbs.%Set("OPTIONS", 1, "boolean")
  }
  Set pMatcher.Pattern="/Patient/([^/]+)"
  If pMatcher.Match(pUrl) {
-   If 'pVerbs.%IsDefined("POST") Do pVerbs.%Set("POST", 1, "boolean")
+   If 'pVerbs.%IsDefined("GET") Do pVerbs.%Set("GET", 1, "boolean")
    If 'pVerbs.%IsDefined("OPTIONS") Do pVerbs.%Set("OPTIONS", 1, "boolean")
  }
  Set pMatcher.Pattern="/Patient/([^/]+)"
@@ -203,8 +203,16 @@ SupportedVerbs(pUrl,pVerbs) methodimpl {
  }
  Set pVerbs = $extract(value,1,*-1)
  Return 1 }
-SyncPatient(pid) methodimpl {
+SyncPatient() methodimpl {
     Try {
+        If $case(%request.ContentType,"application/fhir+json":0,"application/json":0,:1) {
+            Try {
+                Do ##class(fhirfoch.impl).%ReportRESTError(..#HTTP415UNSUPPORTEDMEDIATYPE,$$Error^%apiOBJ(8726,%request.ContentType))
+            } Catch {
+                Do ##class(%REST.Impl).%ReportRESTError(..#HTTP415UNSUPPORTEDMEDIATYPE,$$Error^%apiOBJ(8726,%request.ContentType))
+            }
+            Quit
+        }
         Do ##class(%REST.Impl).%SetContentType("application/fhir+json")
         If '##class(%REST.Impl).%CheckAccepts("application/fhir+json") {
             Try {
@@ -214,7 +222,9 @@ SyncPatient(pid) methodimpl {
             }
             Quit
         }
-        Set response=##class(fhirfoch.impl).SyncPatient(pid)
+        If '$isobject(%request.Content) Do ##class(%REST.Impl).%ReportRESTError(..#HTTP400BADREQUEST,$$Error^%apiOBJ(8727,"body")) Quit
+        Set pbody=%request.Content
+        Set response=##class(fhirfoch.impl).SyncPatient(pbody)
         Do ##class(fhirfoch.impl).%WriteResponse(response)
     } Catch (ex) {
         Try {

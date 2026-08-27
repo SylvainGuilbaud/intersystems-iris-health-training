@@ -35,31 +35,21 @@
         }
       }
     },
-    "/Patient/{id}": {
-      "get": {
-        "operationId": "GetPatient",
-        "summary": "Project a source patient as an R4 FHIR Patient",
-        "description": "Returns the mapped Patient without persisting it to the FHIR repository.",
-        "produces": ["application/fhir+json"],
-        "parameters": [
-          { "$ref": "#/parameters/PatientSourceId" }
-        ],
-        "responses": {
-          "200": {
-            "description": "Mapped FHIR Patient",
-            "schema": { "$ref": "#/definitions/Patient" }
-          },
-          "404": { "$ref": "#/responses/NotFound" },
-          "500": { "$ref": "#/responses/InternalError" }
-        }
-      },
+    "/Patient": {
       "post": {
         "operationId": "SyncPatient",
-        "summary": "Synchronize a source patient with the FHIR repository",
-        "description": "Selects POST or PUT according to whether the target Patient already exists.",
+        "summary": "Synchronize a Patient with the FHIR repository",
+        "description": "Creates or updates the target Patient from the supplied FHIR resource.",
+        "consumes": ["application/fhir+json", "application/json"],
         "produces": ["application/fhir+json"],
         "parameters": [
-          { "$ref": "#/parameters/PatientSourceId" }
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "description": "FHIR Patient to synchronize.",
+            "schema": { "$ref": "#/definitions/Patient" }
+          }
         ],
         "responses": {
           "200": {
@@ -78,9 +68,28 @@
             },
             "schema": { "$ref": "#/definitions/Patient" }
           },
-          "404": { "$ref": "#/responses/NotFound" },
+          "400": { "$ref": "#/responses/InvalidPatient" },
           "500": { "$ref": "#/responses/InternalError" },
           "502": { "$ref": "#/responses/FHIRGatewayError" }
+        }
+      }
+    },
+    "/Patient/{id}": {
+      "get": {
+        "operationId": "GetPatient",
+        "summary": "Project a source patient as an R4 FHIR Patient",
+        "description": "Returns the mapped Patient without persisting it to the FHIR repository.",
+        "produces": ["application/fhir+json"],
+        "parameters": [
+          { "$ref": "#/parameters/PatientSourceId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mapped FHIR Patient",
+            "schema": { "$ref": "#/definitions/Patient" }
+          },
+          "404": { "$ref": "#/responses/NotFound" },
+          "500": { "$ref": "#/responses/InternalError" }
         }
       },
       "put": {

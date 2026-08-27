@@ -1,3 +1,13 @@
+
+### Create REST API
+
+POST http://localhost/iris-health-training-dev/api/mgmnt/v2/TRAINING/fhirfoch
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+
+< ./swagger/fhir.json
+
 ### DEV LOCAL - ORU
 POST http://localhost/iris-health-training-dev/csp/healthshare/dglab/EnsLib.HL7.Service.HTTPService.cls?CfgItem=LAB RESULT from DGLAB - HTTP HTTP/1.1
 Content-Type: text/plain; charset=utf-8
@@ -19,10 +29,147 @@ GET http://localhost/iris-health-training-dev/foch/version HTTP/1.1
 Accept: application/json
 Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
 
-### IRIS instance details and timestamp
-GET http://localhost/iris-health-training-dev/specfirst/foch/version HTTP/1.1
+@specFirstFochBaseUrl = http://localhost/iris-health-training-dev/specfirst/foch
+@specFirstFochPatientId = 2
+@specFirstFochTarget = fhir
+@specFirstFochAuthorization = Basic X3N5c3RlbTpJUklTNEdvb2Qv
+
+### SPEC FIRST FOCH - IRIS instance details
+GET {{specFirstFochBaseUrl}}/version HTTP/1.1
 Accept: application/json
-Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+Authorization: {{specFirstFochAuthorization}}
+
+### SPEC FIRST FOCH - IRIS instance details from Embedded Python
+GET {{specFirstFochBaseUrl}}/versionpy HTTP/1.1
+Accept: application/json
+Authorization: {{specFirstFochAuthorization}}
+
+### SPEC FIRST FOCH - project the source patient as FHIR without persisting it
+GET {{specFirstFochBaseUrl}}/Patient/{{specFirstFochPatientId}} HTTP/1.1
+Accept: application/fhir+json
+Authorization: {{specFirstFochAuthorization}}
+
+### SPEC FIRST FOCH - synchronize with POST or PUT according to target existence
+POST {{specFirstFochBaseUrl}}/Patient?target={{specFirstFochTarget}} HTTP/1.1
+Accept: application/fhir+json
+Content-Type: application/fhir+json
+Authorization: {{specFirstFochAuthorization}}
+
+{
+  "resourceType": "Patient",
+  "id": "HHFOCH001",
+  "identifier": [
+    {
+      "system": "urn:oid:1.2.250.1.999.1",
+      "value": "HHFOCH001"
+    },
+    {
+      "system": "urn:oid:1.2.250.1.213.1.4.8",
+      "value": "HHSYSTEM001"
+    },
+    {
+      "system": "urn:oid:1.2.250.1.213.1.4.10",
+      "value": "19DSF FDSF FSDF9"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "use": "official",
+      "family": "MOREAU",
+      "given": [
+        "Dimitri"
+      ]
+    },
+    {
+      "use": "maiden",
+      "family": "DUPONT"
+    }
+  ],
+  "telecom": [
+    {
+      "system": "email",
+      "value": "T6121@example.com"
+    },
+    {
+      "system": "phone",
+      "value": "N2980",
+      "use": "mobile"
+    },
+    {
+      "system": "phone",
+      "value": "325-518-1140",
+      "use": "home"
+    },
+    {
+      "system": "phone",
+      "value": "M7029",
+      "use": "temp"
+    }
+  ],
+  "gender": "other",
+  "birthDate": "1957-11-30",
+  "deceasedDateTime": "1939-08-04",
+  "address": [
+    {
+      "use": "home",
+      "line": [
+        "25 rue des Vignes"
+      ],
+      "city": "Suresnes",
+      "postalCode": "92500",
+      "country": "FR"
+    }
+  ],
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/patient-birthPlace",
+      "valueAddress": {
+        "line": [
+          "3391 Madison Court",
+          "P9968",
+          "R3740",
+          "C6301"
+        ],
+        "city": "Boston",
+        "postalCode": "88019",
+        "country": "V4487"
+      }
+    }
+  ]
+}
+
+### SPEC FIRST FOCH - update the home address and force an idempotent FHIR PUT
+PUT {{specFirstFochBaseUrl}}/Patient/{{specFirstFochPatientId}}?target={{specFirstFochTarget}} HTTP/1.1
+Accept: application/fhir+json
+Content-Type: application/fhir+json
+Authorization: {{specFirstFochAuthorization}}
+
+{
+	"resourceType": "Patient",
+  "id": "{{specFirstFochPatientId}}",
+  "identifier": [],
+  "active": true,
+  "name": [],
+  "telecom": [],
+  "gender": "unknown",
+	"address": [
+		{
+			"use": "home",
+			"line": [
+				"25 rue des Vignes"
+			],
+			"city": "Suresnes",
+			"postalCode": "92500",
+			"country": "FR"
+		}
+	]
+}
+
+### SPEC FIRST FOCH - delete the target FHIR Patient and preserve data.patient
+DELETE {{specFirstFochBaseUrl}}/Patient/{{specFirstFochPatientId}} HTTP/1.1
+Accept: application/fhir+json
+Authorization: {{specFirstFochAuthorization}}
 
 ### IRIS instance details and timestamp
 GET http://localhost/iris-health-training-dev/fhir/version HTTP/1.1
@@ -50,7 +197,7 @@ Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
 	"id": "J7720",
 	"identifier": [
 		{
-			"system": "urn:oid:1.2.250.1.999.1.ipp",
+      "system": "urn:oid:1.2.250.1.999.1",
 			"value": "J7720"
 		}
 	]
@@ -67,7 +214,7 @@ Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
 	"id": "J7720",
 	"identifier": [
 		{
-			"system": "urn:oid:1.2.250.1.999.1.ipp",
+      "system": "urn:oid:1.2.250.1.999.1",
 			"value": "J7720"
 		}
 	],

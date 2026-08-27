@@ -1,12 +1,15 @@
-/// Interop request carrying a data.patient id to push to the FHIR server.
+/// Interop request carrying either a data.patient id or a FHIR resource stream.
 Class training.fhir.msg.PatientRequest Extends Ens.Request
 {
 
 /// Id of the data.patient row to convert and send.
-Property PatientId As %String [ Required ];
+Property PatientId As %String;
 
-/// Optional override of the HTTP verb (POST or PUT). Empty = use the operation/process default.
-Property HTTPMethod As %String(VALUELIST = ",POST,PUT");
+/// Id of the QuickStream containing a FHIR Patient JSON body.
+Property ResourceStreamId As %String;
+
+/// Optional override of the HTTP verb. Empty = use the operation/process default.
+Property HTTPMethod As %String(VALUELIST = ",POST,PUT,DELETE");
 
 Storage Default
 {
@@ -16,6 +19,9 @@ Storage Default
 <Value>PatientId</Value>
 </Value>
 <Value name="2">
+<Value>ResourceStreamId</Value>
+</Value>
+<Value name="3">
 <Value>HTTPMethod</Value>
 </Value>
 </Data>

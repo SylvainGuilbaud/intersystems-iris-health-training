@@ -41,31 +41,22 @@ XData OpenAPI [ MimeType = application/json ]
         }
       }
     },
-    "/Patient/{id}": {
-      "get": {
-        "operationId": "GetPatient",
-        "summary": "Project a source patient as an R4 FHIR Patient",
-        "description": "Returns the mapped Patient without persisting it to the FHIR repository.",
-        "produces": ["application/fhir+json"],
-        "parameters": [
-          { "$ref": "#/parameters/PatientSourceId" }
-        ],
-        "responses": {
-          "200": {
-            "description": "Mapped FHIR Patient",
-            "schema": { "$ref": "#/definitions/Patient" }
-          },
-          "404": { "$ref": "#/responses/NotFound" },
-          "500": { "$ref": "#/responses/InternalError" }
-        }
-      },
+    "/Patient": {
       "post": {
         "operationId": "SyncPatient",
-        "summary": "Synchronize a source patient with the FHIR repository",
-        "description": "Selects POST or PUT according to whether the target Patient already exists.",
+        "summary": "Create a Patient in the selected target",
+        "description": "Creates the supplied Patient in the FHIR repository by default, or inserts data.patient when target=data.",
+        "consumes": ["application/fhir+json", "application/json"],
         "produces": ["application/fhir+json"],
         "parameters": [
-          { "$ref": "#/parameters/PatientSourceId" }
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "description": "FHIR Patient to synchronize.",
+            "schema": { "$ref": "#/definitions/Patient" }
+          },
+          { "$ref": "#/parameters/Target" }
         ],
         "responses": {
           "200": {
@@ -84,15 +75,34 @@ XData OpenAPI [ MimeType = application/json ]
             },
             "schema": { "$ref": "#/definitions/Patient" }
           },
-          "404": { "$ref": "#/responses/NotFound" },
+          "400": { "$ref": "#/responses/InvalidPatient" },
           "500": { "$ref": "#/responses/InternalError" },
           "502": { "$ref": "#/responses/FHIRGatewayError" }
+        }
+      }
+    },
+    "/Patient/{id}": {
+      "get": {
+        "operationId": "GetPatient",
+        "summary": "Project a source patient as an R4 FHIR Patient",
+        "description": "Returns the mapped Patient without persisting it to the FHIR repository.",
+        "produces": ["application/fhir+json"],
+        "parameters": [
+          { "$ref": "#/parameters/PatientSourceId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mapped FHIR Patient",
+            "schema": { "$ref": "#/definitions/Patient" }
+          },
+          "404": { "$ref": "#/responses/NotFound" },
+          "500": { "$ref": "#/responses/InternalError" }
         }
       },
       "put": {
         "operationId": "PutPatient",
-        "summary": "Update the home address and upsert the Patient in FHIR",
-        "description": "The source id and IPP identifier are immutable. The first home address is imported into data.patient before an idempotent FHIR PUT.",
+        "summary": "Update a Patient in the selected target",
+        "description": "Updates the FHIR resource by default, or transforms the payload and updates data.patient when target=data. The IPP is immutable for data updates.",
         "consumes": ["application/fhir+json", "application/json"],
         "produces": ["application/fhir+json"],
         "parameters": [
@@ -101,9 +111,10 @@ XData OpenAPI [ MimeType = application/json ]
             "name": "body",
             "in": "body",
             "required": true,
-            "description": "FHIR Patient carrying the editable home address.",
-            "schema": { "$ref": "#/definitions/PatientUpdate" }
-          }
+            "description": "FHIR Patient to update.",
+            "schema": { "$ref": "#/definitions/Patient" }
+          },
+          { "$ref": "#/parameters/Target" }
         ],
         "responses": {
           "200": {
@@ -158,6 +169,15 @@ XData OpenAPI [ MimeType = application/json ]
       "required": true,
       "type": "string",
       "description": "Internal data.patient source identifier"
+    },
+    "Target": {
+      "name": "target",
+      "in": "query",
+      "required": false,
+      "type": "string",
+      "enum": ["fhir", "data"],
+      "default": "fhir",
+      "description": "Persistence target: the IRIS FHIR repository or the data.patient table"
     }
   },
   "responses": {
@@ -203,6 +223,7 @@ XData OpenAPI [ MimeType = application/json ]
       "properties": {
         "resourceType": { "type": "string", "enum": ["Patient"] },
         "id": { "type": "string", "pattern": "^[A-Za-z0-9\\-.]{1,64}$" },
+        "text": { "$ref": "#/definitions/Narrative" },
         "identifier": {
           "type": "array",
           "items": { "$ref": "#/definitions/Identifier" }
@@ -245,6 +266,14 @@ XData OpenAPI [ MimeType = application/json ]
           "minItems": 1,
           "items": { "$ref": "#/definitions/Address" }
         }
+      }
+    },
+    "Narrative": {
+      "type": "object",
+      "required": ["status", "div"],
+      "properties": {
+        "status": { "type": "string", "enum": ["generated"] },
+        "div": { "type": "string", "description": "XHTML narrative with the FHIR XHTML namespace" }
       }
     },
     "Identifier": {
