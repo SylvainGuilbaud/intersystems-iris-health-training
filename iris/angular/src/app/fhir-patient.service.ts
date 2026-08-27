@@ -21,6 +21,22 @@ export interface FhirAddress {
   country?: string;
 }
 
+export interface FhirQuantity {
+  value?: number;
+  unit?: string;
+  system?: string;
+  code?: string;
+}
+
+export interface FhirExtension {
+  url?: string;
+  extension?: FhirExtension[];
+  valueString?: string;
+  valueDecimal?: number;
+  valueQuantity?: FhirQuantity;
+  valueDateTime?: string;
+}
+
 export interface FhirPatient {
   resourceType: 'Patient';
   id?: string;
@@ -30,6 +46,7 @@ export interface FhirPatient {
   gender?: string;
   birthDate?: string;
   address?: FhirAddress[];
+  extension?: FhirExtension[];
 }
 
 @Injectable({ providedIn: 'root' })

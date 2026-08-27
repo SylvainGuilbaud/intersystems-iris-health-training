@@ -69,9 +69,14 @@ body { background: #0b0b25; color: #e2e8f0; }
 .patient-facts {
 	display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 20px; margin: 16px 0 0;
 	div { min-width: 0; }
-	.address-fact { grid-column: 1 / -1; }
+	.address-fact, .environment-fact { grid-column: 1 / -1; }
 	dt { color: #94a3b8; font-size: 10px; font-weight: 700; text-transform: uppercase; }
 	dd { margin: 4px 0 0; color: #e2e8f0; font-size: 13px; overflow-wrap: anywhere; }
+}
+.environment-fact {
+	border-top: 1px solid rgba(42, 74, 108, 0.72); padding-top: 12px;
+	dd { display: grid; grid-template-columns: minmax(130px, 1fr) auto; gap: 4px 16px; }
+	.environment-city { grid-row: 1 / span 2; align-self: center; color: #7dd3fc; font-weight: 600; }
 }
 .fhir-json-title {
 	padding: 10px 14px; border-bottom: 1px solid #2a4a6c;
@@ -89,5 +94,7 @@ body { background: #0b0b25; color: #e2e8f0; }
 @media (max-width: 520px) {
 	.fhir-section { padding-inline: 16px; }
 	.fhir-search-controls, .patient-facts { grid-template-columns: 1fr; }
-	.patient-facts .address-fact { grid-column: auto; }
+	.patient-facts .address-fact, .patient-facts .environment-fact { grid-column: auto; }
+	.environment-fact dd { grid-template-columns: 1fr; }
+	.environment-fact .environment-city { grid-row: auto; }
 }

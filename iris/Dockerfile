@@ -11,6 +11,8 @@ COPY key/iris.key /usr/irissys/mgr/iris.key
 WORKDIR /home/irisowner/dev
 COPY . /home/irisowner/dev/
 
+RUN python3 -m pip install --no-cache-dir --target /usr/irissys/mgr/python intersystems-pyprod==0.2.0
+
 RUN iris start IRIS && \
 	iris merge IRIS merge.cpf && \
 	iris session IRIS < iris.script && \

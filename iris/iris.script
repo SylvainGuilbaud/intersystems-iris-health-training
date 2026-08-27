@@ -97,6 +97,7 @@
     set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/data/address.cls", "ck")
     set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/data/users.cls", "ck")
     set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/data/patient.cls", "ck")
+    set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/pyprod/generated", "ck")
     set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/training/fhir", "ck")
     set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/TRAININGPKG/FoundationProduction.cls", "ck")
     set sc = ##class(training.fhir.PatientREST).Install("/fhir", "TRAINING")

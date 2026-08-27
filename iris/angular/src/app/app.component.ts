@@ -4,7 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { catchError, finalize, from, mergeMap, of, Subscription } from 'rxjs';
 import { Hl7Service } from './hl7.service';
-import { FhirPatient, FhirPatientService } from './fhir-patient.service';
+import { FhirExtension, FhirPatient, FhirPatientService } from './fhir-patient.service';
 import { generateOruMessage, generateAdtMessage, Hl7Params } from './hl7-generator';
 
 interface LogEntry {
@@ -12,6 +12,16 @@ interface LogEntry {
   text: string;
   type: 'info' | 'success' | 'error' | 'hl7';
   html?: string;
+}
+
+interface PatientEnvironment {
+  label: string;
+  city?: string;
+  country?: string;
+  latitude?: number;
+  longitude?: number;
+  temperature?: number;
+  temperatureUnit?: string;
 }
 
 type EnvConfig = { baseUrl: string; oruCfgItem: string; adtCfgItem: string; username: string; password: string };
@@ -86,6 +96,10 @@ interface Translation {
   searching: string;
   patientResult: string;
   noPatient: string;
+  birthPlace: string;
+  home: string;
+  temperature: string;
+  coordinates: string;
 }
 
 const TRANSLATIONS: Record<Lang, Translation> = {
@@ -130,6 +144,10 @@ const TRANSLATIONS: Record<Lang, Translation> = {
     searching: 'Searching...',
     patientResult: 'FHIR Patient result',
     noPatient: 'Enter an IPP to search for a Patient.',
+    birthPlace: 'Birth place',
+    home: 'Home',
+    temperature: 'Temperature',
+    coordinates: 'Coordinates',
   },
   fr: {
     headerTitle: 'OUTIL DE TEST HL7 HTTP',
@@ -172,6 +190,10 @@ const TRANSLATIONS: Record<Lang, Translation> = {
     searching: 'Recherche...',
     patientResult: 'Résultat Patient FHIR',
     noPatient: 'Saisissez un IPP pour rechercher un Patient.',
+    birthPlace: 'Lieu de naissance',
+    home: 'Domicile',
+    temperature: 'Température',
+    coordinates: 'Coordonnées',
   },
   es: {
     headerTitle: 'HERRAMIENTA DE PRUEBA HL7 HTTP',
@@ -214,6 +236,10 @@ const TRANSLATIONS: Record<Lang, Translation> = {
     searching: 'Buscando...',
     patientResult: 'Resultado Patient FHIR',
     noPatient: 'Introduzca un IPP para buscar un Patient.',
+    birthPlace: 'Lugar de nacimiento',
+    home: 'Domicilio',
+    temperature: 'Temperatura',
+    coordinates: 'Coordenadas',
   },
 };
 
@@ -341,6 +367,33 @@ export class AppComponent {
     const address = this.fhirPatient?.address?.find(item => item.use === 'home') ?? this.fhirPatient?.address?.[0];
     if (!address) return '';
     return [...(address.line ?? []), address.postalCode, address.city, address.country].filter(Boolean).join(', ');
+  }
+
+  get fhirPatientEnvironment(): PatientEnvironment[] {
+    const enrichment = this.fhirPatient?.extension?.find(item => item.url?.endsWith('/patient-environment'));
+    if (!enrichment) return [];
+
+    return [
+      this.readPatientEnvironment(enrichment, 'birthPlace', this.t.birthPlace),
+      this.readPatientEnvironment(enrichment, 'home', this.t.home),
+    ].filter((item): item is PatientEnvironment => item !== null);
+  }
+
+  private readPatientEnvironment(root: FhirExtension, role: string, label: string): PatientEnvironment | null {
+    const location = root.extension?.find(item => item.url === role);
+    if (!location) return null;
+
+    const value = (url: string) => location.extension?.find(item => item.url === url);
+    const temperature = value('temperature')?.valueQuantity;
+    return {
+      label,
+      city: value('city')?.valueString,
+      country: value('country')?.valueString,
+      latitude: value('latitude')?.valueDecimal,
+      longitude: value('longitude')?.valueDecimal,
+      temperature: temperature?.value,
+      temperatureUnit: temperature?.unit,
+    };
   }
 
   searchFhirPatient(): void {

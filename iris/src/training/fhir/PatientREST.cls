@@ -91,9 +91,9 @@ ClassMethod GetPatient(ipp As %String) As %Status
         Quit $$$OK
     }
 
-    Set resource = ##class(training.fhir.PatientMapper).ToResource(patientId, 1, .sc)
+    Set sc = ##class(weather.PatientService).EnrichPatient(patientId, .resource)
     If $$$ISERR(sc) {
-        Do ..WriteError(500, "exception", $System.Status.GetErrorText(sc))
+        Do ..WriteError(502, "exception", $System.Status.GetErrorText(sc))
         Quit $$$OK
     }
 

@@ -48,9 +48,9 @@ ClassMethod GetPatient(ipp As %String) As %Stream.Object
     If $$$ISERR(findStatus) Quit ..ErrorResponse(500, "exception", $System.Status.GetErrorText(findStatus))
     If patientId = "" Quit ..ErrorResponse(404, "not-found", "Patient with IPP '"_ipp_"' not found")
 
-    Set resource = ##class(training.fhir.PatientMapper).ToResource(patientId, 1, .sc)
+    Set sc = ##class(weather.PatientService).EnrichPatient(patientId, .resource)
     If $$$ISERR(sc) {
-        Quit ..ErrorResponse(500, "exception", $System.Status.GetErrorText(sc))
+        Quit ..ErrorResponse(502, "exception", $System.Status.GetErrorText(sc))
     }
 
     Do ..%SetStatusCode(200)

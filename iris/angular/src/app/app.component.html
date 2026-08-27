@@ -223,6 +223,18 @@
             <div><dt>{{ t.dob }}</dt><dd>{{ fhirPatient.birthDate || '—' }}</dd></div>
             <div><dt>{{ t.gender }}</dt><dd>{{ fhirPatient.gender || '—' }}</dd></div>
             <div class="address-fact"><dt>Address</dt><dd>{{ fhirPatientAddress || '—' }}</dd></div>
+            <div class="environment-fact" *ngFor="let location of fhirPatientEnvironment">
+              <dt>{{ location.label }}</dt>
+              <dd>
+                <span class="environment-city">{{ location.city || '—' }}<ng-container *ngIf="location.country">, {{ location.country }}</ng-container></span>
+                <span *ngIf="location.temperature !== undefined">
+                  {{ t.temperature }}: {{ location.temperature | number:'1.1-1' }} {{ location.temperatureUnit }}
+                </span>
+                <span *ngIf="location.latitude !== undefined && location.longitude !== undefined">
+                  {{ t.coordinates }}: {{ location.latitude | number:'1.4-4' }}, {{ location.longitude | number:'1.4-4' }}
+                </span>
+              </dd>
+            </div>
           </dl>
         </article>
 
