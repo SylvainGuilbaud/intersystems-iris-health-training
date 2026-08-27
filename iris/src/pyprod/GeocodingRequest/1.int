@@ -1,0 +1,1113 @@
+ROUTINE pyprod.GeocodingRequest.1 [Type=INT,Generated]
+ ;pyprod.GeocodingRequest.1
+ ;Generated for class pyprod.GeocodingRequest.  Do NOT edit. 08/27/2026 04:06:27PM
+ ;;43327779;pyprod.GeocodingRequest
+ ;
+SQLUPPER(v,l) { quit $zu(28,v,7,$g(l,32767)) }
+ALPHAUP(v,r) { quit $zu(28,v,6) }
+STRING(v,l) { quit $zu(28,v,9,$g(l,32767)) }
+SQLSTRING(v,l) { quit $zu(28,v,8,$g(l,32767)) }
+UPPER(v) { quit $zu(28,v,5) }
+MVR(v) { quit $zu(28,v,2) }
+TRUNCATE(v,l) { quit $e(v,1,$g(l,3641144)) }
+%BindExport(dev,Seen,RegisterOref,AllowedDepth,AllowedCapacity) methodimpl {
+   i $d(Seen(+$this)) q 1
+   Set Seen(+$this)=$this
+   s sc = 1
+ s proporef=..SerializedStream
+   d:RegisterOref InitObjVar^%SYS.BINDSRV($this)
+   i dev'="" s t=$io u dev i $zobjexport($this_"",3)+$zobjexport($this."%%OID",3)+$zobjexport($this,3)!1 u t
+ If AllowedDepth>0 Set AllowedDepth = AllowedDepth - 1
+ If AllowedCapacity>0 Set AllowedCapacity = AllowedCapacity - 1/1
+ s proporef=..SerializedStream
+       i proporef'="" s sc=1 i AllowedDepth'=0,AllowedCapacity'=0 s sc=proporef.%BindExport(dev,.Seen,RegisterOref,AllowedDepth,AllowedCapacity) q:('sc) sc
+   Quit sc }
+%BuildDeferredIndices(lockFlag=0,journalFlag=1) methodimpl {
+	return $$Error^%apiOBJ(5758,"%Storage.Persistent::%BuildDeferredIndices") }
+%BuildIndices(pIndexList="",pAutoPurge=1,pLockFlag=0,pJournalFlag="",pStartID="",pEndID="",pIgnoreIndexList="",pKeepSelectability=0,pNumberJobs="") methodimpl {
+	if (pIndexList="")||(($listlength(pIndexList)=1)&&($listget(pIndexList,1)="")) { RETURN 1 }
+	RETURN $$Error^%apiOBJ(5066,$classname()_"::"_$ListToString(pIndexList)) }
+%CheckConstraints(pID,pConstraintList="",pCheckDisabled=0,pErrorInfo) methodimpl {
+	if (''..%OnDetermineClass($select(pID="":"",1:$listbuild(pID_"")),.tMSTC)) && (tMSTC '= $classname()) { quit $classmethod(tMSTC,"%CheckConstraints",pID,pConstraintList) } else { quit 1 } }
+%CheckConstraintsForExtent(pConstraintList="",pCheckDisabled=0,pErrorLog) [ SQLCODE,tID ] methodimpl { New %ROWCOUNT,%ROWID,%msg,SQLCODE,tID 
+	kill pErrorLog set tStatusAll = 1, pErrorLog = 0 if '$listvalid(pConstraintList) { set pConstraintList = $listfromstring(pConstraintList) }
+	 ;---&sql(declare ext cursor for select %ID into :tID FROM %NOPARALLEL pyprod.GeocodingRequest)
+ 	 ;--- ** SQL PUBLIC Variables: %ROWCOUNT, %ROWID, %msg, SQLCODE, tID
+	 
+	 ;---&sql(open ext)
+	if $g(%ext01920)'="" { s SQLCODE=-101 } else { try { s %ext01920="%sqlcq."_$tr($namespace,"%_-$@:/\[]^ .","pudssssssssss")_$case($zu(115,2),0:".u",1:".x",3:".v",:"."_$zu(115,2))_"EHaWXbvcf06MdApy6CDhg5QFJrU",%ext01920=$classmethod(%ext01920,"%New") } catch { if ($ze'["<CLASS DOES NOT EXIST>"&&($ze'["<NOROUTINE>")||($ze'[%ext01920)),$ze'["<ZSQLU>" { throw } } if '$isobject(%ext01920) { s %ext01920=$$%0dsqlA() } }
+	if SQLCODE '< 0 {
+		for {
+			 ;---&sql(fetch ext)
+ 			 ;--- ** SQL PUBLIC Variables: %ROWCOUNT, %ROWID, %msg, SQLCODE
+			if $isobject($g(%ext01920))'=1 { s SQLCODE=-102 } else { do %ext01920.FET() }
+			if SQLCODE { if SQLCODE=100 { quit } elseif SQLCODE<0 { set tStatusAll = $select(+tStatusAll:$$Error^%apiOBJ(5521,SQLCODE,$Get(%msg)),1:$$AppendStatus^%occSystem(tStatusAll,$$Error^%apiOBJ(5521,SQLCODE,$Get(%msg)))) quit } }
+			set tStatus = ..%CheckConstraints(tID,pConstraintList,pCheckDisabled,.tErrorInfo)
+			if ('tStatus) { set tStatusAll = $select(+tStatusAll:tStatus,1:$$AppendStatus^%occSystem(tStatusAll,tStatus)) set:pErrorLog<1000 pErrorLog = pErrorLog + 1, pErrorLog(pErrorLog) = tErrorInfo _ $Listbuild(tStatus) }
+		}
+		 ;---&sql(close ext)
+		if '$isobject($get(%ext01920)) { set SQLCODE=-102 } else { set SQLCODE=0 kill %ext01920 }
+	}
+	quit tStatusAll }
+ q
+%0dsqlA()	n %xxsql,%xxoref
+	s %xxsql("S",1)="DECLARE ext CURSOR FOR SELECT %ID INTO :tID FROM %NOPARALLEL pyprod . GeocodingRequest"
+	s %xxsql("M","%occSqlfuncinc")=$c(1),%xxsql("M","ALLOCGVEC")=$c(1),%xxsql("M","CACHENAMES")="",%xxsql("M","DEBUG")=$c(1),%xxsql("M","FORKNETDMN")=$c(1)
+	s %xxsql("M","HASHLOCK")=$c(1),%xxsql("M","NETNEWHASH")=$c(1),%xxsql("M","USEDIRCACHE")=$c(1),%xxsql("M","USEGCNT")=2,%xxsql("M","USEGOFF")=$c(1)
+	s %xxsql("M","USELOST")=$c(1),%xxsql("M","ZVERSION")=$c(1),%xxsql("I","%callout")="",%xxsql("I","%occSqlfunc")="",%xxsql("I","%occStatus")=""
+	s %xxsql("I","%sySystem")="",%xxsql("I","%systemInclude")="",%xxsql("I","%xmlMap")="",%xxsql("I","Ensemble")="",%xxsql("NS")="TRAINING",%xxsql("PToolsCTI")=$LB(,"-1:0:0::0:1")
+	s %xxoref=$$BuildQuery^%SYS.SQLSRV(.%xxsql,$lb("Logical","","","pyprod",0,"",),",0,ext,","pyprod.GeocodingRequest.CLS",1)
+	i $g(SQLCODE) { s tID="" }
+	q %xxoref
+%ComposeOid(id) methodimpl {
+	set tCLASSNAME = $listget($g(^pyprod.GeocodingRequestD(id)),1)
+	if tCLASSNAME="" { quit $select(id="":"",1:$listbuild(id_"","pyprod.GeocodingRequest")) }
+	set tClass=$piece(tCLASSNAME,$extract(tCLASSNAME),*-1)
+	set:tClass'["." tClass="User."_tClass
+	quit $select(id="":"",1:$listbuild(id_"",tClass)) }
+%ConstructCloneInit(object,deep=0,cloned,location) methodimpl {
+	If i%SerializedStream'=""||($isobject(r%SerializedStream)=1) Set r%SerializedStream=..SerializedStream.%ConstructClone(deep,.cloned),i%SerializedStream=""
+	Set i%"%%OID"=""
+	Quit 1 }
+%Delete(oid="",concurrency=-1) methodimpl {
+	RETURN:oid="" $$Error^%apiOBJ(5813,$classname())
+	set id=$listget(oid) RETURN:id="" $$Error^%apiOBJ(5812,$classname())
+	set traninit=0
+	set $zt="%DeleteERR"
+	if concurrency = -1 { set concurrency=$zu(115,10) }
+	if (concurrency > 4) || (concurrency < 0) || (concurrency '= (concurrency\1)) { RETURN $$Error^%apiOBJ(5828) }
+	set class=$listget(oid,2)
+	if class="" { set sc=..%OnDetermineClass(oid,.class) RETURN:('sc) sc set oid=$select(oid="":"",1:$listbuild($listget(oid),class)_$select($listget(oid,3)'="":$listbuild($list(oid,3)),1:"")) } else { set class=$s(class="":"",class[".":class,$e(class)'="%":"User."_class,1:"%Library."_$e(class,2,*)) }
+	if $classname()'=class { RETURN $classmethod(class,"%Delete",oid,concurrency) }
+	if +$g(%objtxSTATUS)=0 { set traninit=1 k %objtxSTATUS,%objtxLIST,%objtxOIDASSIGNED,%objtxOIDUNASSIGNED,%objtxMODIFIED,%objtxVERSION k:'$TLevel %objtxTID,%objtxID i '$zu(115,9) { s %objtxSTATUS=1 } else { TStart  s %objtxSTATUS=2 } }
+	set oref=..%Open(oid,concurrency) if oref="" { set sc=$$Error^%apiOBJ(5810,$classname(),$listget(oid)) goto %DeleteEnd }
+	set stream=oref.SerializedStreamGetObject() if stream'="" { set ^||%isc.strd($i(^||%isc.strd))=$lb(stream,"%Stream.GlobalCharacter") }
+	set oref=""
+	set gbl=..#DATALOCATIONGLOBAL If gbl="" { Set oref=$zobjoid("",$listget(oid)),sfn=$zu(40,0,41) } Else { Set oref=$zobjoid("",$listget(oid),@gbl,.sfn) } if $isobject(oref)=1 { do oref.%DeleteOID() }
+	set sc=..%DeleteData(id,concurrency)
+	if (''sc) {
+		set tPtr = "" for { set tPtr=$order(^||%isc.strd(tPtr),1,tStreamData) quit:tPtr=""  set stream=$li(tStreamData,1),cls=$li(tStreamData,2),sc=$classmethod(cls,"%Delete",stream,concurrency) quit:('sc) }
+		kill ^||%isc.strd
+	}
+%DeleteEnd if ('sc) { kill ^||%isc.strd } if traninit { if (''sc) { i $g(%objtxSTATUS)=1 { k %objtxSTATUS } else { If $Tlevel { TCommit  } k %objtxSTATUS,%objtxLIST,%objtxOIDASSIGNED,%objtxOIDUNASSIGNED,%objtxMODIFIED,%objtxVERSION k:'$TLevel %objtxTID,%objtxID } } else { i $g(%objtxSTATUS)=2 { s sc=$select(+sc:$$%TRollBack^%occTransaction(),1:$$AppendStatus^%occSystem(sc,$$%TRollBack^%occTransaction())) k %objtxTID,%objtxID } else { k %objtxSTATUS } } }
+	RETURN sc
+%DeleteERR	set $zt="",sc=$$Error^%apiOBJ(5002,$ZE)
+	goto %DeleteEnd }
+%DeleteData(id,concurrency) methodimpl {
+	Quit:id="" $$Error^%apiOBJ(5812)
+	set $Ztrap="DeleteDataERR" set lockok=0,sc=""
+	If concurrency {
+		Lock +(^pyprod.GeocodingRequestD(id)#"E"):$zu(115,4)
+		Set lockok=$s('$t:0,1:$case($SYSTEM.Lock.ReturnCode(),0:1,2:2,4:2,:0))
+		Set:lockok=2&&($tlevel) %0CacheLock($classname(),"E")=1
+		If 'lockok {
+			Quit $$Error^%apiOBJ(5803,$classname())
+		}
+	}
+	If ($Data(^pyprod.GeocodingRequestD(id))) {
+		If $data(^oddEXTR($classname())) {
+			Set fc=""
+			For {
+				Set fc=$order(^rINDEXEXT("F",$classname(),"%1","f",fc))
+				Quit:fc=""
+				Set fk=""
+				For {
+					Set fk=$order(^rINDEXEXT("F",$classname(),"%1","f",fc,fk))
+					Quit:fk=""
+					Set sc=$classmethod(fc,fk_"Delete",id)
+					If ('sc) { Goto DeleteDataEXIT }
+				}
+			}
+			Set fc=""
+			For {
+				Set fc=$order(^rINDEXEXT("F",$classname(),"IDKEY","f",fc))
+				Quit:fc=""
+				Set fk=""
+				For {
+					Set fk=$order(^rINDEXEXT("F",$classname(),"IDKEY","f",fc,fk))
+					Quit:fk=""
+					Set sc=$classmethod(fc,fk_"Delete",id)
+					If ('sc) { Goto DeleteDataEXIT }
+				}
+			}
+		}
+		Kill ^pyprod.GeocodingRequestD(id)
+		Set sc=1
+	}
+	Else { Set sc=$$Error^%apiOBJ(5810,$classname(),id) }
+DeleteDataEXIT
+	if (''sc) {
+		set context=$system.Context.SQL() if $g(context.Stats)<$zu(99) { do AggregateStats^%SYS.SQLSRV() }
+		set sHash="^pyprod.GeocodingRequest^2"
+		set $lg(sCnt,,,sRowCnt)=$g(context.Stats($namespace,sHash)),context.Stats($namespace,sHash)=$lb(sCnt+1,,,sRowCnt+1)
+	}
+	If concurrency,lockok {
+		Lock -(^pyprod.GeocodingRequestD(id)#"E")
+	}
+DeleteDataRET	Set $Ztrap = ""
+	QUIT sc
+DeleteDataERR	Set $Ztrap = "DeleteDataRET"
+	Set sc = $$Error^%apiOBJ(5002,$ZE)
+	Goto DeleteDataEXIT }
+%Exists(oid="") methodimpl {
+	Quit ..%ExistsId($listget(oid)) }
+%ExistsId(id) methodimpl {
+	Try { set tExists = $s(id="":0,$d(^pyprod.GeocodingRequestD(id)):1,1:0) } catch tException { set tExists = 0 if '(tException.%IsA("%Exception.SystemException")) { throw tException } elseif tException.Name'="<SUBSCRIPT>" { ZT $ZE } } quit tExists }
+%FileIndices(id,pIndexHandle=0,pVectorBuffer) methodimpl {
+	Quit 1 }
+%GetContentType() methodimpl {
+    if ..SerializedStream.Size > 0 {
+        Quit "application/json"
+    }
+    Quit ##class(Ens.Request)$this.%GetContentType()
+}
+%InitExtentData() methodimpl
+	try {
+		set:'$d(^pyprod.GeocodingRequestD) ^pyprod.GeocodingRequestD=""
+	} catch { RETURN $$Error^%apiOBJ(5001,$ze) }
+	RETURN 1
+%InsertBatch(objects,concurrency=0,useTransactions=0) methodimpl {
+	try {
+		set numerrs=0,errs="",cnt=0,ptr=0,insertedCnt=0
+		while $listnext(objects,ptr,data) {
+			set cnt=cnt+1
+			set lock=0
+			if (useTransactions) tstart
+			set id=$i(^pyprod.GeocodingRequestD)
+			try {
+				set tInnerException = ""
+				;
+				if concurrency { lock +(^pyprod.GeocodingRequestD(id)#"E"):$zu(115,4) set lock=$s('$t:0,1:$case($SYSTEM.Lock.ReturnCode(),0:1,2:2,4:2,:0)) set:lock=2&&($tlevel) %0CacheLock($classname(),"E")=1 if 'lock { Throw ##class(%Exception.StatusException).ThrowIfInterrupt($$Error^%apiOBJ(5803,$classname())) } }
+				set ^pyprod.GeocodingRequestD(id)=data
+				set insertedCnt=insertedCnt+1
+				if (useTransactions) { tcommit }
+			}
+			catch tInnerException {
+				set newerr=$lb(cnt,tInnerException.AsStatus())
+				if '($length(errs)+$length(newerr)>32767) { set numerrs=numerrs+1, errs=errs_newerr }
+				if (useTransactions) && ($Tlevel) trollback
+			}
+			if lock lock -(^pyprod.GeocodingRequestD(id)#"E")
+		}
+		set context=$system.Context.SQL() if $g(context.Stats)<$zu(99) { do AggregateStats^%SYS.SQLSRV() }
+		set sHash="^pyprod.GeocodingRequest^"_1
+		set $lg(sCnt,,,sRowCnt)=$g(context.Stats($namespace,sHash)),context.Stats($namespace,sHash)=$lb(sCnt+1,,,sRowCnt+insertedCnt)
+	}
+	catch tException {
+		set newerr=$lb($g(cnt),tException.AsStatus())
+		if '($length(errs)+$length(newerr)>32767) { set numerrs=numerrs+1, errs=errs_newerr }
+	}
+	QUIT ($lb(numerrs))_errs }
+%KillExtentData(killstreams=0,reinitialize=0) methodimpl
+	Set $sequence(^pyprod.GeocodingRequestD)=""
+	If killstreams Set $sequence(^pyprod.GeocodingRequestS)="" Kill ^pyprod.GeocodingRequestS
+	Kill ^pyprod.GeocodingRequestD
+	try { if reinitialize { do ..%InitExtentData() }} catch {}
+	RETURN 1
+%LoadData(id) methodimpl {
+	New %s1
+	set $ZTrap="CatchError",locked=0,userze=$ze,$ze=""
+	If i%%Concurrency=4 {
+		Lock +(^pyprod.GeocodingRequestD(id)#"E"):$zu(115,4)
+		if '$t do init s i%%Concurrency=0 s:$ze="" $ze=userze return $$Error^%apiOBJ(5803,$classname())
+	} ElseIf i%%Concurrency>1 {
+		Lock +(^pyprod.GeocodingRequestD(id)#"SE"):$zu(115,4)
+		if '$t do init s i%%Concurrency=0 s:$ze="" $ze=userze return $$Error^%apiOBJ(5804,$classname())
+		set locked = 1
+	}
+	If $d(^pyprod.GeocodingRequestD(id),%s1)#2 {
+		If i%%Concurrency=2 { Lock -(^pyprod.GeocodingRequestD(id)#"SIE") }
+		S i%SerializedStream=$lg(%s1,2)
+		s:$ze="" $ze=userze
+		Quit 1
+	} Else {
+		If i%%Concurrency=2 { Lock -(^pyprod.GeocodingRequestD(id)#"SIE") }
+		do init
+		set sc = $$Error^%apiOBJ(5809,$classname(),id) goto CatchError
+	}
+CatchError	set $ZTrap = "" if $ZE'="" { s sc = $$Error^%apiOBJ(5002,$ZE) }
+	If ($get(locked))&&(i%%Concurrency<3) { Lock -(^pyprod.GeocodingRequestD(id)#"SIE") }
+	if '('sc) { set sc=$$Error^%apiOBJ(5809,$classname(),id) }
+	s:$ze="" $ze=userze
+	return sc
+init	Set i%SerializedStream=""
+	quit }
+%LoadDataFromMemory(id,objstate,obj) methodimpl {
+	New %s1
+	If $d(objstate(id)) {
+		Set %s1=$g(objstate(id))
+		S i%SerializedStream=$lg(%s1,2)
+		Quit 1
+	} Else {
+		set i%SerializedStream=""
+		Quit $$Error^%apiOBJ(5809,$classname(),id)
+	} }
+%LoadInit(oid="",concurrency="",reset=0) methodimpl {
+	Set:concurrency'="" i%%Concurrency=concurrency
+	If reset {
+		Kill i%SerializedStream
+	}
+	Set r%SerializedStream=""
+	If 'reset { Set gbl=..#DATALOCATIONGLOBAL If gbl="" { Set oref=$zobjoid("",$listget(oid)),sfn=$zu(40,0,41) } Else { Set oref=$zobjoid("",$listget(oid),@gbl,.sfn) } Set $zobjoid("",$listget(oid),,sfn)=$this,i%"%%OID"=oid }
+	Quit 1 }
+%LockExtent(shared=0) methodimpl {
+	If shared {
+		Lock +(^pyprod.GeocodingRequestD#"S"):$zu(115,4) Quit:$t 1
+		Quit $$Error^%apiOBJ(5799,$classname())
+	}
+	Lock +(^pyprod.GeocodingRequestD):$zu(115,4) Quit:$t 1
+	Quit $$Error^%apiOBJ(5798,$classname()) }
+%LockId(id,shared=0,timeout) methodimpl { s:'($d(timeout)#2) timeout=$zu(115,4)
+	If id="" { Quit $$Error^%apiOBJ(5812) }
+	Set sc=1
+	If 'shared {
+		Lock +(^pyprod.GeocodingRequestD(id)#"E"):timeout Quit:$t 1
+		Quit $$Error^%apiOBJ(5803,id_":"_$classname())
+	}
+	Lock +(^pyprod.GeocodingRequestD(id)#"SE"):timeout Quit:$t 1
+	Quit $$Error^%apiOBJ(5804,id_":"_$classname()) }
+%ObjectModified() methodimpl {
+	If $system.CLS.GetModified() Quit 1
+	If r%SerializedStream'="",..SerializedStream.%ObjectModified() Quit 1
+	Quit 0 }
+%OnDetermineClass(oid,class) methodimpl {
+	Set id=$listget($get(oid))
+	RETURN:id="" $$Error^%apiOBJ(5812)
+	set idclass=$lg($get(^pyprod.GeocodingRequestD(id)),1)
+	if idclass="" { set class="pyprod.GeocodingRequest" RETURN 1 }
+	set class=$piece(idclass,"~",*-1)
+	set:class'["." class="User."_class
+	RETURN 1 }
+%PhysicalAddress(id,paddr) methodimpl
+	if $Get(id)="" { RETURN $$Error^%apiOBJ(5813,$classname()) }
+	if (id="") { RETURN $$Error^%apiOBJ(5832,$classname(),id) }
+	set paddr(1)=$lb($Name(^pyprod.GeocodingRequestD(id)),$classname(),"IDKEY","listnode",id)
+	set paddr=1
+	RETURN 1
+%PurgeIndices(idxlist="",lockExtent=0,pIgnoreIndexList="",pJournalFlag="",pDeleteMappings=0) methodimpl {
+	if idxlist="" { RETURN 1 }
+	RETURN $$Error^%apiOBJ(5066,$classname()_"::"_$ListToString(idxlist)) }
+%SQLAcquireLock(%rowid,s=0,unlockref=0) methodimpl
+	new %d,gotlock
+	set %d(1)=%rowid set s=$e("E",'unlockref)_$e("S",s)
+	lock +^pyprod.GeocodingRequestD(%d(1))#s:$zu(115,4) set gotlock=$t
+	if gotlock,'unlockref { set:$case($SYSTEM.Lock.ReturnCode(),2:1,4:1,:0)&&($tlevel) %0CacheLock("pyprod.GeocodingRequest","E")=1 }
+	set:gotlock&&unlockref unlockref=unlockref+1,unlockref(unlockref)=$lb($name(^pyprod.GeocodingRequestD(%d(1))),"pyprod.GeocodingRequest",s_"D")
+	QUIT gotlock
+%SQLAcquireTableLock(s=0,SQLCODE,to="") methodimpl
+	set s=$e("S",s) set:to="" to=$zu(115,4) lock +^pyprod.GeocodingRequestD#s:to QUIT:$t 1 set SQLCODE=-110 if s="S" { set %msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler35",,"pyprod"_"."_"GeocodingRequest") } else { set %msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler36",,"pyprod"_"."_"GeocodingRequest") } QUIT 0
+	Return
+%SQLBuildIndices(pIndices="",pLockFlag=0,pStartID="",pEndID="",pIgnoreIndexList="",pKeepSelectability=0) methodimpl
+	RETURN ..%BuildIndices(pIndices,,pLockFlag,,pStartID,pEndID,pIgnoreIndexList,pKeepSelectability)
+%SQLBuildPurgeIndexForRow(pIndices="",pActions="BP",pLockRow=1,%d,%e,pIgnoreIndexList="") methodimpl
+	// Purge and build index nodes for a single row using given values, return Status Code
+	new sn,tSC,tLock set tSC=1,pActions=$zcvt(pActions,"U")
+	try {
+		if $g(%d(1))="" { set tSC=$select(+tSC:$$Error^%apiOBJ(5521,-108,"RowID value must be specified in %d(1) when calling %SQLBuildPurgeIndexForRow for table 'pyprod.GeocodingRequest'"),1:$$AppendStatus^%occSystem(tSC,$$Error^%apiOBJ(5521,-108,"RowID value must be specified in %d(1) when calling %SQLBuildPurgeIndexForRow for table 'pyprod.GeocodingRequest'"))) RETURN tSC }
+		if pLockRow { if '..%SQLAcquireLock(%d(1)) { set tSC=$select(+tSC:$$Error^%apiOBJ(5521,-114,"Unable to lock row in table 'pyprod.GeocodingRequest' with %ID = '"_%d(1)_"'"),1:$$AppendStatus^%occSystem(tSC,$$Error^%apiOBJ(5521,-114,"Unable to lock row in table 'pyprod.GeocodingRequest' with %ID = '"_%d(1)_"'"))) RETURN tSC  } else { set tLock=1 }}
+		if pLockRow { do ..%SQLReleaseLock(%d(1),0,0) set tLock=0 }
+	}
+	catch {
+		if $g(tLock) { do ..%SQLReleaseLock(%d(1),0,0) }
+		set tSC=$select(+tSC:$$Error^%apiOBJ(5594,$ze),1:$$AppendStatus^%occSystem(tSC,$$Error^%apiOBJ(5594,$ze)))
+	}
+	QUIT tSC
+%SQLCheckUniqueIndices(pIndices,pOK) methodimpl
+	new d,g,n,o set d=0
+	set pOK=1 QUIT
+%SQLCopyIcolIntoName() methodimpl
+	if %oper="DELETE" {
+		set:$d(%d(1)) %f("ID")=%d(1)
+		QUIT
+	}
+	set:$d(%d(1)) %f("ID")=%d(1) set:$a(%e,2)&&$d(%d(2)) %f("SerializedStream")=%d(2) set:$a(%e,3)&&$d(%d(3)) %f("x__classname")=%d(3)
+	QUIT
+%SQLDefineiDjVars(%d,subs,master) methodimpl
+	QUIT
+%SQLDelete(%rowid,%check,%tstart=1,%mv=0,%polymorphic=0,%bufferedColumns=0) methodimpl
+	// SQL DELETE method for table pyprod.GeocodingRequest
+	new bva,ce,%d,dc,%e,%ele,%itm,%key,%l,%nc,omcall,%oper,%pos,%s,sn,sqlcode,subs set %oper="DELETE",sqlcode=0,%ROWID=%rowid,%d(1)=%rowid,%e(1)=%rowid,%l=$c(0)
+	if '$d(%0CacheSQLRA) { new %0CacheSQLRA set omcall=1 }
+	if '$a(%check,2) {
+		new %ls lock +^pyprod.GeocodingRequestD(%d(1))#"E":$zu(115,4) set %ls=$s('$t:0,1:$case($SYSTEM.Lock.ReturnCode(),0:1,4:2,2:2,1:3,:""))
+		set:%ls=2 $e(%check,2)=$c(1) set:%ls=2&&($tlevel) %0CacheLock("pyprod.GeocodingRequest","E")=1 set:$case(%ls,1:1,2:1,:0) $e(%l)=$c(1)
+		if '%ls||(%ls=3) { set SQLCODE=-110,%msg=$$FormatMessage^%occMessages(,"%SQL.Filer",$s('%ls:"SQLFiler40",1:"SQLFiler55"),,%oper,"pyprod"_"."_"GeocodingRequest",$g(%d(1))) RETURN  }
+	}
+	if %tstart { TSTART:($zu(115,1)=1)||('$TLEVEL&&($zu(115,1)=2))  }
+	set $zt="ERRORDelete"
+	do ..%SQLGetOld(%rowid,.%d,.%e,.sqlcode) if sqlcode { set SQLCODE=-106,%msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler58",,"pyprod"_"."_"GeocodingRequest",%rowid) do ..%SQLEExit() QUIT  }
+	if %e(3)'="" { set sn=$p(%e(3),$e(%e(3)),$l(%e(3),$e(%e(3)))-1) if "pyprod.GeocodingRequest"'=sn { new %f do ..%SQLCopyIcolIntoName() do $classmethod(sn,"%SQLDelete",%rowid,%check,%tstart,%mv,1) QUIT  }}
+	if '$a(%check),'$zu(115,7) do  if sqlcode set SQLCODE=sqlcode do ..%SQLEExit() QUIT  
+	. new %fk,%k,%p,%st,%t,%z set %k="",%p("%1")="%d(1),",%p("IDKEY")="%d(1),"
+	. for  quit:sqlcode<0  set %k=$o(^rINDEXEXT("F","pyprod.GeocodingRequest",%k)) quit:%k=""  set %t="" for  set %t=$o(^rINDEXEXT("F","pyprod.GeocodingRequest",%k,"f",%t)) quit:%t=""  set %st=(%t="pyprod.GeocodingRequest") set %fk="" for  set %fk=$o(^rINDEXEXT("F","pyprod.GeocodingRequest",%k,"f",%t,%fk)) quit:%fk=""  x "set %z=$classmethod(%t,%fk_""SQLFKeyRefAction"",%st,%k,$a(%check,2),"_%p(%k)_")" if %z set sqlcode=-124 quit  
+	set ce="" for  { set ce=$order(^oddSQL("pyprod","GeocodingRequest","DC",ce)) quit:ce=""   do $classmethod(ce,"%SQLDeleteChildren",%d(1),%check,.sqlcode) quit:sqlcode<0  } if sqlcode<0 { set SQLCODE=sqlcode do ..%SQLEExit() QUIT } // Delete any children
+	if '$a(%check,3) {
+	}
+	new %rc if $g(%e(2))'="" { if $a(%check,2)=1 { set %rc=##class(%Stream.Object).%Delete(%e(2),0) } else { set %rc=##class(%Stream.Object).%Delete(%e(2)) } if '%rc { set SQLCODE=$s($case($lg($lg($extract(%rc,3,*)),1,0),"5803":1,"5804":1,:0):-110,1:-412),%msg="Error attempting to delete stream object for field "_"SerializedStream"_":  "_$$GetErrorText^%apiOBJ(%rc) do ..%SQLEExit() QUIT  }}
+	kill ^pyprod.GeocodingRequestD(%d(1))
+	do ..%SQLUnlock() TCOMMIT:%tstart&&($zu(115,1)=1)
+	set SQLCODE=0 kill:$g(omcall) %0CacheSQLRA
+	QUIT
+ERRORDelete	set $zt="",SQLCODE=-415,%msg=$s($g(%msg)'="":%msg_" -- ",1:"")_$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler51",,%oper,"pyprod"_"."_"GeocodingRequest",$ze) if $ze["<FRAMESTACK>" { set %msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler52",,$ze,%oper,"pyprod"_"."_"GeocodingRequest") do ##Class(%SYS.System).WriteToConsoleLog(%msg) if ($zu(67,10,$j)=1)||($zu(67,10,$j)=3) { write !,%msg h 3 } HALT  } do ..%SQLEExit() QUIT
+	Return
+%SQLDeleteTempStreams() methodimpl
+	// Delete all temporary streams
+	new %sid,%ts
+	if $g(%d(2))?1.n1"@"1.e { if $d(%qstrhandle($g(%qacn,1),%d(2)),%ts) { set %sid=%ts.%Oid() if $a(%check,2)=1 { do %ts.%Delete(%sid,0) } else { do %ts.%Delete(%sid) } kill %ts }}
+	QUIT
+%SQLEExit() methodimpl
+	do ..%SQLUnlock() 
+	if %tstart,$zu(115,1)=1,$TLEVEL { set %tstart=0 TROLLBACK 1 } kill:$g(omcall) %0CacheSQLRA QUIT  
+	Return
+%SQLExists(pLockOnly=0,pLockMode=1,pUnlockRef,%pVal...) methodimpl
+	// SQL Foreign Key validation entry point for Key %1.  Called by FKeys that reference this Key to see if the row is defined
+	if pLockOnly>=0 { new id set id=%pVal(1) }
+	if pLockOnly>=0 { if '..%SQLGetLock(id,pLockMode,.pUnlockRef) { set sqlcode=-114,%msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler39",,"pyprod"_"."_"GeocodingRequest"_":"_"%1") RETURN 0 } }
+	if pLockOnly<1 {
+		new exists set exists=$d(^pyprod.GeocodingRequestD(%pVal(1))) RETURN:pLockOnly=-1 exists
+		do:'$g(pUnlockRef) ..%SQLReleaseLock(id,pLockMode) RETURN exists
+	}
+	else { do:'$g(pUnlockRef) ..%SQLReleaseLock(id,pLockMode) RETURN 1 }
+	Return
+%SQLGetLock(pRowId,pShared=0,pUnlockRef) methodimpl
+	QUIT ..%SQLAcquireLock(pRowId,pShared,.pUnlockRef)
+%SQLGetOld(%rowid,%d,%e,sqlcode) methodimpl
+	new s set %d(1)=%rowid,s="" if '$d(^pyprod.GeocodingRequestD(%d(1)),s) { set sqlcode=100 RETURN  }
+	 S %e(3)=$lg(s),%e(2)=$lg(s,2)
+	set:%e(2)'="" %e(2)=..SerializedStreamOid(%e(2))
+	RETURN
+%SQLGetOldAll() methodimpl
+	new s set %d(1)=%rowid,s="" if '$d(^pyprod.GeocodingRequestD(%d(1)),s) { set sqlcode=100 RETURN  }
+	 S %e(3)=$lg(s),%e(2)=$lg(s,2)
+	set:%e(2)'="" %e(2)=..SerializedStreamOid(%e(2))
+	RETURN
+%SQLInsert(%d,%check,%inssel,%vco,%tstart=1,%mv=0,%bufferedColumns=0) methodimpl
+	// SQL INSERT method for table pyprod.GeocodingRequest
+	new bva,%ele,%itm,%key,%f,%l,%n,%nc,%oper,%pos,%s,sqlcode,sn,subs,icol set %oper="INSERT",sqlcode=0,%l=$c(0,0,0)
+	if $a(%check,7) { new %diu merge %diu=%d }
+	if $d(%d(1)),'$zu(115,11) { if %d(1)'="" { set SQLCODE=-111,%msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler6",,"ID","pyprod"_"."_"GeocodingRequest") RETURN ""  } kill %d(1) } 
+	if %tstart { TSTART:($zu(115,1)=1)||('$TLEVEL&&($zu(115,1)=2))  } set $zt="ERRORInsert"
+	if '$a(%check) {
+		do {
+			if $g(%vco)'="" { d @%vco quit:sqlcode<0  }
+		} while 0
+		if sqlcode<0 { set SQLCODE=sqlcode do ..%SQLEExit() RETURN "" }		// A constraint failed
+	}
+	if '$d(%d(1)) { set %d(1)=$i(^pyprod.GeocodingRequestD) } elseif %d(1)>$g(^pyprod.GeocodingRequestD) { if $i(^pyprod.GeocodingRequestD,$zabs(%d(1)-$g(^pyprod.GeocodingRequestD))) {}} elseif $d(^pyprod.GeocodingRequestD(%d(1))) { set SQLCODE=-119,%msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler33",,"ID",%d(1),"pyprod"_"."_"GeocodingRequest"_"."_"ID") do ..%SQLDeleteTempStreams() do ..%SQLEExit() RETURN "" }
+	set:'($d(%d(3))#2) %d(3)="" set:'($d(%d(2))#2) %d(2)=""
+	if '$a(%check,2) {
+		new %ls lock +^pyprod.GeocodingRequestD(%d(1))#"E":$zu(115,4) set %ls=$s('$t:0,1:$case($SYSTEM.Lock.ReturnCode(),0:1,4:2,2:2,1:3,:""))
+		set:%ls=2 $e(%check,2)=$c(1) set:%ls=2&&($tlevel) %0CacheLock("pyprod.GeocodingRequest","E")=1 set:$case(%ls,1:1,2:1,:0) $e(%l)=$c(1)
+		if '%ls||(%ls=3) { set SQLCODE=-110,%msg=$$FormatMessage^%occMessages(,"%SQL.Filer",$s('%ls:"SQLFiler40",1:"SQLFiler55"),,%oper,"pyprod"_"."_"GeocodingRequest",$g(%d(1))) do ..%SQLEExit() RETURN ""  }
+	}
+	if '$a(%check,5),'$a(%check,6) {
+		if %d(2)'="" { set %d(2)=..%SQLInsertStreams(%d(2),"pyprod.GeocodingRequest","SerializedStream","SerializedStream",1,1,0,.sqlcode,.%msg) if sqlcode<0 { set SQLCODE=sqlcode do ..%SQLEExit() RETURN "" }}
+	}
+	set ^pyprod.GeocodingRequestD(%d(1))=$lb(%d(3),%d(2))
+	lock:$a(%l) -^pyprod.GeocodingRequestD(%d(1))#"E"
+	TCOMMIT:%tstart&&($zu(115,1)=1)
+	set SQLCODE=0
+	QUIT %d(1) 			// %SQLInsert
+ERRORInsert	set $zt="",SQLCODE=-415,%msg=$s($g(%msg)'="":%msg_" -- ",1:"")_$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler51",,%oper,"pyprod"_"."_"GeocodingRequest",$ze)
+	if $ze["<FRAMESTACK>" { set %msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler52",,$ze,%oper,"pyprod"_"."_"GeocodingRequest") do ##Class(%SYS.System).WriteToConsoleLog(%msg) if ($zu(67,10,$j)=1)||($zu(67,10,$j)=3) { write !,%msg h 3 } HALT  }
+	do ..%SQLEExit()
+	RETURN ""
+%SQLInsertStreams(pVal,pClassname,pProperty,pField,pChangeEmptyToNull,pOIDType,fileCharStream=0,sqlcode,%msg) methodimpl {
+	if $a(%check,2)=1 { set tOldConcurrency=$zu(115,10) do $zu(115,10,0) }
+	set tStream=$classmethod(pClassname,pProperty_"Open","")
+	if tStream="" { set sqlcode=-412,%msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler11",,"pyprod"_"."_"GeocodingRequest",pField) do:$a(%check,2)=1 $zu(115,10,tOldConcurrency) RETURN "" }
+	set tTempStream=""
+	if $isobject(pVal) { set tTempStream=pVal }
+	elseif (pVal?1.n1"@"1.e) { try { set tTempStream=$zobjref(pVal) if $isobject(tTempStream),tTempStream.%IsA("%Stream.Object"),((pVal_"")=(tTempStream_"")) {} else { set tTempStream="" }} catch { set $ze="" }}
+	elseif $g(%inssel),$listvalid(pVal) { if $a(%check,2)=1 { set tTempStream=##class(%Stream.Object).%Open(pVal,0) } else { set tTempStream=##class(%Stream.Object).%Open(pVal) } }
+	if $isobject(tTempStream) {
+		if 'tTempStream.IsNull() { set tSC=tStream.CopyFromAndSave(tTempStream) if 'tSC { set tError="SQLFiler12" goto ERRORInsertStreams }}
+		else { set tSC=tStream.%Save() if 'tSC { set tError="SQLFiler12" goto ERRORInsertStreams }}
+	}
+	elseif pVal'="" {
+		set:pChangeEmptyToNull&&(pVal=$c(0)) pVal=""
+		if fileCharStream,$d(%0IRISServer),$g(%qfun)="DU" { set pVal=$ZCONVERT(pVal,"O","UTF8") }
+		set tSC=tStream.Write(pVal) if 'tSC { set tError="SQLFiler13" goto ERRORInsertStreams }
+		set tSC=tStream.%Save() if 'tSC { set tError="SQLFiler12" goto ERRORInsertStreams }
+	}
+	else {
+		set tSC=tStream.%Save() if 'tSC { set tError="SQLFiler12" goto ERRORInsertStreams }
+	}
+	set pVal=tStream.%Oid() set:pOIDType=1 pVal=$lg(pVal) set:pOIDType=2 pVal=$li(pVal,1,2) do:$a(%check,2)=1 $zu(115,10,tOldConcurrency)
+	RETURN pVal
+ERRORInsertStreams	do:$a(%check,2)=1 $zu(115,10,tOldConcurrency) set sqlcode=$s($case($lg($lg($extract(tSC,3,*)),1,0),"5803":1,"5804":1,:0):-110,1:-412),%msg=$$GetErrorText^%apiOBJ(tSC),%msg=$g(%msg)_" "_$$FormatMessage^%occMessages(,"%SQL.Filer",tError,,"pyprod"_"."_"GeocodingRequest",pField)_": '"_$g(pVal)_"'" RETURN "" }
+%SQLMissing(fname) methodimpl
+	set sqlcode=-108,%msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler47",,fname,"pyprod"_"."_"GeocodingRequest") quit
+%SQLPurgeIndices(pIndices="",pLockExtent=0,pIgnoreIndexList="",pDeleteMappings=0) methodimpl
+	RETURN ..%PurgeIndices(pIndices,pLockExtent,pIgnoreIndexList,,pDeleteMappings)
+%SQLQuickLoad(%rowid,%nolock=0,pkey=0,qq=0) methodimpl
+	// Get fields from row where SQLRowID=%rowid
+	new d,i,il,subs set:%nolock=2 %nolock=1
+	if %nolock=0 { if '..%SQLAcquireLock(%rowid) { set %qrc=114,%msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler45",,"pyprod"_"."_"GeocodingRequest",%rowid),%ROWCOUNT=0 QUIT  } set:$zu(115,2) il=$zu(115,2,0) }
+	 ;---&sql(SELECT %INTERNAL(ID),SerializedStream,x__classname INTO :d(1),:d(2),:d(3) FROM pyprod.GeocodingRequest WHERE %ID = :%rowid)
+ 	 ;--- ** SQL PUBLIC Variables: %ROWCOUNT, %ROWID, %msg, %rowid, SQLCODE, d
+	try { d $classmethod("%sqlcq."_$tr($namespace,"%_-$@:/\[]^ .","pudssssssssss")_$case($zu(115,2),0:".u",1:".x",3:".v",:"."_$zu(115,2))_"E3f9jFmCUyPicF9ipoq6sX5WIL1","%New") } catch { if ($ze["<CLASS DOES NOT EXIST>"||($ze["<NOROUTINE>"))&&($ze[("%sqlcq."_$tr($namespace,"%_-$@:/\[]^ .","pudssssssssss")_$case($zu(115,2),0:".u",1:".x",3:".v",:"."_$zu(115,2))_"E3f9jFmCUyPicF9ipoq6sX5WIL1"))||($ze["<ZSQLU>") { d %0dsqlD } else { throw } }
+	if SQLCODE { if %nolock=0 { do ..%SQLReleaseLock(%rowid,0,1) do:$g(il) $zu(115,2,il) } set %ROWCOUNT=0 set:SQLCODE<0 SQLCODE=-SQLCODE set %qrc=SQLCODE QUIT  }
+	if qq,d(3)'="" { new sn set sn=$p(d(3),$e(d(3)),$l(d(3),$e(d(3)))-1) if "pyprod.GeocodingRequest"'=sn { if %nolock=0 { do ..%SQLReleaseLock(%rowid,0,1) do:$g(il) $zu(115,2,il) } kill d set:sn'["." sn="User."_sn  do $classmethod(sn,"%SQLQuickLoad",%rowid,%nolock,0,1) QUIT  }}
+	if %nolock=0 { if $zu(115,1)=1 { TSTART  } elseIf '$TLEVEL,$zu(115,1)=2 { TSTART  }}
+	set:qq d=$zobjexport("pyprod.GeocodingRequest",18),d=3,d=$zobjexport(d,18) set i=-1 for  { set i=$o(d(i)) quit:i=""  set d=$zobjexport(d(i),18) } set %qrc=0,%ROWCOUNT=1 if %nolock=0 { d ..%SQLReleaseLock(%rowid,0,0) do:$g(il) $zu(115,2,il) } quit
+	Return
+ q
+%0dsqlD	n %xxsql
+	s %xxsql("S",1)="SELECT %INTERNAL ( ID ) , SerializedStream , x__classname INTO :d(1) , :d(2) , :d(3) FROM pyprod . GeocodingRequest WHERE %ID = :%rowid"
+	s %xxsql("M","%occSqlfuncinc")=$c(1),%xxsql("M","ALLOCGVEC")=$c(1),%xxsql("M","CACHENAMES")="",%xxsql("M","DEBUG")=$c(1),%xxsql("M","FORKNETDMN")=$c(1)
+	s %xxsql("M","HASHLOCK")=$c(1),%xxsql("M","NETNEWHASH")=$c(1),%xxsql("M","USEDIRCACHE")=$c(1),%xxsql("M","USEGCNT")=2,%xxsql("M","USEGOFF")=$c(1)
+	s %xxsql("M","USELOST")=$c(1),%xxsql("M","ZVERSION")=$c(1),%xxsql("I","%callout")="",%xxsql("I","%occSqlfunc")="",%xxsql("I","%occStatus")=""
+	s %xxsql("I","%sySystem")="",%xxsql("I","%systemInclude")="",%xxsql("I","%xmlMap")="",%xxsql("I","Ensemble")="",%xxsql("NS")="TRAINING",%xxsql("PToolsCTI")=$LB(,"-1:0:0::0:1")
+	do BuildQuery^%SYS.SQLSRV(.%xxsql,$lb("ODBC","","","pyprod",0,"",),,"pyprod.GeocodingRequest.CLS")
+	return:$g(%IRISSQLCachedCompileOnly)
+	if $g(SQLCODE) { try { set d(1)="",d(2)="",d(3)="" } catch {} }
+	return
+%SQLReleaseLock(%rowid,s=0,i=0,e="") methodimpl
+	new %d
+	set:e="" e=1 set %d(1)=%rowid set s=$e("E",e)_$e("S",s)_$e("D",i)
+	lock -^pyprod.GeocodingRequestD(%d(1))#s
+	QUIT
+%SQLReleaseTableLock(s=0,i=0) methodimpl
+	set s=$e("S",s)_$e("D",i) lock -^pyprod.GeocodingRequestD#s QUIT 1
+	Return
+%SQLUnlock() methodimpl
+	do:$g(SQLCODE)<0&&(%oper="UPDATE") ..%SQLDeleteTempStreams()
+	lock:$a(%l) -^pyprod.GeocodingRequestD(%d(1))#"E"
+	RETURN
+%SQLUnlockError(cname) methodimpl
+	set sqlcode=-110 if %oper="DELETE" { set %msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler48",,"pyprod"_"."_"GeocodingRequest",cname) } else { set %msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler49",,"pyprod"_"."_"GeocodingRequest",cname) } quit
+	Return
+%SQLUpdate(%rowid,%check,%d,%vco,%tstart=1,%mv=0,%polymorphic=0,%soid,%bufferedColumns=0,%bufferedColumnsDel=0) methodimpl
+	// SQL UPDATE method for table pyprod.GeocodingRequest
+	new %e,bva,%ele,%itm,%key,%f,%l,%n,%nc,%oper,%pos,%s,icol,omcall,s,sn,sqlcode,subs,t set %oper="UPDATE",sqlcode=0,%ROWID=%rowid,$e(%e,1)=$c(0),%l=$c(0,0,0)
+	if '$d(%0CacheSQLRA) { new %0CacheSQLRA set omcall=1 }
+	if $d(%d(1)),%d(1)'=%rowid { set SQLCODE=-107,%msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler16",,"ID","pyprod"_"."_"GeocodingRequest") QUIT  }
+	for icol=2:1:3 { set $e(%e,icol)=$c($d(%d(icol))) }
+	set %d(1)=%rowid,%e(1)=%rowid
+	if '$a(%check,2) {
+		new %ls lock +^pyprod.GeocodingRequestD(%d(1))#"E":$zu(115,4) set %ls=$s('$t:0,1:$case($SYSTEM.Lock.ReturnCode(),0:1,4:2,2:2,1:3,:""))
+		set:%ls=2 $e(%check,2)=$c(1) set:%ls=2&&($tlevel) %0CacheLock("pyprod.GeocodingRequest","E")=1 set:$case(%ls,1:1,2:1,:0) $e(%l)=$c(1)
+		if '%ls||(%ls=3) { set SQLCODE=-110,%msg=$$FormatMessage^%occMessages(,"%SQL.Filer",$s('%ls:"SQLFiler40",1:"SQLFiler55"),,%oper,"pyprod"_"."_"GeocodingRequest",$g(%d(1))) RETURN  }
+	}
+	if %tstart { TSTART:($zu(115,1)=1)||('$TLEVEL&&($zu(115,1)=2))  }
+	set $zt="ERRORUpdate"
+	if $g(%vco)="" { do ..%SQLGetOld(%rowid,.%d,.%e,.sqlcode) i sqlcode { s SQLCODE=-109,%msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler59",,"pyprod"_"."_"GeocodingRequest",%rowid) do ..%SQLEExit() QUIT  } for icol=3,2 { set:'$d(%d(icol)) %d(icol)=%e(icol) set:%d(icol)=%e(icol) $e(%e,icol)=$c(0) }} else { do ..%SQLGetOldAll() if sqlcode { set SQLCODE=-109,%msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler59",,"pyprod"_"."_"GeocodingRequest",%rowid) do ..%SQLEExit() QUIT  } for icol=2,3 { set:'$d(%d(icol)) %d(icol)=%e(icol) set:%d(icol)=%e(icol) $e(%e,icol)=$c(0) }}
+	if %e(3)'="" set sn=$p(%e(3),$e(%e(3)),$l(%e(3),$e(%e(3)))-1) if "pyprod.GeocodingRequest"'=sn new %f do ..%SQLCopyIcolIntoName() do $classmethod(sn,"%SQLUpdate",%rowid,%check,.%d,$g(%vco),%tstart,%mv,1) QUIT
+	if '$a(%check) {
+		do {
+			if $g(%vco)'="" { d @%vco quit:sqlcode<0  }
+		} while 0
+		if sqlcode { set SQLCODE=sqlcode do ..%SQLEExit() QUIT  }
+	}
+	if '$a(%check,5),'$a(%check,6) { new %rc,%stream,%ts
+		if $a(%e,2) { set %d(2)=..%SQLUpdateStreams(%d(2),%e(2),"pyprod.GeocodingRequest","SerializedStream","SerializedStream",1,1,0,.sqlcode,.%msg,$g(%soid(2))) if sqlcode<0 { set SQLCODE=sqlcode do ..%SQLEExit() QUIT  }}
+	}
+	if $a(%e,2)||$a(%e,3) {
+		set ^pyprod.GeocodingRequestD(%d(1))=$listupdate($g(^pyprod.GeocodingRequestD(%d(1))),1,$a(%e,3):%d(3),$a(%e,2):%d(2))
+	}
+	do ..%SQLUnlock() TCOMMIT:%tstart&&($zu(115,1)=1)
+	set SQLCODE=0 kill:$g(omcall) %0CacheSQLRA
+	QUIT
+ERRORUpdate	set $zt="",SQLCODE=-415,%msg=$s($g(%msg)'="":%msg_" -- ",1:"")_$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler51",,%oper,"pyprod"_"."_"GeocodingRequest",$ze) if $ze["<FRAMESTACK>" { set %msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler52",,$ze,%oper,"pyprod"_"."_"GeocodingRequest") do ##Class(%SYS.System).WriteToConsoleLog(%msg) if ($zu(67,10,$j)=1)||($zu(67,10,$j)=3) { write !,%msg h 3 } HALT  } do ..%SQLEExit() QUIT  
+	Return
+%SQLUpdateStreams(pNew,pOld,pClassname,pProperty,pField,pChangeEmptyToNull,pOIDType,fileCharStream=0,sqlcode,%msg,pAllowOid=0) methodimpl {
+	set:$a(%check,2)=1 zu11510=$zu(115,10,0)
+	if pNew'="" {
+		if $a(%check,2)=1 { set tStream=##class(%Stream.Object).%Open(pOld,0) } else { set tStream=##class(%Stream.Object).%Open(pOld) }
+		if tStream="" { set tStream=$classmethod(pClassname,pProperty_"Open","") }
+		if tStream="" { set sqlcode=-412,%msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler22",,"pyprod"_"."_"GeocodingRequest",pField) set:$a(%check,2)=1 zu11510=$zu(115,10,zu11510) RETURN "" }
+		set tTempStream=""
+		if $isobject(pNew) { set tTempStream=pNew }
+		elseif (pNew?1.n1"@"1.e) { try { set tTempStream=$zobjref(pNew) if $isobject(tTempStream),tTempStream.%IsA("%Stream.Object"),((pNew_"")=(tTempStream_"")) {} else { set tTempStream="" }} catch { set $ze="" }}
+		elseif pAllowOid,$listvalid(pNew),$ll(pNew)>2 { if $a(%check,2)=1 { set tTempStream=##class(%Stream.Object).%Open(pNew,0) } else { set tTempStream=##class(%Stream.Object).%Open(pNew) } }
+		if tTempStream'="" {
+			set tSC=tStream.CopyFromAndSave(tTempStream)
+			if 'tSC { set sqlcode=-412,%msg=$$DecomposeStatus^%apiOBJ(tSC,.%msg) set:%msg %msg=%msg(1) }
+			if sqlcode<0 { set:$a(%check,2)=1 zu11510=$zu(115,10,zu11510) RETURN "" }
+		}
+		else {
+			set:pChangeEmptyToNull&&(pNew=$c(0)) pNew=""
+		if fileCharStream,$d(%0IRISServer),$g(%qfun)="DU" { set pNew=$ZCONVERT(pNew,"O","UTF8") }
+			set tSC=tStream.Write(pNew) if 'tSC { set tError="SQLFiler24" goto ERRORUpdateStreams }
+			set tSC=tStream.%Save() if 'tSC { set tError="SQLFiler23" goto ERRORUpdateStreams }
+		}
+	}
+	else {
+		if pOld'="" { if $a(%check,2)=1 { set tSC=##class(%Stream.Object).%Delete(pOld,0) } else { set tSC=##class(%Stream.Object).%Delete(pOld) } if 'tSC { set sqlcode=-412,%msg=$$DecomposeStatus^%apiOBJ(tSC,.%msg) set:%msg %msg=%msg(1) set:$a(%check,2)=1 zu11510=$zu(115,10,zu11510) RETURN "" }}
+		set tStream=$classmethod(pClassname,pProperty_"Open","")
+		if tStream="" { set sqlcode=-412,%msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler22",,"pyprod"_"."_"GeocodingRequest",pField) set:$a(%check,2)=1 zu11510=$zu(115,10,zu11510) RETURN "" }
+		set tSC=tStream.%Save() if 'tSC { set tError="SQLFiler23" goto ERRORUpdateStreams }
+	}
+	set pNew=tStream.%Oid() set:pOIDType=1 pNew=$lg(pNew) set:pOIDType=2 pNew=$li(pNew,1,2) set:$a(%check,2)=1 zu11510=$zu(115,10,zu11510)
+	RETURN pNew
+ERRORUpdateStreams	set:$a(%check,2)=1 zu11510=$zu(115,10,zu11510)
+	set sqlcode=$s($case($lg($lg($extract(tSC,3,*)),1,0),"5803":1,"5804":1,:0):-110,1:-412),%msg=$$GetErrorText^%apiOBJ(tSC),%msg=$g(%msg)_" "_$$FormatMessage^%occMessages(,"%SQL.Filer",tError,,"pyprod"_"."_"GeocodingRequest",pField)_": '"_$g(pNew)_"'"
+	RETURN "" }
+%SQLnBuild() methodimpl {
+	set %n=$lb(,"ID","SerializedStream","x__classname")
+	QUIT }
+%Save(related=1) methodimpl {
+	Set $ZTrap="%SaveERR"
+	New %objTX Set sc=1,traninit=0 If '$data(%objTX2) New %objTX2 Set %objTX2=1
+	If +$g(%objtxSTATUS)=0 { Set traninit=1 k %objtxSTATUS,%objtxLIST,%objtxOIDASSIGNED,%objtxOIDUNASSIGNED,%objtxMODIFIED,%objtxVERSION k:'$TLevel %objtxTID,%objtxID i '$zu(115,9) { s %objtxSTATUS=1 } else { TStart  s %objtxSTATUS=2 } }
+	If $get(%objTX2(+$this)) Set sc=..%BuildObjectGraph(1) If ('sc) { ZTrap "SG" } Set intRef=+$this,objValue=$get(%objTX(1,+$g(%objTX(0,intRef)),1)),sc=..%SerializeObject(.objValue,1) If ('sc) { ZTrap "SG" } Set %objTX(1,%objTX(0,intRef),1)=objValue GoTo %SaveCOMMIT
+	Set sc=..%BuildObjectGraph(related+2) If ('sc) ZTrap "SG"
+	If '$data(%objTX(2)) s sc=1 GoTo %SaveCOMMIT
+	Set %objTX(3)=0,i="" For  Set i=$order(%objTX(2,i),1,data) Quit:i=""  Set intRef=$li(data) If '$data(%objTX(1,+$g(%objTX(0,intRef)),2)) Set %objTX(3,$increment(%objTX(3)))=%objTX(1,%objTX(0,intRef)) Kill %objTX(2,i),%objTX(11,intRef)
+	For ptr=1:1 Quit:ptr>%objTX(3)  Set objRef=%objTX(3,ptr),objValue=$get(%objTX(1,+$g(%objTX(0,+objRef)),1)),sc=objRef.%SerializeObject(.objValue) Do  Set %objTX(1,%objTX(0,+objRef),1)=objValue Kill %objTX(1,%objTX(0,+objRef),3) Do $system.CLS.SetModified(objRef,0)
+	. If ('sc) ZTrap "SG"
+	. i $g(%objtxSTATUS)=2 { Set %objtxMODIFIED(+objRef)=$system.CLS.GetModifiedBits(objRef) }
+	. Set intSucc="" For  Set intSucc=$order(%objTX(1,%objTX(0,+objRef),3,intSucc)) Quit:intSucc=""  Kill %objTX(1,%objTX(0,+objRef),3,intSucc),%objTX(1,intSucc,2,%objTX(0,+objRef)) If '$data(%objTX(1,intSucc,2)) Set %objTX(3,$increment(%objTX(3)))=%objTX(1,intSucc) Kill:$d(%objTX(11,+%objTX(1,intSucc))) %objTX(2,%objTX(11,+%objTX(1,intSucc))),%objTX(11,+%objTX(1,intSucc))
+	Kill %objTX(3) Set %objTX(3)=0 For  Set pserial=0 Do  Quit:'pserial
+	. Set i="" For  Set i=$order(%objTX(2,i),1,data) Quit:i=""  Set intPred="",intRef=$li(data) For  Set intPred=$order(%objTX(1,%objTX(0,intRef),2,intPred)) Quit:intPred=""  If $get(%objTX(1,intPred,6))=1 Set objValue=$get(%objTX(1,intPred,1)),sc=(%objTX(1,intPred)).%SerializeObject(.objValue,1) If ('sc) { If $d(%objTX(11,+%objTX(1,intPred))) { Set %objTX(2,%objTX(11,+%objTX(1,intPred)),1)=sc } Else { Set %objTX(2,$i(%objTX(2)),1)=sc,%objTX(11,+%objTX(1,intPred))=%objTX(2) } } If (''sc) Set pserial=1,%objTX(1,intPred,1)=objValue Do
+	. . Set intSucc="" For  Set intSucc=$order(%objTX(1,intPred,3,intSucc)) Quit:intSucc=""  Kill %objTX(1,intPred,3,intSucc),%objTX(1,intSucc,2,intPred) If '$data(%objTX(1,intSucc,2)) Set %objTX(3,$i(%objTX(3)))=%objTX(1,intSucc) Kill:$d(%objTX(11,+%objTX(1,intSucc))) %objTX(2,%objTX(11,+%objTX(1,intSucc))),%objTX(11,+%objTX(1,intSucc))
+	. . For ptr=1:1 Quit:ptr>%objTX(3)  Set objSerialize=%objTX(3,ptr),objValue=$get(%objTX(1,+$g(%objTX(0,+objSerialize)),1)),sc=objSerialize.%SerializeObject(.objValue) Do  Set %objTX(1,%objTX(0,+objSerialize),1)=objValue Kill %objTX(1,%objTX(0,+objSerialize),3) Do $system.CLS.SetModified(objSerialize,0)
+	. . . If ('sc) ZTrap "SG"
+	. . . i $g(%objtxSTATUS)=2 { Set %objtxMODIFIED(+objSerialize)=$system.CLS.GetModifiedBits(objSerialize) }
+	. . . Set intSucc="" For  Set intSucc=$order(%objTX(1,%objTX(0,+objSerialize),3,intSucc)) Quit:intSucc=""  Kill %objTX(1,%objTX(0,+objSerialize),3,intSucc),%objTX(1,intSucc,2,%objTX(0,+objSerialize)) If '$data(%objTX(1,intSucc,2)) Set %objTX(3,$i(%objTX(3)))=%objTX(1,intSucc) Kill:$d(%objTX(11,+%objTX(1,intSucc))) %objTX(2,%objTX(11,+%objTX(1,intSucc))),%objTX(11,+%objTX(1,intSucc))
+	. . Kill %objTX(3) Set %objTX(3)=0
+	If $data(%objTX(2))>2 {
+		Set sc=$$Error^%apiOBJ(5827,$classname())
+		set i="" for  set i=$order(%objTX(2,i)) quit:i=""  if ('$Get(%objTX(2,i,1),1)) set sc=$$EmbedStatus^%apiOBJ(sc,%objTX(2,i,1))
+	 	ZTrap "SG"
+	}
+	Set cmd="" For  Set cmd=$order(%objTX(9,cmd)) Quit:cmd=""  Xecute cmd
+%SaveCOMMIT	If traninit { i $g(%objtxSTATUS)=1 { k %objtxSTATUS } else { If $Tlevel { TCommit  } k %objtxSTATUS,%objtxLIST,%objtxOIDASSIGNED,%objtxOIDUNASSIGNED,%objtxMODIFIED,%objtxVERSION k:'$TLevel %objtxTID,%objtxID } }
+	Do $system.CLS.SetModified(0) Quit sc
+%SaveERR	Set $ZTrap="" If $extract($zerror,1,5)'="<ZSG>" Set sc=$$Error^%apiOBJ(5002,$ZE)
+	If $get(traninit) { i $g(%objtxSTATUS)=2 { s sc=$select(+sc:$$%TRollBack^%occTransaction(),1:$$AppendStatus^%occSystem(sc,$$%TRollBack^%occTransaction())) k %objtxTID,%objtxID } else { k %objtxSTATUS } }
+	Quit sc }
+%SaveData(id) methodimpl {
+	try {
+		set id=$listget(i%"%%OID") if id'="" { set insert=0,idassigned=1 } else { set insert=1,idassigned=0 }
+		set lock=0,lockok=0,tSharedLock=0
+		if 'idassigned { set id=$i(^pyprod.GeocodingRequestD) do ..%IdSet(id) set:$g(%objtxSTATUS)=2 %objtxOIDASSIGNED(+$this)="" }
+		try {
+			set tInnerException = ""
+			;
+			if 'insert {
+				if (i%%Concurrency<4)&&(i%%Concurrency) { lock +(^pyprod.GeocodingRequestD(id)#"E"):$zu(115,4) set lockok=$s('$t:0,1:$case($SYSTEM.Lock.ReturnCode(),0:1,2:2,4:2,:0)) set:lockok=2&&($tlevel) %0CacheLock($classname(),"E")=1 if lockok { set lock=1 } else { Throw ##class(%Exception.StatusException).ThrowIfInterrupt($$Error^%apiOBJ(5803,$classname())) } }
+				if ('$Data(^pyprod.GeocodingRequestD(id))) {
+					set insert=1
+					if lock { lock -(^pyprod.GeocodingRequestD(id)#"E") set (lock,lockok) = 0 }
+				}
+			}
+			if insert {
+				if ('lockok&&..%Concurrency&&$tlevel)||(i%%Concurrency=4) {  lock +(^pyprod.GeocodingRequestD(id)#"E"):$zu(115,4) set lockok=$s('$t:0,1:$case($SYSTEM.Lock.ReturnCode(),0:1,2:2,4:2,:0)) set:(lockok=2&&(i%%Concurrency'=4)) %0CacheLock($classname(),"E")=1 set:lockok lock=1 if 'lockok { Throw ##class(%Exception.StatusException).ThrowIfInterrupt($$Error^%apiOBJ(5803,$classname())) } }
+				if i%%Concurrency=3 { lock +(^pyprod.GeocodingRequestD(id)#"ES") set tSharedLock=1 }
+				set ^pyprod.GeocodingRequestD(id)=$lb("",i%SerializedStream)
+			}
+			else {
+				set ^pyprod.GeocodingRequestD(id)=$lb("",i%SerializedStream)
+			}
+			set tStatus = 1
+			set context=$system.Context.SQL() if $g(context.Stats)<$zu(99) { do AggregateStats^%SYS.SQLSRV() }
+			set sHash="^pyprod.GeocodingRequest^"_insert
+			set $lg(sCnt,,,sRowCnt)=$g(context.Stats($namespace,sHash)),context.Stats($namespace,sHash)=$lb(sCnt+1,,,sRowCnt+1)
+		}
+		catch tInnerException {
+			if ('idassigned) { Set $zobjoid("",$listget(i%"%%OID"))="",i%"%%OID"="" kill:$g(%objtxSTATUS)=2 %objtxOIDASSIGNED(+$this) }
+			if (tSharedLock) {  lock -(^pyprod.GeocodingRequestD(id)#"ES") } elseif (lockok=1)&&(insert)&&(i%%Concurrency=4) {  lock -(^pyprod.GeocodingRequestD(id)) }
+		}
+		if lock lock -(^pyprod.GeocodingRequestD(id)#"E")
+		if $Isobject(tInnerException) { throw tInnerException }
+	}
+	catch tException {
+		set tStatus = tException.AsStatus()
+	}
+	quit tStatus }
+%SaveDirect(id="",idList="",data,concurrency=-1) methodimpl {
+	try {
+		if concurrency=-1 { set concurrency=$zu(115,10) }
+		if id'="" { set insert=0,idassigned=1 } else { set insert=1,idassigned=0 }
+		set lock=0,tSharedLock=0
+		if 'idassigned { set id=$i(^pyprod.GeocodingRequestD) }
+		try {
+			set tInnerException = ""
+			;
+			if 'insert {
+				if concurrency { lock +(^pyprod.GeocodingRequestD(id)#"E"):$zu(115,4) set lock=$s('$t:0,1:$case($SYSTEM.Lock.ReturnCode(),0:1,2:2,4:2,:0)) set:lock=2&&($tlevel) %0CacheLock($classname(),"E")=1 if 'lock { Throw ##class(%Exception.StatusException).ThrowIfInterrupt($$Error^%apiOBJ(5803,$classname())) } }
+				if ('$Data(^pyprod.GeocodingRequestD(id))) {
+					set insert=1
+					if lock { lock -(^pyprod.GeocodingRequestD(id)#"E") set (lock,lockok) = 0 }
+				}
+			}
+			if insert {
+				if concurrency { lock +(^pyprod.GeocodingRequestD(id)#"E"):$zu(115,4) set lock=$s('$t:0,1:$case($SYSTEM.Lock.ReturnCode(),0:1,2:2,4:2,:0)) set:lock=2&&($tlevel) %0CacheLock($classname(),"E")=1 if 'lock { Throw ##class(%Exception.StatusException).ThrowIfInterrupt($$Error^%apiOBJ(5803,$classname())) } }
+				set ^pyprod.GeocodingRequestD(id)=data
+			}
+			else {
+				set ^pyprod.GeocodingRequestD(id)=data
+			}
+			set tStatus = 1
+			set context=$system.Context.SQL() if $g(context.Stats)<$zu(99) { do AggregateStats^%SYS.SQLSRV() }
+			set sHash="^pyprod.GeocodingRequest^"_insert
+			set $lg(sCnt,,,sRowCnt)=$g(context.Stats($namespace,sHash)),context.Stats($namespace,sHash)=$lb(sCnt+1,,,sRowCnt+1)
+		}
+		catch tInnerException {
+		}
+		if lock lock -(^pyprod.GeocodingRequestD(id)#"E")
+		if $Isobject(tInnerException) { throw tInnerException }
+	}
+	catch tException {
+		set tStatus = tException.AsStatus()
+	}
+	quit tStatus }
+%SaveIndices(pStartId="",pEndId="",lockExtent=0) methodimpl {
+	Quit 1 }
+%SerializeObject(serial,partial=0) methodimpl {
+	try {
+		If $get(%objTX2(+$this)) { Set partial = 1 } ElseIf ('partial) { Set %objTX2(+$this) = 1 }
+		Set sc=..%ValidateObject(,0) Throw:('sc) ##class(%Exception.StatusException).ThrowIfInterrupt(sc)
+		Set sc=..%NormalizeObject() Throw:('sc) ##class(%Exception.StatusException).ThrowIfInterrupt(sc)
+		If r%SerializedStream'="" { Set:'$data(%objTX(0,+r%SerializedStream)) %objTX(0,+r%SerializedStream)=$i(%objTX(1)),%objTX(1,%objTX(0,+r%SerializedStream))=r%SerializedStream,%objTX(1,%objTX(0,+r%SerializedStream),1)=..SerializedStreamGetObject(1),%objTX(1,%objTX(0,+r%SerializedStream),6)=2 Set M%SerializedStream=1,i%SerializedStream=$listget(%objTX(1,%objTX(0,+r%SerializedStream),1)) }
+		s:$g(%objtxSTATUS)=2 %objtxLIST(+$this)=$this
+		Set id=$listget(serial),sc=..%SaveData(.id) If ('sc) { Throw ##class(%Exception.StatusException).ThrowIfInterrupt(sc) }
+		Set serial=(..%Oid())
+		if 'partial {
+			Set %objTX2(+$this) = 0
+		}
+		set sc=1
+	}
+	catch tException {
+		If 'partial { Set %objTX2(+$this) = 0 }
+		set sc = tException.AsStatus()
+	}
+	Quit sc }
+%AddToSaveSet(depth=3,refresh=0) methodimpl {
+	Set sc=1,intOref=+$this
+	If $data(%objTX(0,intOref),index) {
+		If 'refresh RETURN 1
+		Set intPoref="" For  Set intPoref=$order(%objTX(1,index,2,intPoref)) Quit:intPoref=""  Kill %objTX(1,%objTX(0,intPoref),3,index),%objTX(1,index,2,%objTX(0,intPoref))
+	}
+	Set:'$d(index) (index,%objTX(0,intOref))=$i(%objTX(1)),%objTX(1,index)=$this Set %objTX(1,index,1)=i%"%%OID",%objTX(1,index,6)=1 If (i%"%%OID" '= "") && (depth<2) { Quit 1 } Else { Set %objTX(7,index)=$lb(intOref,1) }
+	if ('$d(i%SerializedStream))&&(..SerializedStream)
+	Set Poref=r%SerializedStream If Poref'="" Set:'$data(%objTX(0,+Poref)) %objTX(6,$i(%objTX(6)))=Poref Set %objTX(8,$i(%objTX(8)))=$lb(+Poref,intOref,3,i%SerializedStream)
+exit	Quit sc }
+%SortBegin(idxlist="",excludeunique=0) methodimpl
+	RETURN 1
+%SortEnd(idxlist="",commit=1,excludeunique=0) methodimpl {
+	RETURN 1 }
+%UnlockExtent(shared=0,immediate=0) methodimpl {
+	If 'shared {
+		If 'immediate {
+			Lock -^pyprod.GeocodingRequestD
+			 Quit 1
+		}
+		Lock -^pyprod.GeocodingRequestD#"I"
+		Quit 1
+	}
+	If 'immediate {
+		Lock -^pyprod.GeocodingRequestD#"S"
+		Quit 1
+	}
+	Lock -^pyprod.GeocodingRequestD#"SI"
+	Quit 1 }
+%UnlockId(id,shared=0,immediate=0) methodimpl {
+	If 'shared {
+		If 'immediate {
+			Lock -(^pyprod.GeocodingRequestD(id)#"E")
+			Quit 1
+		}
+		Lock -(^pyprod.GeocodingRequestD(id)#"IE")
+		Quit 1
+	}
+	If 'immediate {
+		Lock -(^pyprod.GeocodingRequestD(id)#"SE")
+		Quit 1
+	}
+	Lock -(^pyprod.GeocodingRequestD(id)#"SIE")
+	Quit 1 }
+%ValidateIndices(idxList="",autoCorrect=0,lockOption=1,multiProcess=1,mapList,verbose=1,errors) methodimpl
+	w !,"There are no indices to validate for class 'pyprod.GeocodingRequest'"
+	QUIT 1
+OnShowJSONContents(pZenOutput=0) methodimpl {
+	Set tSC = 1
+    Do ..OutputFormattedJSON(..SerializedStream) }
+zXMLDTD(top,format,input,dtdlist) methodimpl
+ Quit ##class(%XML.Implementation).XMLDTD("pyprod.GeocodingRequest",.top,.format,.input,.dtdlist)
+zXMLExportInternal() methodimpl
+ New tag,summary,attrsVal,savelocal,aval,k,tmpPrefix,prefixDepth,hasNoContent,hasElement,topAttrs,beginprefix,endprefix,savexsiAttrs,initialxsiAttrs,initlist,initialCR,inlineFlag,popAtEnd,saveTopPrefix,saveTypesPrefix,saveAttrsPrefix,saveUsePrefix,initlist
+ Set $ztrap="XMLExportInternalTrap",popAtEnd=0
+ Set summary=summaryArg,initialxsiAttrs=xsiAttrs
+ If group Quit $$Error^%apiOBJ(6386,"pyprod.GeocodingRequest")
+ If indentFlag Set initialCR=($extract(currentIndent,1,2)=$c(13,10))
+ Set id=createId
+ Set temp=""
+ If id'="" {
+   If $piece($get(idlist(+$this)),",",2)'="" Quit 1
+   Set idlist(+$this)=id_",1"
+ }
+ If encoded Set initlist=$lb($get(oreflist),inlineFlagArg),oreflist=1,inlineFlag=inlineFlagArg
+ If 'nocycle,('encoded||inlineFlag) {
+   If $data(oreflist($this)) Quit $$Error^%apiOBJ(6296,"pyprod.GeocodingRequest")
+   Set oreflist($this)=""
+ }
+ Set tag=$get(topArg)
+ Set tmpi=(($get(typeAttr)'="")&&(typeAttr'="pyprod.GeocodingRequest"))
+ If $IsObject(namespaces) {
+     Set popAtEnd=1,saveTopPrefix=topPrefix,saveTypesPrefix=typesPrefix,saveAttrsPrefix=attrsPrefix,saveUsePrefix=usePrefix
+     Set sc=namespaces.PushNodeForExport("",$get(local,0),(encoded||tmpi),"",,.topPrefix,.topAttrs,.typesPrefix,.attrsPrefix,.usePrefix)
+     If 'sc Quit sc
+   Set beginprefix=$select(namespaces.ElementQualified&&usePrefix:typesPrefix,1:"")
+   If topAttrs'="" Set temp=temp_" "_topAttrs
+   If tag="" Set tag="GeocodingRequest"
+   Set xsitype=namespaces.OutputTypeAttribute
+ } Else {
+   Set saveTopPrefix=topPrefix,saveTypesPrefix=typesPrefix,saveAttrsPrefix=attrsPrefix,saveUsePrefix=usePrefix
+   Set typesPrefix=namespaces If (typesPrefix'=""),($extract(typesPrefix,*)'=":") Set typesPrefix=typesPrefix_":"
+   If 'encoded Set namespaces=""
+   Set (topPrefix,attrsPrefix,topAttrs,beginprefix)=""
+   If tag="" Set tag=typesPrefix_"GeocodingRequest"
+   Set xsitype=0
+ }
+ Set local=+$get(local),savelocal=local
+ Set endprefix="</"_beginprefix,beginprefix="<"_beginprefix
+ If tmpi Set temp=temp_" "_xsiPrefix_"type="""_typesPrefix_"GeocodingRequest"""_xsiAttrs,xsiAttrs=""
+   If id'="" Set temp=" "_$select($get(soap12):soapPrefix_"id",1:"id")_"=""id"_id_""""_temp
+ If encoded Set temp=temp_xsiAttrs,xsiAttrs=""
+ If indentFlag Set %xmlmsg=currentIndent if $data(%xmlBlock) { Do xeWrite^%occXMLInternal } else { write %xmlmsg } Set currentIndent=$select(initialCR:"",1:$c(13,10))_currentIndent_indentChars
+ If tag[":" Set topPrefix=$piece(tag,":"),tag=$piece(tag,":",2)  If topPrefix'="" Set topPrefix=topPrefix_":"
+ Set %xmlmsg="<"_topPrefix_tag_temp if $data(%xmlBlock) { Do xeWrite^%occXMLInternal } else { write %xmlmsg }
+ Set attrsVal=attrsArg,attrsArg="" Set %xmlmsg=attrsVal if $data(%xmlBlock) { Do xeWrite^%occXMLInternal } else { write %xmlmsg }
+ Set %xmlmsg=">" if $data(%xmlBlock) { Do xeWrite^%occXMLInternal } else { write %xmlmsg }
+ Set val=..SerializedStream
+ If (val'=""),('val.IsNull()) {
+   If val.Size=0 {
+     Set %xmlmsg=currentIndent_beginprefix_"SerializedStream />" if $data(%xmlBlock) { Do xeWrite^%occXMLInternal } else { write %xmlmsg }
+   } Else {
+     Set %xmlmsg=currentIndent_beginprefix_"SerializedStream"_$select(xsitype:" "_xsiPrefix_"type="""_schemaPrefix_"string""",1:"")_">" if $data(%xmlBlock) { Do xeWrite^%occXMLInternal } else { write %xmlmsg }
+     Set sc=$$WriteCDataCharStream^%occXMLInternal(val) If 'sc Goto XMLExportExit
+     Set %xmlmsg=endprefix_"SerializedStream>" if $data(%xmlBlock) { Do xeWrite^%occXMLInternal } else { write %xmlmsg }
+   }
+ } Else {
+   Set %xmlmsg=currentIndent_beginprefix_"SerializedStream"_$select(xsitype:" "_xsiPrefix_"type="""_schemaPrefix_"string""",1:"")_" />" if $data(%xmlBlock) { Do xeWrite^%occXMLInternal } else { write %xmlmsg }
+ }
+ If indentFlag { Set currentIndent=$extract(currentIndent,1,*-$length(indentChars)) Set %xmlmsg=currentIndent if $data(%xmlBlock) { Do xeWrite^%occXMLInternal } else { write %xmlmsg }}
+ Set %xmlmsg="</"_topPrefix_tag_">"
+ if $data(%xmlBlock) { Do xeWrite^%occXMLInternal } else { write %xmlmsg } If indentFlag,'initialCR if $data(%xmlBlock) { Set %xmlmsg="" Do xeWriteLine^%occXMLInternal } else { write ! } Set $extract(currentIndent,1,2)=""
+ If '$IsObject(namespaces) || (popAtEnd=1) Set topPrefix=saveTopPrefix,typesPrefix=saveTypesPrefix,attrsPrefix=saveAttrsPrefix,usePrefix=saveUsePrefix
+ If popAtEnd Do namespaces.PopNode()
+ If encoded Set oreflist=$list(initlist),inlineFlag=$list(initlist,2)
+ If 'encoded||inlineFlag {
+   If 'nocycle Kill oreflist($this)
+ }
+ Quit sc
+XMLExportInternalTrap Set $ztrap=""
+ If $data(val) , $IsObject(val) , ($piece($ze,">",1)="<METHOD DOES NOT EXIST") {
+   Set sc=$$Error^%apiOBJ(6249,$classname(val))
+ } Else {
+   Set sc=$$Error^%apiOBJ(5002,$ze)
+ }
+XMLExportExit 
+ If '$IsObject(namespaces) || (popAtEnd=1) Set topPrefix=saveTopPrefix,typesPrefix=saveTypesPrefix,attrsPrefix=saveAttrsPrefix,usePrefix=saveUsePrefix
+ If popAtEnd Do namespaces.PopNode()
+ Quit sc
+zXMLGetSchemaImports(imports,classes) methodimpl
+ Quit ##class(%XML.Implementation).XMLGetSchemaImports("pyprod.GeocodingRequest",.imports,.classes)
+zXMLImportInternal() methodimpl
+ New child,childlist,node,nodelist,inner,innerlist,data,encodedArray,key,nsIndex,savechild,savechildlist,saveinner,saveinnnerlist,exists
+ Set $ztrap="XMLImportInternalTrap"
+ Set encoded=$case($piece(fmt,",",1),"":0,"literal":0,"encoded":1,"encoded12":1,:"")
+ If encoded="" Quit $$Error^%apiOBJ(6231,fmt)
+ Set nsIndex=$select($get(namespace)="":"",1:$get(@(tree)@("N",namespace)))
+ Set node=nodeArg,nodelist=nodeArgChildlist
+ If tag'=@(tree)@("d",$zlascii(nodelist,9)) Set inner=node Goto XMLImportMalformed
+ If bareProjection Quit $$Error^%apiOBJ(6386,"pyprod.GeocodingRequest")
+ If encoded {
+   Do XMLImportAttrnode() If $data(attributeList("id")) Set idlist(node)=$this
+ }
+ If $zboolean(+($zlascii(nodelist,13)#16),+1,1) Quit 1
+ Set sc=$$XMLImportElements()
+XMLImportExit Quit sc
+XMLImportElements() ;
+XMLLOOP1 Set descriptor=$zlascii(nodelist,$zwascii(nodelist,17)) Set child=($zlascii(@(tree)@($piece(node,",",1)),$piece(node,",",2))\16)_","_$zwascii(nodelist,17) If (descriptor#16)=3 { If (descriptor\16)'=0 { Set child=##class(%XML.ImportHandler).NextChild(tree,node,.nodelist,child,.descriptor) } Else { Set child="" }} For { Quit:child=""  Quit:(descriptor#16)'=2  Set descriptor=$piece(child,",",2)+4 Set child=$piece(child,",",1)_","_descriptor Set descriptor=$zlascii(nodelist,descriptor) If (descriptor#16)=3 { If (descriptor\16)'=0 { Set child=##class(%XML.ImportHandler).NextChild(tree,node,.nodelist,child,.descriptor) } Else {Set child="" }} } Goto XMLLOOP2
+XMLLOOP For  { Set descriptor=$piece(child,",",2)+4 Set child=$piece(child,",",1)_","_descriptor Set descriptor=$zlascii(nodelist,descriptor) If (descriptor#16)=3 { If (descriptor\16)'=0 { Set child=##class(%XML.ImportHandler).NextChild(tree,node,.nodelist,child,.descriptor) } Else {Set child="" }} Quit:child=""  Quit:(descriptor#16)'=2  }
+XMLLOOP2 If child="" Quit sc
+ If (descriptor#16)'=0 Set inner=child Goto XMLImportMalformedNoTag
+ Set childlist=@(tree)@((descriptor\16))
+ Set tag=@(tree)@("d",$zlascii(childlist,9))
+ If tag="SerializedStream" {
+   If ($get(namespace)="")||$case($zwascii(childlist,19),0:1,nsIndex:1,:0) {
+   If encoded Set savechild=child,savechildlist=childlist
+   If encoded,$$XMLImportIdChild() {
+     Set data=idlist(child)
+   } Else { Goto:'sc XMLImportExit
+     If $zboolean(+($zlascii(childlist,13)#16),+1,1) { Set data=""
+     } Else {
+       Set data=..SerializedStream Do data.Rewind()
+       Set tmp=##class(%XML.ImportHandler).SerializeNode(tree,child,1,0,.data,0,0,childlist)
+       If 'tmp Goto XMLImportErrchild
+     }
+     If encoded Do XMLImportAttrchild() If $data(attributeList("id")) Set idlist(child)=data
+   }
+   If encoded Set child=savechild,childlist=savechildlist
+   Goto XMLLOOP } }
+ Goto XMLImportBadTagchild
+XMLImportBadTagchild Set inner=child
+XMLImportBadTag Quit $$Error^%apiOBJ(6237,tag_$$XMLImportLocation(inner))
+XMLImportBadTypenode Set inner=node Goto XMLImportBadType
+XMLImportBadTypechild Set inner=child
+XMLImportBadType Quit $$Error^%apiOBJ(6277,class,$select(($zlascii(@(tree)@($piece(inner,",",1)),$piece(inner,",",2))#16)=0:@(tree)@("d",$zlascii(@(tree)@(($zlascii(@(tree)@($piece(inner,",",1)),$piece(inner,",",2))\16)),9)),1:@(tree)@("d",($zlascii(@(tree)@($piece(inner,",",1)),$piece(inner,",",2))\16)))_$$XMLImportLocation(inner))
+XMLImportErrnode Set inner=node Goto XMLImportErr
+XMLImportErrchild Set inner=child
+XMLImportErr
+ Set data=##class(%XML.ImportHandler).GetNextChild(tree,inner,"")
+ If (data'="") {
+   If ($zlascii(@(tree)@($piece(data,",",1)),$piece(data,",",2))#16)'=0 {
+     Quit $$Error^%apiOBJ(6232,@(tree)@("d",$zlascii(@(tree)@(($zlascii(@(tree)@($piece(inner,",",1)),$piece(inner,",",2))\16)),9))_$$XMLImportLocation(inner),$extract(@(tree)@("d",($zlascii(@(tree)@($piece(data,",",1)),$piece(data,",",2))\16)),1,200))
+   } Else {
+     Quit $$Error^%apiOBJ(6253,@(tree)@("d",$zlascii(@(tree)@(($zlascii(@(tree)@($piece(inner,",",1)),$piece(inner,",",2))\16)),9))_$$XMLImportLocation(inner),@(tree)@("d",$zlascii(@(tree)@(($zlascii(@(tree)@($piece(data,",",1)),$piece(data,",",2))\16)),9)))
+   }
+ } Else {
+   Quit $$Error^%apiOBJ(6252,@(tree)@("d",$zlascii(@(tree)@(($zlascii(@(tree)@($piece(inner,",",1)),$piece(inner,",",2))\16)),9))_$$XMLImportLocation(inner))
+ }
+XMLImportIdErr Set sc=$$Error^%apiOBJ(6236,id,@(tree)@("d",$zlascii(@(tree)@(($zlascii(@(tree)@($piece(inner,",",1)),$piece(inner,",",2))\16)),9))_$$XMLImportLocation(inner)) Quit sc
+XMLImportMalformed Set sc=$$Error^%apiOBJ(6233,$select(($zlascii(@(tree)@($piece(inner,",",1)),$piece(inner,",",2))#16)=0:@(tree)@("d",$zlascii(@(tree)@(($zlascii(@(tree)@($piece(inner,",",1)),$piece(inner,",",2))\16)),9)),1:@(tree)@("d",($zlascii(@(tree)@($piece(inner,",",1)),$piece(inner,",",2))\16)))_$$XMLImportLocation(inner)) Quit sc
+XMLImportMalformedNoTag Set node=$select($piece(inner,",",1)<=0:0,1:$zlascii(@(tree)@($piece(inner,",",1)),1)_","_$zlascii(@(tree)@($piece(inner,",",1)),5)),sc=$$Error^%apiOBJ(6254,$select(($zlascii(@(tree)@($piece(inner,",",1)),$piece(inner,",",2))#16)=0:@(tree)@("d",$zlascii(@(tree)@(($zlascii(@(tree)@($piece(inner,",",1)),$piece(inner,",",2))\16)),9)),1:@(tree)@("d",($zlascii(@(tree)@($piece(inner,",",1)),$piece(inner,",",2))\16))),$select(($zlascii(@(tree)@($piece(node,",",1)),$piece(node,",",2))#16)=0:@(tree)@("d",$zlascii(@(tree)@(($zlascii(@(tree)@($piece(node,",",1)),$piece(node,",",2))\16)),9)),1:@(tree)@("d",($zlascii(@(tree)@($piece(node,",",1)),$piece(node,",",2))\16)))_$$XMLImportLocation(node)) Quit sc
+XMLImportNSchild Set inner=child
+XMLImportNS Set sc=$$Error^%apiOBJ(6235,@(tree)@("d",$zlascii(@(tree)@(($zlascii(@(tree)@($piece(inner,",",1)),$piece(inner,",",2))\16)),9))_$$XMLImportLocation(inner)) Quit sc
+XMLImportLocation(node) new msg,loc
+ Set loc=$lb($zlascii(@(tree)@(($zlascii(@(tree)@($piece(node,",",1)),$piece(node,",",2))\16)),21),$zlascii(@(tree)@(($zlascii(@(tree)@($piece(node,",",1)),$piece(node,",",2))\16)),25))
+ If loc="" Quit ""
+ Set msg=$get(^%qMsg("%ObjectErrors",$s(""'="":$zcvt("","L"),1:$s($mvv(58)="":"en",1:$mvv(58))),"XMLImportLocation")," (%1,%2)")
+ Quit $$FormatText^%occMessages(msg,$listget(loc,1),$listget(loc,2))
+XMLImportInternalTrap Set $ztrap=""
+ Set loc=$select($ZE["<CLASS DOES NOT EXIST>":" for element "_tag_$$XMLImportLocation(child),1:"")
+ Quit $$Error^%apiOBJ(5002,$ZE_loc)
+XMLImportIdChild() Set inner=child,innerlist=childlist,tmp=$$XMLImportId(),child=inner,childlist=innerlist Quit tmp
+XMLImportId() ;
+ Do XMLImportAttrinner()
+ If $data(attributeList("href")) {
+   Set id=$case($data(@(tree)@("d",$zlascii(attributeList("href"),13))),1:@(tree)@("d",$zlascii(attributeList("href"),13)),0:"",:##class(%XML.ImportHandler).GetAttribute(tree,attributeList("href")))
+   If $extract(id)="#" {
+     Set tmp=$select($get(@(tree)@("i",$extract(id,2,*)))="":"",1:$piece(@(tree)@("i",$extract(id,2,*)),",",1)_","_$piece(@(tree)@("i",$extract(id,2,*)),",",2)) If tmp="" Goto XMLImportIdErr
+     Set inner=tmp
+     Set descriptor=$zlascii(@(tree)@($piece(inner,",",1)),$piece(inner,",",2)) Set innerlist=@(tree)@((descriptor\16))
+   }
+ } ElseIf $data(attributeList("ref")),($get(@(tree)@("n",$zwascii(attributeList("ref"),9)))="http://www.w3.org/2003/05/soap-encoding") {
+   Set id=$case($data(@(tree)@("d",$zlascii(attributeList("ref"),13))),1:@(tree)@("d",$zlascii(attributeList("ref"),13)),0:"",:##class(%XML.ImportHandler).GetAttribute(tree,attributeList("ref")))
+   Set tmp=$select($get(@(tree)@("i",id))="":"",1:$piece(@(tree)@("i",id),",",1)_","_$piece(@(tree)@("i",id),",",2)) If tmp="" Goto XMLImportIdErr
+   Set inner=tmp
+   Set descriptor=$zlascii(@(tree)@($piece(inner,",",1)),$piece(inner,",",2)) Set innerlist=@(tree)@((descriptor\16))
+ } ElseIf '$data(attributeList("id")) {
+   Quit 0
+ }
+ Quit $data(idlist(inner))
+XMLImportAttrnode()
+ If $get(attributeList)=node Quit
+ Kill attributeList
+ Set attributeList=node
+ Set offset=29 While offset<$zwascii(nodelist,17) { Set attribute=$extract(nodelist,offset,offset+15)
+    Set attrname=@(tree)@("d",$zlascii(attribute,1))
+    Set attributeList(attrname)=attribute
+ Set offset=offset+16 }
+ Quit
+XMLImportAttrchild()
+ If $get(attributeList)=child Quit
+ Kill attributeList
+ Set attributeList=child
+ Set offset=29 While offset<$zwascii(childlist,17) { Set attribute=$extract(childlist,offset,offset+15)
+    Set attrname=@(tree)@("d",$zlascii(attribute,1))
+    Set attributeList(attrname)=attribute
+ Set offset=offset+16 }
+ Quit
+XMLImportAttrinner()
+ If $get(attributeList)=inner Quit
+ Kill attributeList
+ Set attributeList=inner
+ Set offset=29 While offset<$zwascii(innerlist,17) { Set attribute=$extract(innerlist,offset,offset+15)
+    Set attrname=@(tree)@("d",$zlascii(attribute,1))
+    Set attributeList(attrname)=attribute
+ Set offset=offset+16 }
+ Quit
+zXMLNew(document,node,containerOref="") methodimpl
+	Quit (##class(pyprod.GeocodingRequest).%New())
+zXMLSchema(top="",format="",namespacePrefix="",input=0,refOnly=0,schema) methodimpl
+ Quit ##class(%XML.Implementation).XMLSchema("pyprod.GeocodingRequest",top,format,namespacePrefix,input,refOnly,.schema)
+chunksFromIRIS(iteration,chunkSize=1048576) methodimpl {
+    if iteration = 0 {
+        do ..SerializedStream.Rewind()
+    }
+    if ..SerializedStream.AtEnd {
+        return ""
+    }
+    return ..SerializedStream.Read(chunkSize) }
+SerializedStreamDelete(streamvalue) methodimpl {
+	Set $ZTrap = "CatchError"
+	Quit $select(streamvalue="":$$Error^%apiOBJ(5813,$classname()),1:##class(%Stream.GlobalCharacter).%Delete($select(streamvalue="":"",1:$listbuild(streamvalue_"","%Stream.GlobalCharacter","^pyprod.GeocodingRequestS"))))
+CatchError	Set $ZTrap=""
+	Quit $$Error^%apiOBJ(5002,$zerror) }
+SerializedStreamGetObject(force=0) methodimpl {
+	Quit:r%SerializedStream="" $select(i%SerializedStream="":"",1:$listbuild(i%SerializedStream_"","%Stream.GlobalCharacter","^pyprod.GeocodingRequestS")) Quit:(''..SerializedStream.%GetSwizzleObject(force,.oid)) oid Quit "" }
+SerializedStreamGetObjectId(force=0) methodimpl {
+	Quit $listget(..SerializedStreamGetObject(force)) }
+SerializedStreamGetStored(id) methodimpl {
+	Quit $Select(id'="":$listget($g(^pyprod.GeocodingRequestD(id)),2),1:"") }
+SerializedStreamGetSwizzled(noswizzle=0) methodimpl {
+	If noswizzle { RETURN r%SerializedStream }
+	If i%SerializedStream="" Set modstate=$system.CLS.GetSModifiedBits() Set oref=..SerializedStreamNewObject("") Do $system.CLS.SetSModifiedBits(modstate) Set r%SerializedStream=0,r%SerializedStream=oref Quit oref
+	Set oref=##class(%Stream.GlobalCharacter).%Open($select(i%SerializedStream="":"",1:$listbuild(i%SerializedStream_"","%Stream.GlobalCharacter","^pyprod.GeocodingRequestS")),,.sc) If ('sc) Do:$get(^%SYS("ThrowSwizzleError"),0) $zutil(96,3,19,1) Quit ""
+	Set modstate=$system.CLS.GetModifiedBits() Set r%SerializedStream=oref Do $system.CLS.SetModifiedBits(modstate)
+	Quit oref }
+SerializedStreamNewObject(type="") methodimpl {
+	Set $ZTrap = "CatchError"
+	Set sc=1
+	If type="" {
+		Set type = "%Stream.GlobalCharacter"
+	} ElseIf '($classmethod(type,"%IsA","%Stream.GlobalCharacter")) {
+		Set sc=$$Error^%apiOBJ(5833,"pyprod.GeocodingRequest","SerializedStream") Quit ""
+	}
+	Set newobject=$classmethod(type,"%New","^pyprod.GeocodingRequestS") If newobject="" Quit ""
+	Set r%SerializedStream=0,i%SerializedStream=0,r%SerializedStream=newobject,i%SerializedStream=""
+	Quit newobject
+CatchError	Set $ZTrap=""
+	If (''sc) Set sc = $$Error^%apiOBJ(5002,$ze)
+	Quit "" }
+SerializedStreamOid(streamvalue,external="") methodimpl {
+	Quit $s($isobject(streamvalue):streamvalue.%Oid(),1:$select(streamvalue="":"",1:$listbuild(streamvalue_"","%Stream.GlobalCharacter","^pyprod.GeocodingRequestS"))) }
+SerializedStreamOpen(streamvalue) methodimpl {
+	If $get(streamvalue)="" {
+		Set object=##class(%Stream.GlobalCharacter).%New("^pyprod.GeocodingRequestS")
+	} elseif $isobject(streamvalue)=1 {
+		set object = streamvalue
+	} else {
+		Set object=##class(%Stream.GlobalCharacter).%Open($select(streamvalue="":"",1:$listbuild(streamvalue_"","%Stream.GlobalCharacter","^pyprod.GeocodingRequestS")))
+		If $isobject(object)=1,object.%IsNull()=1 Quit ""
+	}
+	Quit object }
+SerializedStreamSet(newvalue) methodimpl {
+	If newvalue="" Set r%SerializedStream=0,i%SerializedStream=0,r%SerializedStream="",i%SerializedStream="" Quit 1
+	If '$isobject(newvalue) Quit $$Error^%apiOBJ(5807,newvalue)
+	If newvalue=r%SerializedStream Quit 1
+	If newvalue.%IsA("%Stream.GlobalCharacter") {
+		Set r%SerializedStream=newvalue.%ConstructClone(0,,"^pyprod.GeocodingRequestS"),i%SerializedStream=1,i%SerializedStream=""
+	} Else {
+		Do ..SerializedStream.Clear()
+		Quit ..SerializedStream.CopyFrom(newvalue)
+	}
+	Quit 1 }
+SerializedStreamSetObject(newvalue) methodimpl {
+	If newvalue'="",$data(i%SerializedStream,tmp),tmp=$listget(newvalue) Quit 1
+	Set i%SerializedStream=$listget(newvalue),r%SerializedStream=0,r%SerializedStream=""
+	Quit 1 }
+SerializedStreamSetObjectId(newid) methodimpl {
+	Quit ..SerializedStreamSetObject($select(newid="":"",1:$listbuild(newid_""))) }
+SerializedStreamUnSwizzle(force=0) methodimpl {
+	If r%SerializedStream="" Quit 1
+	Set sc=..SerializedStream.%GetSwizzleObject(force,.newvalue) Quit:('sc) sc
+	Set modstate=$system.CLS.GetModifiedBits() Set r%SerializedStream="" Do $system.CLS.SetModifiedBits(modstate)
+	Set i%SerializedStream=$listget(newvalue)
+	Quit 1 }
+ExtentClose(%qHandle) [ SQLCODE ] methodimpl {
+	New SQLCODE Set SQLCODE=0
+	Do:$isobject($get(%qHandle)) %qHandle.%Destruct() Kill %qHandle
+	If SQLCODE { Set:$isobject($g(%sqlcontext)) %sqlcontext.%SQLCODE=SQLCODE,%sqlcontext.%Message=$g(%msg) Set sc=$$Error^%apiOBJ(5540,SQLCODE,$get(%msg)) } Else { Set sc=1 }
+	Quit sc }
+ExtentExecute(%qHandle) [ SQLCODE ] methodimpl { New %ROWCOUNT,%ROWID,%msg,SQLCODE 
+	Set sc=1
+	 ;---&sql(DECLARE QExtent CURSOR FOR
+ 	 ;---		 SELECT ID FROM %NOPARALLEL pyprod.GeocodingRequest)
+ 	 ;--- ** SQL PUBLIC Variables: %ROWCOUNT, %ROWID, %msg, SQLCODE
+	 
+	 ;---&sql(OPEN QExtent)
+	if $g(%qHandle)'="" { s SQLCODE=-101 } else { try { s %qHandle="%sqlcq."_$tr($namespace,"%_-$@:/\[]^ .","pudssssssssss")_$case($zu(115,2),0:".u",1:".x",3:".v",:"."_$zu(115,2))_"EMrIVWRsBn7hpcS99yidxiGFSqV",%qHandle=$classmethod(%qHandle,"%New") } catch { if ($ze'["<CLASS DOES NOT EXIST>"&&($ze'["<NOROUTINE>")||($ze'[%qHandle)),$ze'["<ZSQLU>" { throw } } if '$isobject(%qHandle) { s %qHandle=$$%0dsqlF() } }
+	If SQLCODE { Set:$isobject($g(%sqlcontext)) %sqlcontext.%SQLCODE=SQLCODE,%sqlcontext.%Message=$g(%msg) Set sc=$$Error^%apiOBJ(5821,"SQLCODE = "_SQLCODE_" %msg = "_$g(%msg)) } Else { Set sc=1 }
+	Quit sc }
+ExtentFetch(%qHandle,Row,AtEnd=0) [ SQLCODE ] methodimpl { New %ROWCOUNT,%ROWID,%msg,SQLCODE 
+	Set Row="",AtEnd=0
+	 ;---&sql(FETCH QExtent INTO :c1)
+ 	 ;--- ** SQL PUBLIC Variables: %ROWCOUNT, %ROWID, %msg, SQLCODE
+	if $isobject($g(%qHandle))'=1 { s SQLCODE=-102 } else { do %qHandle.FET() i SQLCODE=0 { s c1=%qHandle.sqlcol1 } }
+	If 'SQLCODE { Set Row=$lb(c1) Set sc=1 }
+	ElseIf SQLCODE=100 { Set AtEnd=1,sc=1 Set:$isobject($g(%sqlcontext)) %sqlcontext.%SQLCODE=SQLCODE,%sqlcontext.%ROWCOUNT=$g(%ROWCOUNT) }
+	Else { Set:$isobject($g(%sqlcontext)) %sqlcontext.%SQLCODE=SQLCODE,%sqlcontext.Message=$g(%msg) Set AtEnd=1,sc=$$Error^%apiOBJ(5540,SQLCODE,$get(%msg)) }
+	QUIT sc }
+ExtentFetchRows(%qHandle,FetchCount=0,RowSet,ReturnCount,AtEnd) [ SQLCODE ] methodimpl { New %ROWCOUNT,%ROWID,%msg,SQLCODE 
+	Set RowSet="",ReturnCount=0,AtEnd=0
+	For {
+		 ;---&sql(FETCH QExtent INTO :c1)
+ 		 ;--- ** SQL PUBLIC Variables: %ROWCOUNT, %ROWID, %msg, SQLCODE
+		if $isobject($g(%qHandle))'=1 { s SQLCODE=-102 } else { do %qHandle.FET() i SQLCODE=0 { s c1=%qHandle.sqlcol1 } }
+		If 'SQLCODE { Set RowSet=RowSet_$lb(c1),ReturnCount=ReturnCount+1 Quit:(ReturnCount=FetchCount)||(($l(RowSet)+($l(RowSet)\ReturnCount))>30000) } Else { Set AtEnd=1 Quit }
+	}
+	If 'SQLCODE { Set sc=1 } ElseIf SQLCODE=100 { Set sc=1 Set:$isobject($g(%sqlcontext)) %sqlcontext.%SQLCODE=SQLCODE,%sqlcontext.%ROWCOUNT=$g(%ROWCOUNT) } Else { Set:$isobject($g(%sqlcontext)) %sqlcontext.%SQLCODE=SQLCODE,%sqlcontext.Message=$g(%msg) Set sc=$$Error^%apiOBJ(5540,SQLCODE,$get(%msg)) }
+	Quit sc }
+ExtentSendODBC(%qHandle,array,qacn,%qrc,piece,ColumnCount) [ SQLCODE ] methodimpl { New %ROWCOUNT,%ROWID,%msg,SQLCODE 
+	set %qrc=0,piece=0
+	for {
+		set rc=..ExtentFetch(.%qHandle,.row,.atend)
+		if ('rc) { set %qrc=-400 set:$isobject($get(%sqlcontext)) %sqlcontext.SQLCode=-400,%sqlcontext.Message=$g(%msg) do ProcessError^%ourProcedure(rc,$get(%sqlcontext),.%qrc,.%msg),Logerr^%SYS.SQLSRV(%qrc,"","SP",.%msg) RETURN  }
+		if row="" { set %qrc=100 set:$isobject($get(%sqlcontext)) %sqlcontext.SQLCode=100 RETURN  }
+		RETURN:$zobjexport(row,60)
+	}
+	RETURN }
+ q
+%0dsqlF()	n %xxsql,%xxoref
+	s %xxsql("S",1)="DECLARE QExtent CURSOR FOR SELECT ID "
+	s %xxsql("S",2)="INTO  :i%sqlcol1"
+	s %xxsql("S",3)="FROM %NOPARALLEL pyprod . GeocodingRequest"
+	s %xxsql("M","%occSqlfuncinc")=$c(1),%xxsql("M","ALLOCGVEC")=$c(1),%xxsql("M","CACHENAMES")="",%xxsql("M","DEBUG")=$c(1),%xxsql("M","FORKNETDMN")=$c(1)
+	s %xxsql("M","HASHLOCK")=$c(1),%xxsql("M","NETNEWHASH")=$c(1),%xxsql("M","SOAP12ENCns")="0"_$c(1,1)_"0"_$c(1)_"""http://www.w3.org/2003/05/soap-encoding"""
+	s %xxsql("M","USEDIRCACHE")=$c(1),%xxsql("M","USEGCNT")=2,%xxsql("M","USEGOFF")=$c(1),%xxsql("M","USELOST")=$c(1),%xxsql("M","ZVERSION")=$c(1)
+	s %xxsql("I","%callout")="",%xxsql("I","%occSqlfunc")="",%xxsql("I","%occStatus")="",%xxsql("I","%sySystem")="",%xxsql("I","%systemInclude")=""
+	s %xxsql("I","%xmlMap")="",%xxsql("I","Ensemble")="",%xxsql("NS")="TRAINING",%xxsql("PToolsCTI")=$LB(,"-1:0:0::0:1")
+	s %xxoref=$$BuildQuery^%SYS.SQLSRV(.%xxsql,$lb("Runtime","","","pyprod",0,"",),",1,QExtent,","pyprod.GeocodingRequest.CLS",1)
+	q %xxoref
+ExtentFunc() methodimpl {
+	try {
+		set tSchemaPath = ##class(%SQL.Statement).%ClassPath($classname())
+			set tStatement = ##class(%SQL.Statement).%New(,tSchemaPath)
+			do tStatement.prepare(" SELECT ID FROM %NOPARALLEL pyprod . GeocodingRequest /*#OPTIONS {""DynamicSQL"":1} */")
+		set tResult = tStatement.%Execute()
+	}
+	catch tException { if '$Isobject($Get(tResult)) { set tResult = ##class(%SQL.StatementResult).%New() } set tResult.%SQLCODE=tException.AsSQLCODE(),tResult.%Message=tException.AsSQLMessage() }
+	Quit tResult }
+ExtentGetInfo(colinfo,parminfo,idinfo,%qHandle,extoption=0,extinfo) methodimpl {
+ s parminfo=""
+	s:'($d(^oddCOM($classname(),"q","Extent",21),clientinfo)#2)&&'$s($d(^(2),clientinfo)#2&&(clientinfo'=$classname()):$d(^oddCOM(clientinfo,"q","Extent",21),clientinfo)#2||($d(^oddDEF(clientinfo,"q","Extent",21),clientinfo)#2),1:$d(^oddDEF($classname(),"q","Extent",21),clientinfo)#2) clientinfo=""
+	Set:extoption extinfo=$s($d(^oddCOM($classname(),"q","Extent",38))#2:^(38),$d(^oddCOM($g(^(2),$classname()),"q","Extent",38))#2:^(38),1:$s($d(^oddDEF($g(^oddCOM($classname(),"q","Extent",2),$classname()),"q","Extent",38))#2:^(38),1:""))
+	If clientinfo'="" Set colinfo=$listget(clientinfo,1),parminfo=$listget(clientinfo,2),idinfo=$listget(clientinfo,3) Quit 1
+	Set colinfo="",parminfo="",idinfo=$listbuild(0)
+	Set sc=$$externaltype^%apiOLE("%Library.Integer",.exttypes,"0")
+	Quit:('sc) sc
+	s:'($d(^oddCOM($classname(),"q","Extent",23),names)#2)&&'$s($d(^(2),names)#2&&(names'=$classname()):$d(^oddCOM(names,"q","Extent",23),names)#2||($d(^oddDEF(names,"q","Extent",23),names)#2),1:$d(^oddDEF($classname(),"q","Extent",23),names)#2) names=""
+	s:'($d(^oddCOM($classname(),"q","Extent",22),captions)#2)&&'$s($d(^(2),captions)#2&&(captions'=$classname()):$d(^oddCOM(captions,"q","Extent",22),captions)#2||($d(^oddDEF(captions,"q","Extent",22),captions)#2),1:$d(^oddDEF($classname(),"q","Extent",22),captions)#2) captions=""
+	For i=1:1:1 Set colinfo=colinfo_$listbuild($listbuild($listget(names,i),$piece(exttypes,",",i),$listget(captions,i)))
+	Set idinfo=$listbuild(1,$classname())
+	s ^oddCOM($classname(),"q","Extent",21)=$listbuild(colinfo,parminfo,idinfo)
+	Quit 1 }
+ExtentGetODBCInfo(colinfo,parminfo,qHandle) methodimpl {
+	Set metadata=$lb(1,1,"ID",4,10,0,2,"ID","GeocodingRequest","pyprod","",$c(0,0,0,0,0,0,0,0,0,0,0,1,0),0)
+	set colcount=$li(metadata,2),cmdlen=colcount*10,parmcount=$li(metadata,3+cmdlen),pmdlen=parmcount*6,parminfo=$li(metadata,cmdlen+3,cmdlen+pmdlen+3)
+	set colinfo=$li(metadata,2,2+cmdlen)
+	RETURN 1 }
+IDKEYCheck(K1,lockonly=0,concurrency=-1) methodimpl {
+	s id=K1,exists=..%ExistsId(id) q:'exists $s('lockonly:$$Error^%apiOBJ(5797,$classname(),"IDKEY",id),1:1) s:concurrency=-1 concurrency=$select(..#DEFAULTCONCURRENCY="$zu(115,10)":$zu(115,10),1:$xecute("q "_..#DEFAULTCONCURRENCY)) if concurrency { s status=..%LockId(id,1) q:('status) status } if 'lockonly { s exists=..%ExistsId(id) d:concurrency ..%UnlockId(id,1,0) quit $s('exists:$$Error^%apiOBJ(5797,$classname(),"IDKEY",id),1:1) } else { d:concurrency ..%UnlockId(id,1,0) q 1 }
+}
+IDKEYDelete(K1,concurrency=-1) methodimpl {
+	Quit ..%DeleteId(.K1,concurrency) }
+IDKEYExists(K1,id="") methodimpl {
+	s id=K1 q ..%ExistsId(K1) }
+IDKEYOpen(K1,concurrency=-1,sc) methodimpl { s:'($d(sc)#2) sc=1
+	Quit ..%OpenId(.K1,concurrency,.sc) }
+zIDKEYSQLCheckUnique(pFromOrig=0,%pID,%pVals...) methodimpl
+ QUIT $$Error^%apiOBJ(5758,"%Persistent::IDKEYSQLCheckUnique")
+zIDKEYSQLExists(pLockOnly=0,pLockMode=1,pUnlockRef,%pVal...) methodimpl
+	// SQL Foreign Key validation entry point for Key IDKEY.  Called by FKeys that reference this Key to see if the row is defined
+	if pLockOnly>=0 { new id set id=%pVal(1) }
+	if pLockOnly>=0 { if '..%SQLGetLock(id,pLockMode,.pUnlockRef) { set sqlcode=-114,%msg=$$FormatMessage^%occMessages(,"%SQL.Filer","SQLFiler39",,"pyprod"_"."_"GeocodingRequest"_":"_"IDKEY") RETURN 0 } }
+	if pLockOnly<1 {
+		new exists set exists=$d(^pyprod.GeocodingRequestD(%pVal(1))) RETURN:pLockOnly=-1 exists
+		do:'$g(pUnlockRef) ..%SQLReleaseLock(id,pLockMode) RETURN exists
+	}
+	else { do:'$g(pUnlockRef) ..%SQLReleaseLock(id,pLockMode) RETURN 1 }
+	Return
+zIDKEYSQLFindPKeyByConstraint(%con) methodimpl
+ QUIT $$Error^%apiOBJ(5758,"%Persistent::IDKEYSQLFindPKeyByConstraint")
+zIDKEYSQLFindRowIDByConstraint(%con,pInternal=0) methodimpl
+ QUIT $$Error^%apiOBJ(5758,"%Persistent::IDKEYSQLFindRowIDByConstraint")
+%sqllistUCQ(t) public	{
+	s t("%0dsqlA")="",t("%0dsqlD")="",t("%0dsqlF")=""
+}
