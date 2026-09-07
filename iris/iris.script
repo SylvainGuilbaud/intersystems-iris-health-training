@@ -99,7 +99,26 @@
     set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/data/patient.cls", "ck")
     set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/pyprod/generated", "ck")
     set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/training/fhir", "ck")
+    set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/weather", "ck")
     set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/TRAININGPKG/FoundationProduction.cls", "ck")
-    set sc = ##class(training.fhir.PatientREST).Install("/fhir", "TRAINING")
+    set sc = ##class(training.fhir.PatientREST).Install("/specfirst/foch", "TRAINING")
+
+    set patientId = ##class(training.fhir.PatientMapper).FindPatientIdByIPP("G7809", .sc)
+    if patientId = "" {
+        set patient = ##class(data.patient).%New()
+        set patient.IPP = "G7809"
+        set patient.firstName = "Anne"
+        set patient.lastName = "VERSAIRE"
+        set patient.DOB = $ZDateH("1985-01-24", 3)
+        set patient.sex = 2
+        set patient.status = "qualified"
+        set patient.homeAddress.PostalCode = "75001"
+        set patient.homeAddress.City = "Paris"
+        set patient.homeAddress.Country = "France"
+        set patient.birthPlace.PostalCode = "69001"
+        set patient.birthPlace.City = "Lyon"
+        set patient.birthPlace.Country = "France"
+        set sc = patient.%Save()
+    }
 
     halt
