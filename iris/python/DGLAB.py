@@ -1041,7 +1041,7 @@ canvas = tk.Canvas(window, width=1728, height=1000, bg=_BG, highlightthickness=0
 canvas.pack(fill="both", expand=True)
 
 # Chargement images
-bg_image = Image.open("TECHNIDATA.jpg").resize((600, 157))
+bg_image = Image.open("LOGO.jpg").resize((600, 157))
 bg_photo = ImageTk.PhotoImage(bg_image)
 
 logo_image = Image.open("IS_logo.jpg").resize((200, 64))
