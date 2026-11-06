@@ -23,20 +23,32 @@ $panel-border: #2a4a6c;
 
 // ── Header ────────────────────────────────────────────────────────────────
 .header {
-  background: $bg;
+  background: #fff;
   border-top: 3px solid $accent;
-  border-bottom: 1px solid #1a3a5c;
+  border-bottom: 1px solid #cbd5e1;
   padding: 8px 24px;
   display: flex;
   align-items: center;
   gap: 24px;
 
+  .header-logo {
+    display: block;
+    height: 30px;
+    width: auto;
+  }
+
   .header-title {
-    color: $accent;
+    color: #333695; // InterSystems dark blue
     font-size: 13px;
     font-weight: bold;
     letter-spacing: 1px;
     text-transform: uppercase;
+  }
+
+  .header-link {
+    display: inline-block;
+    vertical-align: middle;
+    &:hover { opacity: 0.85; }
   }
 
   .header-sub {
@@ -47,7 +59,7 @@ $panel-border: #2a4a6c;
   .lang-btn {
     margin-left: auto;
     background: transparent;
-    border: 1px solid #2a4a6c;
+    border: 1px solid #cbd5e1;
     border-radius: 4px;
     padding: 2px 8px;
     font-size: 18px;
@@ -60,8 +72,8 @@ $panel-border: #2a4a6c;
   .logout-btn {
     margin-left: auto;
     background: transparent;
-    color: $input-fg;
-    border: 1px solid #2a4a6c;
+    color: #334155;
+    border: 1px solid #cbd5e1;
     border-radius: 4px;
     padding: 4px 10px;
     font-size: 12px;

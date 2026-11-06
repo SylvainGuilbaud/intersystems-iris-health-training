@@ -19,6 +19,11 @@ function nextOruId(): string {
   return String(++messageControlId).padStart(9, '0');
 }
 
+/** Name prefix (XPN-5) consistent with the administrative sex. */
+function civility(gender: string): string {
+  return gender === 'M' ? 'MONSIEUR' : gender === 'F' ? 'MADAME' : '';
+}
+
 function nextAdtId(): string {
   return `MSG-${String(++messageControlId).padStart(3, '0')}`;
 }
@@ -30,7 +35,7 @@ export function generateOruMessage(p: Hl7Params): string {
 
   const segments = [
     `MSH|^~\\&|DGLab|LAB|OpenMedical|${rcvFacility}|${now}||ORU^R01|${msgId}|P|2.3|||||CH|8859/1|de`,
-    `PID|1||18^^^LAB^PI~${p.patientId}^^^ASIP-SANTE-INS-NIA&1.2.250.1.213.1.4.9&ISO^INS-NIA||${p.lastName}^${p.firstName}^^^MADAME^^L||${p.dob}|${p.gender}|||^^^^^^H||||F|||||||||||||||||VALI`,
+    `PID|1||18^^^LAB^PI~${p.patientId}^^^ASIP-SANTE-INS-NIA&1.2.250.1.213.1.4.9&ISO^INS-NIA||${p.lastName}^${p.firstName}^^^${civility(p.gender)}^^L||${p.dob}|${p.gender}|||^^^^^^H||||F|||||||||||||||||VALI`,
     `PV1|1|I|^^^||||||||||||||||0|||||||||||||||||||||||||202605280000|190001010000|||||17`,
     `ORC|SC|||6100130|IP||||20260610144322|||3|||${now}`,
     `OBR|1|||296^S-Sodium^L|||${now}|20260610141505||||||||3|||||||||F`,
@@ -51,7 +56,7 @@ export function generateAdtMessage(p: Hl7Params): string {
   const segments = [
     `MSH|^~\\&|EMETTEUR|ETABLISSEMENT|DATAMED|${rcvFacility}|${now}||ADT^A08^ADT_A08|${msgId}|P|2.5|||NE|AL|FRA|8859/1`,
     `EVN|A08|${now}`,
-    `PID|1||${p.patientId}^^^ETABLISSEMENT&1.2.250.1.99.1&ISO^PI~285031512345678^^^INS-NIR&1.2.250.1.213.1.4.8&ISO^INS-NIR||${p.lastName}^${p.firstName}^^^MADAME^^D~${p.lastName}^${p.firstName}^^^^^L||${p.dob}|${p.gender}|||15 RUE DE LA PAIX^^PARIS^^75001^FRA^H||||||||||||||||||||75056`,
+    `PID|1||${p.patientId}^^^ETABLISSEMENT&1.2.250.1.99.1&ISO^PI~285031512345678^^^INS-NIR&1.2.250.1.213.1.4.8&ISO^INS-NIR||${p.lastName}^${p.firstName}^^^${civility(p.gender)}^^D~${p.lastName}^${p.firstName}^^^^^L||${p.dob}|${p.gender}|||15 RUE DE LA PAIX^^PARIS^^75001^FRA^H||||||||||||||||||||75056`,
     `PV1|1|N`,
     `ZBE|MVT-003^ETABLISSEMENT^1.2.250.1.99.1^ISO|${now}||INSERT|N|A08`,
   ];

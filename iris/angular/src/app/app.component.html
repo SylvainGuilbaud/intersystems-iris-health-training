@@ -1,7 +1,7 @@
 <div class="app">
   <!-- Header -->
   <header class="header">
-    <span class="header-title">IRIS HEALTH &nbsp;·&nbsp; {{ t.headerTitle }}</span>
+    <span class="header-title"><a class="header-link" [href]="adminPortalUrl" target="_blank" rel="noopener" title="IRIS Management Portal"><img src="IRISHealth.png" class="header-logo" alt="InterSystems IRIS Health" /></a> &nbsp;·&nbsp; {{ t.headerTitle }}</span>
     <button *ngIf="isLoggedIn" class="logout-btn" (click)="fakeLogout()">Logout</button>
     <button class="lang-btn" (click)="cycleLang()" [title]="lang">{{ langFlags[lang] }}</button>
   </header>
@@ -48,18 +48,18 @@
         </datalist>
 
         <label>{{ t.lastName }}</label>
-        <input [(ngModel)]="lastName" name="lastName" />
+        <input [(ngModel)]="lastName" (ngModelChange)="refreshHl7Preview()" name="lastName" />
 
         <label>{{ t.dob }}</label>
-        <input type="date" [(ngModel)]="dob" name="dob" />
+        <input type="date" [(ngModel)]="dob" (ngModelChange)="refreshHl7Preview()" name="dob" />
 
         <label>{{ t.gender }}</label>
-        <select [(ngModel)]="gender" name="gender">
+        <select [(ngModel)]="gender" (ngModelChange)="refreshHl7Preview()" name="gender">
           <option *ngFor="let g of genderOpts" [value]="g.value">{{ g.label }}</option>
         </select>
 
         <label>{{ t.sodium }}</label>
-        <input type="number" [(ngModel)]="sodium" name="sodium" />
+        <input type="number" [(ngModel)]="sodium" (ngModelChange)="refreshHl7Preview()" name="sodium" />
       </section>
 
 
@@ -169,10 +169,6 @@
 
       </div><!-- /config-panel -->
 
-      <!-- ISC logo bottom right -->
-      <div class="isc-logo-wrap">
-        <img src="IS_logo.jpg" class="isc-logo" alt="InterSystems" />
-      </div>
     </div><!-- /right-col -->
 
   </div><!-- /main-layout -->
@@ -180,6 +176,7 @@
   <div class="divider"></div>
 
   <section class="fhir-section" aria-labelledby="fhir-search-title">
+    <div class="fhir-header">
     <button type="button" class="fhir-toggle" (click)="fhirSearchExpanded = !fhirSearchExpanded"
             [attr.aria-expanded]="fhirSearchExpanded" aria-controls="fhir-search-content">
       <span class="fhir-chevron" [class.expanded]="fhirSearchExpanded" aria-hidden="true"></span>
@@ -188,10 +185,7 @@
         <span class="fhir-endpoint">GET {{ fhirBaseUrl }}/Patient/:ipp</span>
       </span>
     </button>
-
-    <div id="fhir-search-content" class="fhir-content" *ngIf="fhirSearchExpanded">
-      <div class="fhir-heading">
-      <form class="fhir-search-form" (ngSubmit)="searchFhirPatient()">
+      <form class="fhir-search-form" *ngIf="fhirSearchExpanded" (ngSubmit)="searchFhirPatient()">
         <label for="fhirIpp">{{ t.ipp }}</label>
         <div class="fhir-search-controls">
           <input id="fhirIpp" name="fhirIpp" [(ngModel)]="fhirIpp" autocomplete="off"
@@ -201,8 +195,9 @@
           </button>
         </div>
       </form>
-      </div>
+    </div>
 
+    <div id="fhir-search-content" class="fhir-content" *ngIf="fhirSearchExpanded">
       <div *ngIf="fhirError" class="fhir-error" role="alert">{{ fhirError }}</div>
 
       <div *ngIf="fhirPatient" class="fhir-result">

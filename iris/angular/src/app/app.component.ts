@@ -279,7 +279,7 @@ export class AppComponent {
   // Server config
   environment  = DEFAULT_ENV_KEY;
   baseUrl      = DEFAULT_ENV_CONFIG.baseUrl;
-  namespace    = 'DGLAB';
+  namespace    = 'TRAINING';
   oruCfgItem   = DEFAULT_ENV_CONFIG.oruCfgItem;
   adtCfgItem   = DEFAULT_ENV_CONFIG.adtCfgItem;
   username     = DEFAULT_ENV_CONFIG.username;
@@ -293,6 +293,7 @@ export class AppComponent {
 
   // Logs
   hl7Log:      LogEntry[] = [];
+  private lastHl7Type: 'ORU' | 'ADT' | null = null;
   responseLog: LogEntry[] = [];
   private progressEntry: LogEntry | null = null;
 
@@ -349,6 +350,13 @@ export class AppComponent {
 
   constructor(private hl7: Hl7Service, private fhirPatientService: FhirPatientService) {
     this.onEnvChange();
+  }
+
+  get adminPortalUrl(): string {
+    const marker = '/csp/healthshare/';
+    const i = this.baseUrl.indexOf(marker);
+    const root = i >= 0 ? this.baseUrl.slice(0, i) : this.baseUrl.replace(/\/$/, '');
+    return `${root}/csp/sys/UtilHome.csp?$NAMESPACE=${encodeURIComponent(this.namespace.trim().toUpperCase())}`;
   }
 
   get fhirBaseUrl(): string {
@@ -426,7 +434,7 @@ export class AppComponent {
 
   private extractNamespaceFromBaseUrl(url: string): string {
     const m = url.match(/\/csp\/healthshare\/([^/]+)\/?$/);
-    return m?.[1] ?? 'DGLAB';
+    return m?.[1] ?? 'TRAINING';
   }
 
   private applyNamespaceToBaseUrl(url: string, ns: string): string {
@@ -492,6 +500,17 @@ export class AppComponent {
   onFirstNameChange(): void {
     if (AppComponent.MALE_NAMES.has(this.firstName))        this.gender = 'M';
     else if (AppComponent.FEMALE_NAMES.has(this.firstName)) this.gender = 'F';
+    this.refreshHl7Preview();
+  }
+
+  /** Keep the displayed HL7 message in sync with the form when the form changes (gender, last name, birthdate, sodium). */
+  refreshHl7Preview(): void {
+    if (!this.hl7Log.length || !this.lastHl7Type || (this.rawMessage ?? '').trim()) return;
+    const params = this.params();
+    const msg = this.lastHl7Type === 'ORU' ? generateOruMessage(params) : generateAdtMessage(params);
+    const display = msg.replace(/\r/g, '\n')
+      .replace(/(Base64\^)([A-Za-z0-9+/=]{200})[A-Za-z0-9+/=]+/g, '$1$2[...]');
+    this.addHl7Log(display, AppComponent.highlightHl7(display, params));
   }
 
   randomize(): void {
@@ -572,6 +591,12 @@ export class AppComponent {
     mark(p.firstName, 'hl7-patient');
     mark(p.patientId, 'hl7-patient');
 
+    // Civility prefix (XPN-5), tied to the selected gender
+    html = html.replace(
+      /(\^\^\^)(MONSIEUR|MADAME)(\^\^)/g,
+      (_m, a, t, b) => `${a}<mark class="hl7-patient">${t}</mark>${b}`,
+    );
+
     // DOB + gender, highlighted only in their PID position |YYYYMMDD|G|
     html = html.replace(
       new RegExp(`(\\|)(${AppComponent.escapeRegExp(p.dob)})(\\|)([MFX])(\\|)`, 'g'),
@@ -642,6 +667,7 @@ export class AppComponent {
 
     const display = messages[0].replace(/\r/g, '\n')
       .replace(/(Base64\^)([A-Za-z0-9+/=]{200})[A-Za-z0-9+/=]+/g, '$1$2[...]');
+    this.lastHl7Type = overrideMsg ? null : type;
     this.addHl7Log(display, AppComponent.highlightHl7(display, params));
 
     this.addResponse(`▶ ${type} → ${this.baseUrl}?CfgItem=${cfgItem}`, 'info');
