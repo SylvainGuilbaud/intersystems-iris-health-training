@@ -94,6 +94,45 @@ XData ProductionDefinition
     <Setting Target="Host" Name="Server">api.open-meteo.com</Setting>
     <Setting Target="Host" Name="Timeout">10</Setting>
   </Item>
+  <Item Name="LAW Analyzer Manager" Category="IHE LAW" ClassName="DGLAB.law.AnalyzerManager" PoolSize="1" Enabled="true" Foreground="false" Comment="IHE LAW simulator: Analyzer Manager for LAB-27 and LAB-29, Automate for LAB-28" LogTraceEvents="true" Schedule="">
+    <Setting Target="Host" Name="AwosBroadcastTarget">LAW AWOS Broadcast to Analyzer - FILE</Setting>
+  </Item>
+  <Item Name="LAW AWOS Broadcast to Analyzer - FILE" Category="IHE LAW" ClassName="EnsLib.HL7.Operation.FileOperation" PoolSize="1" Enabled="true" Foreground="false" Comment="LAB-28 AWOS Broadcast (OML^O33) written to files; replace by a TCP/HTTP operation to reach a real analyzer" LogTraceEvents="true" Schedule="">
+    <Setting Target="Adapter" Name="FilePath">/data/HL7/LAW/out/</Setting>
+    <Setting Target="Host" Name="Filename">OML_O33_%Q.hl7</Setting>
+  </Item>
+  <Item Name="LAW LAB-27 Query for AWOS - HTTP" Category="IHE LAW" ClassName="EnsLib.HL7.Service.HTTPService" PoolSize="1" Enabled="true" Foreground="false" Comment="LAB-27 Query for AWOS: QBP^Q11 answered by RSP^K11" LogTraceEvents="true" Schedule="">
+    <Setting Target="Adapter" Name="Port">9021</Setting>
+    <Setting Target="Host" Name="TargetConfigNames">LAW Analyzer Manager</Setting>
+    <Setting Target="Host" Name="AckMode">App</Setting>
+    <Setting Target="Host" Name="MessageSchemaCategory">2.5.1</Setting>
+    <Setting Target="Host" Name="AddNackERR">1</Setting>
+    <Setting Target="Host" Name="EnableStandardRequests">1</Setting>
+  </Item>
+  <Item Name="LAW LAB-28 AWOS Broadcast - HTTP" Category="IHE LAW" ClassName="EnsLib.HL7.Service.HTTPService" PoolSize="1" Enabled="true" Foreground="false" Comment="LAB-28 AWOS Broadcast: OML^O33 answered by ORL^O34" LogTraceEvents="true" Schedule="">
+    <Setting Target="Adapter" Name="Port">9022</Setting>
+    <Setting Target="Host" Name="TargetConfigNames">LAW Analyzer Manager</Setting>
+    <Setting Target="Host" Name="AckMode">App</Setting>
+    <Setting Target="Host" Name="MessageSchemaCategory">2.5.1</Setting>
+    <Setting Target="Host" Name="AddNackERR">1</Setting>
+    <Setting Target="Host" Name="EnableStandardRequests">1</Setting>
+  </Item>
+  <Item Name="LAW LAB-29 AWOS Status Change - HTTP" Category="IHE LAW" ClassName="EnsLib.HL7.Service.HTTPService" PoolSize="1" Enabled="true" Foreground="false" Comment="LAB-29 AWOS Status Change: OUL^R22 answered by ACK" LogTraceEvents="true" Schedule="">
+    <Setting Target="Adapter" Name="Port">9023</Setting>
+    <Setting Target="Host" Name="TargetConfigNames">LAW Analyzer Manager</Setting>
+    <Setting Target="Host" Name="AckMode">App</Setting>
+    <Setting Target="Host" Name="MessageSchemaCategory">2.5.1</Setting>
+    <Setting Target="Host" Name="AddNackERR">1</Setting>
+    <Setting Target="Host" Name="EnableStandardRequests">1</Setting>
+  </Item>
+  <Item Name="LAW LAB-27/28/29 - MLLP" Category="IHE LAW" ClassName="EnsLib.HL7.Service.TCPService" PoolSize="1" Enabled="true" Foreground="false" Comment="IHE LAW over MLLP: QBP^Q11, OML^O33 and OUL^R22 on a single port" LogTraceEvents="true" Schedule="">
+    <Setting Target="Adapter" Name="Port">9020</Setting>
+    <Setting Target="Adapter" Name="JobPerConnection">1</Setting>
+    <Setting Target="Host" Name="TargetConfigNames">LAW Analyzer Manager</Setting>
+    <Setting Target="Host" Name="AckMode">App</Setting>
+    <Setting Target="Host" Name="MessageSchemaCategory">2.5.1</Setting>
+    <Setting Target="Host" Name="AddNackERR">1</Setting>
+  </Item>
 </Production>
 }
 

@@ -551,7 +551,7 @@ def _get_http_instance_for_env(env=None):
     return ""
 
 def _compose_http_base_url(server_ip, http_port, namespace, instance_path=""):
-    ns = (namespace or "dglab").strip().lower()
+    ns = (namespace or "training").strip().lower()
     host_part = f"{server_ip}:{http_port}" if http_port not in ("80", "443", "") else server_ip
     instance = instance_path.strip().strip("/")
     if instance:
@@ -1041,15 +1041,9 @@ canvas = tk.Canvas(window, width=1728, height=1000, bg=_BG, highlightthickness=0
 canvas.pack(fill="both", expand=True)
 
 # Chargement images
-bg_image = Image.open("LOGO.jpg").resize((600, 157))
-bg_photo = ImageTk.PhotoImage(bg_image)
-
 logo_image = Image.open("IS_logo.jpg").resize((200, 64))
 
 logo_photo = ImageTk.PhotoImage(logo_image)
-
-# Ajout fond
-canvas.create_image(1728, 0, image=bg_photo, anchor="ne")
 
 canvas.create_image(1525, 883, image=logo_photo, anchor="nw")
 
@@ -1058,27 +1052,27 @@ canvas.create_rectangle(0, 0, 1728, 3, fill=_ACCENT, outline="")           # top
 canvas.create_rectangle(0, 997, 1728, 1000, fill=_ACCENT, outline="")      # bottom accent bar
 canvas.create_rectangle(0, 3, 927, 30, fill="#0b0b25", outline="")          # header strip (left)
 canvas.create_text(564, 16, text="InterSystems IRIS for Health  ·  HL7 ORU/ADT  ·  MLLP/FILE TESTS",
-                   fill=_ACCENT, font=("Avenir", 11, "bold"), anchor="center")
+                   fill=_ACCENT, font=("Avenir", 10, "bold"), anchor="center")
 canvas.create_line(10, 430, 1718, 430, fill="#1a3a5c", width=1)             # divider above HL7 log
 canvas.create_line(10, 675, 1718, 675, fill="#1a3a5c", width=1)             # divider above response
 # Raw message override box (middle column)
 canvas.create_rectangle(785, 36, 1118, 402, outline="#2a4a6c", fill="", width=1)
 # Config panel (right side, under TECHNIDATA image)
-canvas.create_rectangle(1126, 158, 1726, 425, outline="#2a4a6c", fill="", width=1)
-canvas.create_text(1426, 166, text="⚙  SERVER CONFIGURATION", fill=_ACCENT, font=("Avenir", 10, "bold"), anchor="center")
-canvas.create_line(1126, 174, 1726, 174, fill="#2a4a6c", width=1)
+canvas.create_rectangle(1126, 36, 1726, 402, outline="#2a4a6c", fill="", width=1)
+canvas.create_text(1426, 46, text="⚙  SERVER CONFIGURATION", fill=_ACCENT, font=("Avenir", 10, "bold"), anchor="center")
+canvas.create_line(1126, 54, 1726, 54, fill="#2a4a6c", width=1)
 
 # Widgets sur canvas
-entry = tk.Entry(window, font=("Avenir", 23))
+entry = tk.Entry(window, font=("Avenir", 15))
 
-label_patient_id = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23), text=translations[current_language]["patient_id"])
-entry_patient_id = tk.Entry(window, bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT, selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 23))
+label_patient_id = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 15), text=translations[current_language]["patient_id"])
+entry_patient_id = tk.Entry(window, bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT, selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 15))
 entry_patient_id.insert(0, "24445670")
-btn_generate_data = tk.Button(window, text="🎲", font=("Avenir", 13), bg=_BTN_BG, fg=_BG, activebackground=_ACCENT, activeforeground=_BG, relief="flat", cursor="hand2", command=on_generate_data)
+btn_generate_data = tk.Button(window, text="🎲", font=("Avenir", 10), bg=_BTN_BG, fg=_BG, activebackground=_ACCENT, activeforeground=_BG, relief="flat", cursor="hand2", command=on_generate_data)
 
-label_first_name = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23))
+label_first_name = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 15))
 _FIRST_NAMES = ["Anne", "Delphine", "Danmark", "Marck-Augustus", "Carl-Jamie", "Francois", "Rochelle", "Neil", "Adrian", "Philippe", "Jean-Michel", "Olivier", "Michael", "Sophie", "Frederic", "Ronald"]
-entry_first_name = ttk.Combobox(window, font=("Avenir", 23), values=_FIRST_NAMES)
+entry_first_name = ttk.Combobox(window, font=("Avenir", 15), values=_FIRST_NAMES)
 entry_first_name.set("Anne")
 
 def _on_first_name_selected(event):
@@ -1091,41 +1085,41 @@ entry_first_name.bind("<<ComboboxSelected>>", _on_first_name_selected)
 entry_first_name.bind("<FocusOut>", _on_first_name_selected)
 entry_first_name.bind("<Return>", _on_first_name_selected)
 
-label_last_name = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23))
-entry_last_name = tk.Entry(window, bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT, selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 23))
+label_last_name = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 15))
+entry_last_name = tk.Entry(window, bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT, selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 15))
 entry_last_name.insert(0,"VERSAIRE")
 
-label_dob = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23))
+label_dob = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 15))
 
-# entry_dob = tk.Entry(window,bg="#03045C", font=("Avenir", 23))
+# entry_dob = tk.Entry(window,bg="#03045C", font=("Avenir", 15))
 
-entry_dob = DateEntry(window, date_pattern='dd/mm/yyyy', locale='fr_FR', font=("Avenir", 23), width=12)
+entry_dob = DateEntry(window, date_pattern='dd/mm/yyyy', locale='fr_FR', font=("Avenir", 15), width=12)
 entry_dob.set_date(date(1985, 1, 24))
 entry_dob.configure(showweeknumbers=False, state="normal")
 entry_dob._top_cal.overrideredirect(True)  # empêche l'ouverture du calendrier (non documenté)
 
-label_gender = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23))
+label_gender = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 15))
 
 gender_var = tk.StringVar()
-entry_gender = ttk.Combobox(window, textvariable=gender_var, state="readonly", font=("Avenir", 23))
+entry_gender = ttk.Combobox(window, textvariable=gender_var, state="readonly", font=("Avenir", 15))
 entry_gender.set(gender_options_dict[current_language][1]) 
 
-label_sodium = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 23))
-entry_sodium = tk.Entry(window, bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT, selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 23))
+label_sodium = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 15))
+entry_sodium = tk.Entry(window, bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT, selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 15))
 entry_sodium.insert(0, random.randint(135, 145))
 
-chk_include_pdf = tk.Checkbutton(window, bg=_BG, fg=_ACCENT, font=("Avenir", 13), variable=include_pdf_var, text="include PDF", activebackground=_BG, activeforeground=_ACCENT, selectcolor=_INPUT_BG)
+chk_include_pdf = tk.Checkbutton(window, bg=_BG, fg=_ACCENT, font=("Avenir", 10), variable=include_pdf_var, text="include PDF", activebackground=_BG, activeforeground=_ACCENT, selectcolor=_INPUT_BG)
 
-chk_forward_to_file = tk.Checkbutton(window, bg=_BG, fg=_ACCENT, font=("Avenir", 13), variable=forward_to_file_var, text="forward to file repository", activebackground=_BG, activeforeground=_ACCENT, selectcolor=_INPUT_BG)
-entry_file_dest = ttk.Combobox(window, font=("Avenir", 13), values=["/dev/data/HL7/ORU/in"])
+chk_forward_to_file = tk.Checkbutton(window, bg=_BG, fg=_ACCENT, font=("Avenir", 10), variable=forward_to_file_var, text="forward to file repository", activebackground=_BG, activeforeground=_ACCENT, selectcolor=_INPUT_BG)
+entry_file_dest = ttk.Combobox(window, font=("Avenir", 10), values=["/dev/data/HL7/ORU/in"])
 entry_file_dest.set("/dev/data/HL7/ORU/in")
 
-label_nb_messages = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Nb messages")
-entry_nb_messages = ttk.Combobox(window, font=("Avenir", 13), values=["1", "5", "10", "20", "50", "100", "200", "500", "1000"])
+label_nb_messages = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 10), text="Nb messages")
+entry_nb_messages = ttk.Combobox(window, font=("Avenir", 10), values=["1", "5", "10", "20", "50", "100", "200", "500", "1000"])
 entry_nb_messages.set("1")
 
-label_nb_threads = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Nb threads")
-entry_nb_threads = ttk.Combobox(window, font=("Avenir", 13), values=["1", "2", "4", "5", "10", "20"])
+label_nb_threads = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 10), text="Nb threads")
+entry_nb_threads = ttk.Combobox(window, font=("Avenir", 10), values=["1", "2", "4", "5", "10", "20"])
 entry_nb_threads.set("1")
 
 _ENV_MAP = {
@@ -1164,47 +1158,47 @@ _NAMESPACE_PORT_MAP = {
 }
 _current_http_auth = _ENV_MAP["dev"][3]
 
-label_environment = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Environment")
-entry_environment = ttk.Combobox(window, font=("Avenir", 13), state="readonly",
+label_environment = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 10), text="Environment")
+entry_environment = ttk.Combobox(window, font=("Avenir", 10), state="readonly",
                                  values=list(_ENV_MAP.keys()))
 entry_environment.set("dev")
-label_namespace = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Namespace")
-entry_http_namespace = ttk.Combobox(window, font=("Avenir", 13), values=_NAMESPACE_OPTIONS)
-entry_http_namespace.set("DGLAB")
+label_namespace = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 10), text="Namespace")
+entry_http_namespace = ttk.Combobox(window, font=("Avenir", 10), values=_NAMESPACE_OPTIONS)
+entry_http_namespace.set("TRAINING")
 active_env_var = tk.StringVar(value=f"Active environment: {entry_environment.get()}")
 label_active_environment = tk.Label(window, textvariable=active_env_var,
                                     bg="#0f2336", fg="#93c5fd", font=("Avenir", 10, "bold"),
                                     anchor="w", padx=8)
 
-label_server_ip = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Server IP")
+label_server_ip = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 10), text="Server IP")
 server_ip_var = tk.StringVar(value=DEFAULT_SERVER_IP)
 entry_server_ip = tk.Entry(window, textvariable=server_ip_var, state="readonly",
-                           font=("Avenir", 13), readonlybackground=_INPUT_BG, fg=_INPUT_FG)
+                           font=("Avenir", 10), readonlybackground=_INPUT_BG, fg=_INPUT_FG)
 
-label_server_port = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="ORU Port")
-entry_server_port = ttk.Combobox(window, font=("Avenir", 13), values=["9001", "9002", "9500", "39001", "39501", "6661", "2575"])
+label_server_port = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 10), text="ORU Port")
+entry_server_port = ttk.Combobox(window, font=("Avenir", 10), values=["9120", "9001", "9002", "9500", "39001", "39501", "6661", "2575"])
 entry_server_port.set(str(DEFAULT_SERVER_PORT))
 
-label_adt_port = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="ADT Port")
-entry_adt_port = ttk.Combobox(window, font=("Avenir", 13), values=["9002", "9003", "9501", "39002", "39502", "6662", "2576"])
+label_adt_port = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 10), text="ADT Port")
+entry_adt_port = ttk.Combobox(window, font=("Avenir", 10), values=["9140", "9002", "9003", "9501", "39002", "39502", "6662", "2576"])
 entry_adt_port.set(str(DEFAULT_SERVER_PORT + 1))
 
-label_http_port = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="HTTP Port")
-entry_http_port = ttk.Combobox(window, font=("Avenir", 13), values=["80", "881", "443", "884"])
+label_http_port = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 10), text="HTTP Port")
+entry_http_port = ttk.Combobox(window, font=("Avenir", 10), values=["80", "881", "443", "884"])
 entry_http_port.set("80")
 
-label_base_url = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="Base URL")
-base_url_var = tk.StringVar(value=_compose_http_base_url(DEFAULT_SERVER_IP, "80", "DGLAB", _get_http_instance_for_env("dev")))
+label_base_url = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 10), text="Base URL")
+base_url_var = tk.StringVar(value=_compose_http_base_url(DEFAULT_SERVER_IP, "80", "TRAINING", _get_http_instance_for_env("dev")))
 entry_base_url = tk.Entry(window, textvariable=base_url_var,
                           bg=_INPUT_BG, fg=_INPUT_FG, insertbackground=_ACCENT,
-                          selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 11))
+                          selectbackground=_ACCENT, selectforeground=_BG, font=("Avenir", 10))
 
-label_http_oru_cfgitem = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="ORU Cfg")
-entry_http_oru_cfgitem = ttk.Combobox(window, font=("Avenir", 13), values=["LAB RESULT from DGLAB - HTTP", "LAB RESULT from DGLAB - MLLP"])
+label_http_oru_cfgitem = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 10), text="ORU Cfg")
+entry_http_oru_cfgitem = ttk.Combobox(window, font=("Avenir", 10), values=["LAB RESULT from DGLAB - HTTP", "LAB RESULT from DGLAB - MLLP"])
 entry_http_oru_cfgitem.set("LAB RESULT from DGLAB - HTTP")
 
-label_http_adt_cfgitem = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 13), text="ADT Cfg")
-entry_http_adt_cfgitem = ttk.Combobox(window, font=("Avenir", 13), values=["Patient Information from IHE PAM - HTTP", "Patient Information from IHE PAM - MLLP"])
+label_http_adt_cfgitem = tk.Label(window, bg=_BG, fg=_LABEL_FG, font=("Avenir", 10), text="ADT Cfg")
+entry_http_adt_cfgitem = ttk.Combobox(window, font=("Avenir", 10), values=["Patient Information from IHE PAM - HTTP", "Patient Information from IHE PAM - MLLP"])
 entry_http_adt_cfgitem.set("Patient Information from IHE PAM - HTTP")
 
 def _on_env_selected(event):
@@ -1216,7 +1210,12 @@ def _on_env_selected(event):
         entry_server_port.set(port)
         entry_adt_port.set(str(int(port) + 1))
         entry_http_port.set(http_port)
-        selected_namespace = entry_http_namespace.get().strip() or "DGLAB"
+        # dev-local defaults to DGLAB (9001/9002); other environments default to TRAINING
+        selected_namespace = "DGLAB" if env == "dev-local" else "TRAINING"
+        entry_http_namespace.set(selected_namespace)
+        if env != "dev-local" and selected_namespace in _NAMESPACE_PORT_MAP:
+            entry_server_port.set(_NAMESPACE_PORT_MAP[selected_namespace][0])
+            entry_adt_port.set(_NAMESPACE_PORT_MAP[selected_namespace][1])
         base_url_var.set(_compose_http_base_url(ip, http_port, selected_namespace, _get_http_instance_for_env(env)))
         _current_http_auth = auth
         entry_http_oru_cfgitem.set("LAB RESULT from DGLAB - HTTP")
@@ -1289,11 +1288,11 @@ def _show_login_gate():
     card.place(relx=0.5, rely=0.5, anchor="center", width=560, height=420)
 
     tk.Label(card, text="Login", bg=_INPUT_BG, fg=_ACCENT, font=("Avenir", 22, "bold")).place(x=24, y=18)
-    tk.Label(card, text="UI-only fake authentication for demo purpose.", bg=_INPUT_BG, fg=_LABEL_FG, font=("Avenir", 11)).place(x=24, y=58)
+    tk.Label(card, text="UI-only fake authentication for demo purpose.", bg=_INPUT_BG, fg=_LABEL_FG, font=("Avenir", 10)).place(x=24, y=58)
 
-    tk.Label(card, text="Target IRIS instance", bg=_INPUT_BG, fg=_LABEL_FG, font=("Avenir", 13)).place(x=24, y=92)
+    tk.Label(card, text="Target IRIS instance", bg=_INPUT_BG, fg=_LABEL_FG, font=("Avenir", 10)).place(x=24, y=92)
     login_target_var = tk.StringVar(value=entry_environment.get() if entry_environment.get() in _LOGIN_TARGETS else _LOGIN_TARGETS[0])
-    entry_gate_target = ttk.Combobox(card, textvariable=login_target_var, state="readonly", font=("Avenir", 13),
+    entry_gate_target = ttk.Combobox(card, textvariable=login_target_var, state="readonly", font=("Avenir", 10),
                                      values=_LOGIN_TARGETS)
     entry_gate_target.place(x=24, y=118, width=510, height=34)
 
@@ -1329,21 +1328,21 @@ entry_http_namespace.bind("<FocusOut>", _on_namespace_selected)
 _CLR_ORU = "#4ade80"   # green border  – ORU
 _CLR_ADT = "#f472b6"   # pink border   – ADT
 
-btn_send = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_oru_message, font=("Avenir", 13, "bold"), activebackground=_ACCENT, activeforeground=_BG, disabledforeground=_BG, cursor="hand2", highlightbackground=_CLR_ORU, highlightthickness=2)
-btn_send_adt = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_adt_message, font=("Avenir", 13, "bold"), activebackground=_ACCENT, activeforeground=_BG, disabledforeground=_BG, cursor="hand2", highlightbackground=_CLR_ADT, highlightthickness=2)
-btn_send_http_oru = tk.Button(window, bg="#065f46", fg=_BG, text="", command=send_oru_http_message, font=("Avenir", 13, "bold"), activebackground="#10b981", activeforeground=_BG, disabledforeground=_BG, cursor="hand2", highlightbackground=_CLR_ORU, highlightthickness=2)
-btn_send_http_adt = tk.Button(window, bg="#065f46", fg=_BG, text="", command=send_adt_http_message, font=("Avenir", 13, "bold"), activebackground="#10b981", activeforeground=_BG, disabledforeground=_BG, cursor="hand2", highlightbackground=_CLR_ADT, highlightthickness=2)
-btn_lang = tk.Button(window, bg=_BG, fg=_BTN_FG, text="🇬🇧", command=switch_language, font=("Avenir", 23), activebackground=_BG, cursor="hand2")
+btn_send = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_oru_message, font=("Avenir", 10, "bold"), activebackground=_ACCENT, activeforeground=_BG, disabledforeground=_BG, cursor="hand2", highlightbackground=_CLR_ORU, highlightthickness=2)
+btn_send_adt = tk.Button(window, bg=_BTN_BG, fg=_BG, text="", command=send_adt_message, font=("Avenir", 10, "bold"), activebackground=_ACCENT, activeforeground=_BG, disabledforeground=_BG, cursor="hand2", highlightbackground=_CLR_ADT, highlightthickness=2)
+btn_send_http_oru = tk.Button(window, bg="#065f46", fg=_BG, text="", command=send_oru_http_message, font=("Avenir", 10, "bold"), activebackground="#10b981", activeforeground=_BG, disabledforeground=_BG, cursor="hand2", highlightbackground=_CLR_ORU, highlightthickness=2)
+btn_send_http_adt = tk.Button(window, bg="#065f46", fg=_BG, text="", command=send_adt_http_message, font=("Avenir", 10, "bold"), activebackground="#10b981", activeforeground=_BG, disabledforeground=_BG, cursor="hand2", highlightbackground=_CLR_ADT, highlightthickness=2)
+btn_lang = tk.Button(window, bg=_BG, fg=_BTN_FG, text="🇬🇧", command=switch_language, font=("Avenir", 15), activebackground=_BG, cursor="hand2")
 btn_logout = tk.Button(window, text="Logout", font=("Avenir", 10, "bold"), bg=_BTN_BG, fg=_BG,
                        activebackground=_ACCENT, activeforeground=_BG, relief="flat", cursor="hand2",
                        command=_logout_to_login)
 
 # ── Middle column: raw message override (paste any content to send as-is) ───
-label_message_override = tk.Label(window, bg=_BG, fg=_ACCENT, font=("Avenir", 11, "bold"),
+label_message_override = tk.Label(window, bg=_BG, fg=_ACCENT, font=("Avenir", 10, "bold"),
                                   text="📋 Raw message — paste to override the form")
 entry_message_override = tk.Text(window, height=18, width=44, bg=_INPUT_BG, fg=_INPUT_FG,
                                  insertbackground=_ACCENT, selectbackground=_ACCENT,
-                                 selectforeground=_BG, font=("Monaco", 10), wrap="none", undo=True)
+                                 selectforeground=_BG, font=("Monaco", 8), wrap="none", undo=True)
 btn_clear_override = tk.Button(window, text="✕ clear", font=("Avenir", 10), bg=_BTN_BG, fg=_BG,
                                activebackground=_ACCENT, activeforeground=_BG, relief="flat",
                                cursor="hand2", command=lambda: entry_message_override.delete("1.0", tk.END))
@@ -1378,36 +1377,36 @@ btn_send_http_adt.place(x=400, y=385, width=175)
 btn_send_http_oru.place(x=585, y=385, width=175)
 
 # ── Right column: Server config (panel under TECHNIDATA image) ──────────────────
-label_environment.place(x=1133, y=184)
-entry_environment.place(x=1285, y=182, width=160)
-label_namespace.place(x=1455, y=184)
-entry_http_namespace.place(x=1548, y=182, width=160)
+label_environment.place(x=1133, y=64)
+entry_environment.place(x=1285, y=60, width=160)
+label_namespace.place(x=1455, y=64)
+entry_http_namespace.place(x=1548, y=60, width=160)
 
-label_server_ip.place(x=1133, y=211)
-entry_server_ip.place(x=1285, y=209, width=418)
+label_server_ip.place(x=1133, y=100)
+entry_server_ip.place(x=1285, y=96, width=418)
 
-label_server_port.place(x=1133, y=238)
-entry_server_port.place(x=1285, y=236, width=70)
+label_server_port.place(x=1133, y=136)
+entry_server_port.place(x=1285, y=132, width=70)
 
-label_adt_port.place(x=1133, y=265)
-entry_adt_port.place(x=1285, y=263, width=70)
+label_adt_port.place(x=1133, y=172)
+entry_adt_port.place(x=1285, y=168, width=70)
 
-label_http_port.place(x=1133, y=292)
-entry_http_port.place(x=1285, y=290, width=70)
+label_http_port.place(x=1133, y=208)
+entry_http_port.place(x=1285, y=204, width=70)
 
-label_base_url.place(x=1133, y=319)
-entry_base_url.place(x=1285, y=317, width=418)
+label_base_url.place(x=1133, y=244)
+entry_base_url.place(x=1285, y=240, width=418)
 
-label_http_adt_cfgitem.place(x=1133, y=346)
-entry_http_adt_cfgitem.place(x=1285, y=344, width=418)
+label_http_adt_cfgitem.place(x=1133, y=280)
+entry_http_adt_cfgitem.place(x=1285, y=276, width=418)
 
-label_http_oru_cfgitem.place(x=1133, y=373)
-entry_http_oru_cfgitem.place(x=1285, y=371, width=418)
+label_http_oru_cfgitem.place(x=1133, y=316)
+entry_http_oru_cfgitem.place(x=1285, y=312, width=418)
 
-label_nb_messages.place(x=1133, y=400)
-entry_nb_messages.place(x=1285, y=398, width=70)
-label_nb_threads.place(x=1365, y=400)
-entry_nb_threads.place(x=1455, y=398, width=60)
+label_nb_messages.place(x=1133, y=352)
+entry_nb_messages.place(x=1285, y=348, width=70)
+label_nb_threads.place(x=1365, y=352)
+entry_nb_threads.place(x=1455, y=348, width=60)
 
 btn_lang.place(x=0, y=0, width=50)
 btn_logout.place(x=56, y=4, width=78, height=24)
@@ -1421,14 +1420,14 @@ btn_clear_override.place(x=790, y=372, width=80, height=24)
 # Zone de log affichée dans l'interface
 log_text = tk.Text(window, height=14, width=212, bg=_LOG_BG, fg=_LOG_FG,
                    insertbackground=_ACCENT, selectbackground=_ACCENT,
-                   selectforeground=_BG, font=("Monaco", 11))
+                   selectforeground=_BG, font=("Monaco", 8))
 
 # Style pour le segment PID
 log_text.tag_config(
     "pid_segment",
     background="#0f2336",
     foreground=_ACCENT,
-    font=("Monaco", 11, "bold")
+    font=("Monaco", 8, "bold")
 )
 
 # Style pour les champs importants (nom, prénom, etc.)
@@ -1446,7 +1445,7 @@ log_text.tag_config("highlight", background="#1e293b", foreground=_ACCENT)
 # Zone de réponse reçue
 log_response = tk.Text(window, height=18, width=212, bg=_LOG_BG, fg=_RESP_FG,
                        insertbackground=_ACCENT, selectbackground=_ACCENT,
-                       selectforeground=_BG, font=("Monaco", 11))
+                       selectforeground=_BG, font=("Monaco", 8))
 log_response.tag_config("ack", background="#052e16", foreground="#4ade80")
 log_response.tag_config("error", background="#450a0a", foreground="#f87171")
 log_response.place(x=20, y=685)

@@ -175,6 +175,45 @@
 
   <div class="divider"></div>
 
+  <!-- IHE LAW (LAB-27 / LAB-28 / LAB-29) -->
+  <section class="law-section" aria-labelledby="law-title">
+    <div class="law-header">
+      <span id="law-title" class="law-title">{{ t.lawTitle }}</span>
+      <span class="law-hint">{{ t.lawHint }}</span>
+    </div>
+
+    <div class="law-container-row">
+      <label for="lawContainerId">{{ t.lawContainer }}</label>
+      <input id="lawContainerId" name="lawContainerId" [(ngModel)]="lawContainerId"
+             class="law-input" autocomplete="off" spellcheck="false" />
+      <button type="button" class="btn-icon" (click)="newLawContainer()" [title]="t.lawNewContainer">🎲</button>
+    </div>
+
+    <div class="law-tx-row">
+      <div class="law-tx">
+        <span class="law-role">{{ t.lawRoleAutomate }} · QBP^Q11 → RSP^K11</span>
+        <button type="button" class="btn-send btn-adt" (click)="sendLaw('LAB-27')" [disabled]="lawCycleRunning">{{ t.lawQuery }}</button>
+        <input [(ngModel)]="lawQbpCfgItem" name="lawQbpCfgItem" class="law-cfg" placeholder="service name" />
+      </div>
+      <div class="law-tx">
+        <span class="law-role">{{ t.lawRoleManager }} · OML^O33 → ORL^O34</span>
+        <button type="button" class="btn-send" (click)="sendLaw('LAB-28')" [disabled]="lawCycleRunning">{{ t.lawBroadcast }}</button>
+        <input [(ngModel)]="lawOmlCfgItem" name="lawOmlCfgItem" class="law-cfg" placeholder="service name" />
+      </div>
+      <div class="law-tx">
+        <span class="law-role">{{ t.lawRoleAutomate }} · OUL^R22 → ACK</span>
+        <button type="button" class="btn-send btn-adt" (click)="sendLaw('LAB-29')" [disabled]="lawCycleRunning">{{ t.lawStatus }}</button>
+        <input [(ngModel)]="lawOulCfgItem" name="lawOulCfgItem" class="law-cfg" placeholder="service name" />
+      </div>
+      <div class="law-tx law-tx-cycle">
+        <span class="law-role">LAB-27 → LAB-28 → LAB-29</span>
+        <button type="button" class="btn-send btn-law-cycle" (click)="sendLawCycle()" [disabled]="lawCycleRunning">▶ {{ t.lawCycle }}</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
   <section class="fhir-section" aria-labelledby="fhir-search-title">
     <div class="fhir-header">
     <button type="button" class="fhir-toggle" (click)="fhirSearchExpanded = !fhirSearchExpanded"

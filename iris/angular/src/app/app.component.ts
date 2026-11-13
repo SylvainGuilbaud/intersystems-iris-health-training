@@ -2,10 +2,13 @@ import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { catchError, finalize, from, mergeMap, of, Subscription } from 'rxjs';
+import { catchError, finalize, firstValueFrom, from, mergeMap, of, Subscription } from 'rxjs';
 import { Hl7Service } from './hl7.service';
 import { FhirExtension, FhirPatient, FhirPatientService } from './fhir-patient.service';
-import { generateOruMessage, generateAdtMessage, Hl7Params } from './hl7-generator';
+import {
+  generateOruMessage, generateAdtMessage, Hl7Params,
+  generateQbpMessage, generateOmlMessage, generateOulMessage, LawParams, LawTransaction,
+} from './hl7-generator';
 
 interface LogEntry {
   timestamp: string;
@@ -44,7 +47,11 @@ const LOCAL_ENV_MAP: Record<string, EnvConfig> = {
 
 const IS_CLOUD_DEPLOYED = typeof window !== 'undefined' && !/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
 const ENV_MAP: Record<string, EnvConfig> = IS_CLOUD_DEPLOYED ? CLOUD_ENV_MAP : LOCAL_ENV_MAP;
-const DEFAULT_ENV_KEY = ENV_MAP['dev'] ? 'dev' : Object.keys(ENV_MAP)[0];
+// Local ng serve defaults to the dev-local environment and the DGLAB namespace; the cloud deployment keeps dev / TRAINING.
+const DEFAULT_ENV_KEY = IS_CLOUD_DEPLOYED
+  ? (ENV_MAP['dev'] ? 'dev' : Object.keys(ENV_MAP)[0])
+  : (ENV_MAP['dev-local'] ? 'dev-local' : Object.keys(ENV_MAP)[0]);
+const DEFAULT_NAMESPACE = IS_CLOUD_DEPLOYED ? 'TRAINING' : 'DGLAB';
 const DEFAULT_ENV_CONFIG: EnvConfig = ENV_MAP[DEFAULT_ENV_KEY] ?? {
   baseUrl: '/csp/healthshare/dglab',
   oruCfgItem: 'LAB RESULT from DGLAB - HTTP',
@@ -100,6 +107,16 @@ interface Translation {
   home: string;
   temperature: string;
   coordinates: string;
+  lawTitle: string;
+  lawHint: string;
+  lawContainer: string;
+  lawQuery: string;
+  lawBroadcast: string;
+  lawStatus: string;
+  lawCycle: string;
+  lawRoleAutomate: string;
+  lawRoleManager: string;
+  lawNewContainer: string;
 }
 
 const TRANSLATIONS: Record<Lang, Translation> = {
@@ -148,6 +165,16 @@ const TRANSLATIONS: Record<Lang, Translation> = {
     home: 'Home',
     temperature: 'Temperature',
     coordinates: 'Coordinates',
+    lawTitle: 'IHE LAW — Laboratory Analytical Workflow',
+    lawHint: 'AWOS = Analytical Work Order Step. The production plays the peer system of each transaction.',
+    lawContainer: 'Container (tube) ID',
+    lawQuery: 'LAB-27 Query for AWOS',
+    lawBroadcast: 'LAB-28 AWOS Broadcast',
+    lawStatus: 'LAB-29 Status Change',
+    lawCycle: 'Run full LAW cycle',
+    lawRoleAutomate: 'Automate → Analyzer Manager',
+    lawRoleManager: 'Analyzer Manager → Automate',
+    lawNewContainer: 'New container',
   },
   fr: {
     headerTitle: 'OUTIL DE TEST HL7 HTTP',
@@ -194,6 +221,16 @@ const TRANSLATIONS: Record<Lang, Translation> = {
     home: 'Domicile',
     temperature: 'Température',
     coordinates: 'Coordonnées',
+    lawTitle: 'IHE LAW — Laboratory Analytical Workflow',
+    lawHint: 'AWOS = Analytical Work Order Step (étape de travail analytique). La production joue le système en face de chaque transaction.',
+    lawContainer: 'Identifiant du tube',
+    lawQuery: 'LAB-27 Demande des AWOS',
+    lawBroadcast: 'LAB-28 Transmission des AWOS',
+    lawStatus: 'LAB-29 Statuts et résultats',
+    lawCycle: 'Dérouler le cycle LAW complet',
+    lawRoleAutomate: 'Automate → Analyzer Manager',
+    lawRoleManager: 'Analyzer Manager → Automate',
+    lawNewContainer: 'Nouveau tube',
   },
   es: {
     headerTitle: 'HERRAMIENTA DE PRUEBA HL7 HTTP',
@@ -240,6 +277,16 @@ const TRANSLATIONS: Record<Lang, Translation> = {
     home: 'Domicilio',
     temperature: 'Temperatura',
     coordinates: 'Coordenadas',
+    lawTitle: 'IHE LAW — Laboratory Analytical Workflow',
+    lawHint: 'AWOS = Analytical Work Order Step (paso de trabajo analítico). La producción hace de sistema contrario en cada transacción.',
+    lawContainer: 'Identificador del tubo',
+    lawQuery: 'LAB-27 Consulta de AWOS',
+    lawBroadcast: 'LAB-28 Difusión de AWOS',
+    lawStatus: 'LAB-29 Estados y resultados',
+    lawCycle: 'Ejecutar el ciclo LAW completo',
+    lawRoleAutomate: 'Autómata → Analyzer Manager',
+    lawRoleManager: 'Analyzer Manager → Autómata',
+    lawNewContainer: 'Nuevo tubo',
   },
 };
 
@@ -279,7 +326,7 @@ export class AppComponent {
   // Server config
   environment  = DEFAULT_ENV_KEY;
   baseUrl      = DEFAULT_ENV_CONFIG.baseUrl;
-  namespace    = 'TRAINING';
+  namespace    = DEFAULT_NAMESPACE;
   oruCfgItem   = DEFAULT_ENV_CONFIG.oruCfgItem;
   adtCfgItem   = DEFAULT_ENV_CONFIG.adtCfgItem;
   username     = DEFAULT_ENV_CONFIG.username;
@@ -298,6 +345,13 @@ export class AppComponent {
   private progressEntry: LogEntry | null = null;
 
   sending = false;
+
+  // IHE LAW (LAB-27 / LAB-28 / LAB-29) simulation
+  lawContainerId = AppComponent.newContainerId();
+  lawQbpCfgItem  = 'LAW LAB-27 Query for AWOS - HTTP';
+  lawOmlCfgItem  = 'LAW LAB-28 AWOS Broadcast - HTTP';
+  lawOulCfgItem  = 'LAW LAB-29 AWOS Status Change - HTTP';
+  lawCycleRunning = false;
 
   // FHIR Patient search
   fhirIpp = 'G7809';
@@ -356,7 +410,17 @@ export class AppComponent {
     const marker = '/csp/healthshare/';
     const i = this.baseUrl.indexOf(marker);
     const root = i >= 0 ? this.baseUrl.slice(0, i) : this.baseUrl.replace(/\/$/, '');
-    return `${root}/csp/sys/UtilHome.csp?$NAMESPACE=${encodeURIComponent(this.namespace.trim().toUpperCase())}`;
+    // Local web-gateway environments (dev-local/prod-local, community): link straight to the
+    // local gateway instead of the ng-serve proxy prefix.
+    const local = root.match(/^\/(iris80|iris881)(\/.*)$/);
+    if (local) {
+      const host = local[1] === 'iris881' ? 'http://localhost:881' : 'http://localhost';
+      return `${host}${local[2]}/csp/sys/%25CSP.Portal.Home.zen`;
+    }
+    // AWS environments (dev/prod): open the System Management Portal home (UtilHome.csp).
+    const aws = root.match(/^\/irisaws(\/.*)$/);
+    const awsHost = 'http://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com';
+    return `${aws ? awsHost + aws[1] : root}/csp/sys/UtilHome.csp`;
   }
 
   get fhirBaseUrl(): string {
@@ -642,6 +706,109 @@ export class AppComponent {
       v /= 1024;
     }
     return `${v.toFixed(1)} TB`;
+  }
+
+  // ── IHE LAW ─────────────────────────────────────────────────────────────
+  private static newContainerId(): string {
+    return 'C' + String(Math.floor(Math.random() * 1e8)).padStart(8, '0');
+  }
+
+  newLawContainer(): void {
+    this.lawContainerId = AppComponent.newContainerId();
+  }
+
+  private lawParams(): LawParams {
+    return {
+      containerId: this.lawContainerId.trim(),
+      patientId:   this.patientId,
+      firstName:   this.firstName,
+      lastName:    this.lastName,
+      dob:         this.dobFormatted(),
+      gender:      this.gender,
+      sodium:      this.sodium,
+    };
+  }
+
+  private lawMessage(tx: LawTransaction): { msg: string; cfgItem: string; label: string } {
+    const p = this.lawParams();
+    switch (tx) {
+      case 'LAB-27': return { msg: generateQbpMessage(p), cfgItem: this.lawQbpCfgItem, label: 'LAB-27 QBP^Q11 → RSP^K11' };
+      case 'LAB-28': return { msg: generateOmlMessage(p), cfgItem: this.lawOmlCfgItem, label: 'LAB-28 OML^O33 → ORL^O34' };
+      case 'LAB-29': return { msg: generateOulMessage(p), cfgItem: this.lawOulCfgItem, label: 'LAB-29 OUL^R22 → ACK' };
+    }
+  }
+
+  private static lawDisplay(msg: string): string {
+    return msg.replace(/\r/g, '\n');
+  }
+
+  /** Sends one LAW transaction and logs the request and the answer. */
+  sendLaw(tx: LawTransaction): void {
+    if (!this.isLoggedIn) {
+      this.addResponse('ERROR: Please login first with testuser / IRIS.', 'error');
+      return;
+    }
+    if (!this.lawContainerId.trim()) {
+      this.addResponse('ERROR: container ID is required.', 'error');
+      return;
+    }
+    const { msg, cfgItem, label } = this.lawMessage(tx);
+    const display = AppComponent.lawDisplay(msg);
+    this.lastHl7Type = null;
+    this.addHl7Log(display, AppComponent.highlightHl7(display, this.params()));
+    this.addResponse(`▶ ${label} → ${this.baseUrl}?CfgItem=${cfgItem}`, 'info');
+
+    const start = Date.now();
+    this.hl7.send(this.baseUrl, cfgItem, this.username, this.password, msg).pipe(
+      catchError(err => of(`ERROR: ${err.message ?? err.statusText ?? 'Unknown'}`)),
+    ).subscribe(resp => {
+      const isError = resp.startsWith('ERROR:');
+      const elapsed = ((Date.now() - start) / 1000).toFixed(2);
+      this.addResponse(`${resp.replace(/\r/g, '\n')} — ${AppComponent.fmtBytes(new Blob([msg]).size)} — ${elapsed}s`, isError ? 'error' : 'success');
+    });
+  }
+
+  /**
+   * Plays the whole LAW cycle of a tube: the Automate queries the work (LAB-27), the Analyzer Manager
+   * broadcasts it (LAB-28), then the Automate reports statuses and results (LAB-29).
+   */
+  async sendLawCycle(): Promise<void> {
+    if (!this.isLoggedIn) {
+      this.addResponse('ERROR: Please login first with testuser / IRIS.', 'error');
+      return;
+    }
+    if (!this.lawContainerId.trim()) {
+      this.addResponse('ERROR: container ID is required.', 'error');
+      return;
+    }
+    this.lawCycleRunning = true;
+    this.lastHl7Type = null;
+    const expectedAnswers: Record<LawTransaction, string> = { 'LAB-27': 'RSP^K11', 'LAB-28': 'ORL^O34', 'LAB-29': 'ACK' };
+    const sent: string[] = [];
+    try {
+      for (const tx of ['LAB-27', 'LAB-28', 'LAB-29'] as LawTransaction[]) {
+        const { msg, cfgItem, label } = this.lawMessage(tx);
+        sent.push(`── ${label.split(' → ')[0]} ──\n${AppComponent.lawDisplay(msg)}`);
+        const display = sent.join('\n\n');
+        this.addHl7Log(display, AppComponent.highlightHl7(display, this.params()));
+        this.addResponse(`▶ ${label} → ${this.baseUrl}?CfgItem=${cfgItem}`, 'info');
+
+        const resp = await firstValueFrom(
+          this.hl7.send(this.baseUrl, cfgItem, this.username, this.password, msg).pipe(
+            catchError(err => of(`ERROR: ${err.message ?? err.statusText ?? 'Unknown'}`)),
+          ),
+        );
+        const answerOk = !resp.startsWith('ERROR:') && resp.includes(expectedAnswers[tx]);
+        this.addResponse(resp.replace(/\r/g, '\n'), answerOk ? 'success' : 'error');
+        if (!answerOk) {
+          this.addResponse(`❌ ${tx}: expected a ${expectedAnswers[tx]} answer — cycle stopped`, 'error');
+          return;
+        }
+      }
+      this.addResponse(`✅ LAW cycle done for container ${this.lawContainerId.trim()} (LAB-27 → LAB-28 → LAB-29)`, 'success');
+    } finally {
+      this.lawCycleRunning = false;
+    }
   }
 
   private static readonly CONCURRENCY = 6;

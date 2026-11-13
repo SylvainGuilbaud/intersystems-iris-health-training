@@ -555,6 +555,79 @@ label {
   &:hover { background: $accent; }
 }
 
+// ── IHE LAW panel ─────────────────────────────────────────────────────────
+.law-section {
+  margin: 0 24px;
+  padding: 8px 12px 12px;
+  border: 1px solid #2a4a6c;
+  border-radius: 3px;
+}
+
+.law-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
+  margin-bottom: 8px;
+}
+
+.law-title {
+  color: $accent;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.law-hint {
+  color: #93c5fd;
+  font-size: 11px;
+}
+
+.law-container-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.law-input {
+  width: 160px;
+}
+
+.law-tx-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: flex-end;
+}
+
+.law-tx {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 220px;
+}
+
+.law-role {
+  color: #93c5fd;
+  font-size: 11px;
+}
+
+.law-cfg {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 11px;
+}
+
+.btn-law-cycle {
+  border-color: #facc15;
+}
+
+.btn-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 // ── Divider ───────────────────────────────────────────────────────────────
 .divider {
   height: 1px;

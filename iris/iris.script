@@ -92,8 +92,14 @@
     do $SYSTEM.OBJ.Load("/home/irisowner/dev/src/DGLAB/lookup/PatientClasses.xml","ck")
     do $SYSTEM.OBJ.Load("/home/irisowner/dev/src/DGLAB/lookup/Gender.xml","ck")
 
+    // IHE LAW simulator (LAB-27/28/29): add its items to the production of the DGLAB namespace
+    do $SYSTEM.OBJ.Import(sourceRoot _ "/DGLAB/law", "ck")
+    do ##class(DGLAB.law.Setup).AddToProduction("DGLABPKG.FoundationProduction")
+
     zn "TRAINING"
 
+    // The IHE LAW simulator classes are also needed by TRAININGPKG.FoundationProduction
+    do $SYSTEM.OBJ.Import(sourceRoot _ "/DGLAB/law", "ck")
     set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/data/address.cls", "ck")
     set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/data/users.cls", "ck")
     set sc = $SYSTEM.OBJ.Import(sourceRoot _ "/data/patient.cls", "ck")

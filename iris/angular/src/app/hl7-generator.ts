@@ -62,3 +62,111 @@ export function generateAdtMessage(p: Hl7Params): string {
   ];
   return segments.join('\r');
 }
+
+// ── IHE LAW (Laboratory Analytical Workflow) — HL7 v2.5.1 ─────────────────
+// LAB-27 Query for AWOS        QBP^Q11  Automate -> Analyzer Manager   (answer RSP^K11)
+// LAB-28 AWOS Broadcast        OML^O33  Analyzer Manager -> Automate   (answer ORL^O34)
+// LAB-29 AWOS Status Change    OUL^R22  Automate -> Analyzer Manager   (answer ACK)
+// AWOS = Analytical Work Order Step.
+
+export type LawTransaction = 'LAB-27' | 'LAB-28' | 'LAB-29';
+
+export interface LawTest {
+  code: string;   // e.g. 296
+  text: string;   // e.g. S-Sodium
+  unit: string;
+}
+
+/** Tests simulated by the Analyzer Manager (same defaults as DGLAB.law.Messages). */
+export const LAW_TESTS: LawTest[] = [
+  { code: '296', text: 'S-Sodium',    unit: 'mmol/L' },
+  { code: '297', text: 'S-Potassium', unit: 'mmol/L' },
+  { code: '298', text: 'S-Chloride',  unit: 'mmol/L' },
+];
+
+export interface LawParams {
+  containerId: string;
+  patientId: string;
+  firstName: string;
+  lastName: string;
+  dob: string;       // YYYYMMDD
+  gender: string;    // M / F / X
+  sodium: number;
+}
+
+let lawControlId = 0;
+
+function lawId(prefix: string): string {
+  return `${prefix}${String(++lawControlId).padStart(8, '0')}`;
+}
+
+function lawMsh(type: string, ctrlId: string, tx: LawTransaction, sendApp: string, recvApp: string): string {
+  return `MSH|^~\\&|${sendApp}|LAB|${recvApp}|LAB|${ts()}||${type}|${ctrlId}|P|2.5.1|||NE|AL||UNICODE UTF-8|||${tx}^IHE`;
+}
+
+function lawPid(p: LawParams): string {
+  return `PID|1||${p.patientId}^^^LAB^PI||${p.lastName}^${p.firstName}||${p.dob}|${p.gender}`;
+}
+
+function lawOrderNumber(p: LawParams, rank: number): string {
+  return `${p.containerId}-${rank}`;
+}
+
+/** Plausible deterministic value of a test (the sodium follows the form value). */
+function lawValue(p: LawParams, rank: number): string {
+  if (rank === 1) return String(p.sodium);
+  const seed = [...p.containerId].reduce((a, c) => a + c.charCodeAt(0), 0);
+  return rank === 2 ? (3.5 + (seed % 15) / 10).toFixed(1) : String(98 + (seed % 10));
+}
+
+/** LAB-27 — QBP^Q11 Query for AWOS: the analyzer asks for the work of a container (tube). */
+export function generateQbpMessage(p: LawParams): string {
+  return [
+    lawMsh('QBP^Q11^QBP_Q11', lawId('QBP'), 'LAB-27', 'ANALYZER', 'LIS'),
+    `QPD|WOS^Work Order Step^IHE_LABTF|Q${ts()}|${p.containerId}`,
+    'RCP|I||R',
+  ].join('\r');
+}
+
+/** LAB-28 — OML^O33 AWOS Broadcast: the Analyzer Manager transmits the work orders of a container.
+ *  In the HL7 2.5.1 OML_O33 definition an SPM group carries one order (ORC/TQ1/OBR), so the specimen and its
+ *  container are repeated for each test of the container. */
+export function generateOmlMessage(p: LawParams): string {
+  const now = ts();
+  const segments = [
+    lawMsh('OML^O33^OML_O33', lawId('OML'), 'LAB-28', 'LIS', 'ANALYZER'),
+    lawPid(p),
+  ];
+  LAW_TESTS.forEach((t, i) => {
+    const order = lawOrderNumber(p, i + 1);
+    segments.push(
+      `SPM|${i + 1}|SP${p.containerId}^LIS||BLD^Blood^HL70487|||||||P^Patient^HL70369|||||||${now}`,
+      `SAC|||${p.containerId}`,
+      `ORC|NW|${order}^LIS|${order}^LIS`,
+      'TQ1|1||||||||R',
+      `OBR|${i + 1}|${order}^LIS|${order}^LIS|${t.code}^${t.text}^L|||${now}`,
+    );
+  });
+  return segments.join('\r');
+}
+
+/** LAB-29 — OUL^R22 AWOS Status Change: the analyzer reports the status and results of the work orders. */
+export function generateOulMessage(p: LawParams): string {
+  const now = ts();
+  const segments = [
+    lawMsh('OUL^R22^OUL_R22', lawId('OUL'), 'LAB-29', 'ANALYZER', 'LIS'),
+    lawPid(p),
+    `SPM|1|SP${p.containerId}^LIS||BLD^Blood^HL70487|||||||P^Patient^HL70369|||||||${now}`,
+    `SAC|||${p.containerId}`,
+  ];
+  LAW_TESTS.forEach((t, i) => {
+    const order = lawOrderNumber(p, i + 1);
+    // In the HL7 2.5.1 OUL_R22 definition the ORC follows its OBR
+    segments.push(
+      `OBR|${i + 1}|${order}^LIS|${order}^LIS|${t.code}^${t.text}^L|||${now}${'|'.repeat(18)}F`,
+      `ORC|SC|${order}^LIS|${order}^LIS||CM`,
+      `OBX|1|NM|${t.code}^${t.text}^L||${lawValue(p, i + 1)}|${t.unit}^${t.unit}^UCUM||N|||F|||${now}`,
+    );
+  });
+  return segments.join('\r');
+}
