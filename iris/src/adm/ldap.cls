@@ -1,8 +1,9 @@
 /// Native LDAP authentication and authorization of the IRIS instance (demo OpenLDAP, docker-compose.yml, service "ldap").
 ///
-/// Idempotent: can be replayed on an existing container with configure-ldap.sh. It is NOT called by iris.script: the
-/// password of the account that searches the directory is a secret, which must not be baked in the image (it is
-/// passed at run time from ldap/secrets.env).
+/// Idempotent: can be replayed on an existing container with configure-ldap.sh. iris.script calls it at image build time
+/// WITHOUT password: the password of the account that searches the directory is a secret, which must not be baked in the
+/// image (it would show in its layers). The structure is then in place, and configure-ldap.sh sends the password at run
+/// time from ldap/secrets.env.
 ///
 /// What it configures:
 ///  1. an LDAP configuration named like the LDAP domain (users log in as "ldap.admin" or "ldap.admin@example.org"),
@@ -39,7 +40,7 @@ Parameter WEBAPPS = "/csp/sys,/csp/sys/exp,/csp/sys/mgr,/csp/sys/op,/csp/sys/sec
 /// LDAPFlags bits: UseGroups 8 + UseUniversalGroups 32 + Enabled 64
 Parameter FLAGS = 104;
 
-/// Applies the whole configuration. pSearchPassword is the password of Parameter SEARCHUSER.
+/// Applies the whole configuration. pSearchPassword is the password of Parameter SEARCHUSER; "" keeps the current one.
 ClassMethod Configure(pSearchPassword As %String, pWebApps As %String = {..#WEBAPPS}, pVerbose As %Boolean = 1, pHosts As %String = {..#HOSTS}) As %Status
 {
 	New $Namespace
@@ -61,18 +62,20 @@ ClassMethod Configure(pSearchPassword As %String, pWebApps As %String = {..#WEBA
 /// The LDAP configuration (named like the domain)
 ClassMethod EnsureConfiguration(pSearchPassword As %String, pHosts As %String, pVerbose As %Boolean = 1) As %Status
 {
-	If pSearchPassword = "" Quit $$$ERROR($$$GeneralError, "The password of the LDAP search account is required")
 	Set tName = ..#DOMAIN
 	Set tProps("LDAPHostNames") = pHosts
 	Set tProps("LDAPBaseDN") = ..#BASEDN
 	Set tProps("LDAPBaseDNForGroups") = ..#GROUPSDN
 	Set tProps("LDAPSearchUsername") = ..#SEARCHUSER
-	Set tProps("LDAPSearchPassword") = pSearchPassword
+	// An empty password (image build: the secret is not available) leaves the stored one untouched, or empty on a new
+	// configuration: LDAP logins then fail until configure-ldap.sh sends the password.
+	Set:pSearchPassword'="" tProps("LDAPSearchPassword") = pSearchPassword
 	Set tProps("LDAPUniqueDNIdentifier") = ..#LOGINATTRIBUTE
 	Set tProps("LDAPDomainName") = ..#DOMAIN
 	Set tProps("LDAPFlags") = ..#FLAGS
 	Set tProps("LDAPAttributeFullName") = "displayName"
 	Set tProps("LDAPAttributeMail") = "mail"
+	Write:pVerbose&&(pSearchPassword="") "  WARNING: no search password given: LDAP logins work only once ./configure-ldap.sh has sent it", !
 	If ##class(Security.LDAPConfigs).Exists(tName) {
 		Set tSC = ##class(Security.LDAPConfigs).Modify(tName, .tProps)
 		Write:pVerbose "  LDAP configuration ", tName, ": ", $Select($$$ISOK(tSC):"updated", 1:$System.Status.GetErrorText(tSC)), !

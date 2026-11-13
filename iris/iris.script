@@ -134,4 +134,11 @@
     do $SYSTEM.OBJ.Import("/home/irisowner/dev/src/adm/oidc.cls", "ck")
     do ##class(adm.oidc).Configure()
 
+    // Native LDAP authentication: the structure only (LDAP configuration, default domain, LDAP method on the service and the
+    // portal applications). The password of the search account is a secret and must not be baked in the image: after the
+    // build, run ./configure-ldap.sh (see docs/LDAP-IRIS-Security.md) to send it. The LDAP server itself is the "ldap" service
+    // of docker-compose.yml. The LDAP groups map to the iris-* roles created just above by adm.oidc.
+    do $SYSTEM.OBJ.Import("/home/irisowner/dev/src/adm/ldap.cls", "ck")
+    do ##class(adm.ldap).Configure("")
+
     halt

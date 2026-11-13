@@ -39,7 +39,7 @@ reçoit le rôle IRIS `iris-admin`. Ce sont les **mêmes quatre rôles** que pou
 | `ldap.operator` | `intersystems-Role-iris-operator` | `iris-operator` | `%Operator` |
 | `ldap.viewer` | `intersystems-Role-iris-viewer` | `iris-viewer` | `Interop_Viewer_Role` |
 
-Les rôles `iris-*` sont créés par `adm.oidc` (configuration Keycloak) : **exécutez d'abord `./configure-oidc.sh`**, ou créez ces rôles autrement, car l'autorisation LDAP ne crée pas de rôle IRIS.
+Les rôles `iris-*` sont créés par `adm.oidc` (configuration Keycloak ; `iris.script` l'exécute juste avant `adm.ldap`) : sur une instance existante, **exécutez d'abord `./configure-oidc.sh`**, ou créez ces rôles autrement, car l'autorisation LDAP ne crée pas de rôle IRIS.
 
 ---
 
@@ -113,7 +113,7 @@ donne la raison exacte des refus (par exemple « LDAP search bind failed, error 
 
 ## 4. Gérer les utilisateurs et les groupes
 
-Le serveur de démonstration est administrable avec les outils OpenLDAP **dans son conteneur**. Avec le mot de passe `LDAP_ADMIN_PASSWORD` de `ldap/secrets.env` :
+Le serveur de démonstration est administrable avec les outils OpenLDAP **dans son conteneur**, ou avec l'interface web optionnelle décrite plus bas. Avec le mot de passe `LDAP_ADMIN_PASSWORD` de `ldap/secrets.env` :
 
 ```bash
 set -a; . ldap/secrets.env; set +a
@@ -123,6 +123,31 @@ docker exec -e W="$LDAP_ADMIN_PASSWORD" iris-health-training-ldap sh -c 'ldapsea
 - **Ajouter un utilisateur** : une entrée `inetOrgPerson` sous `ou=people,dc=example,dc=org` (attributs `uid`, `cn`, `sn`, `displayName`, `mail`, `userPassword`), avec `ldapadd`.
 - **Lui donner un rôle** : l'ajouter comme `uniqueMember` d'un groupe `cn=intersystems-Role-<rôle IRIS>,ou=groups,…`. Le rôle IRIS du même nom doit exister.
 - **Retirer un accès** : le supprimer du groupe, ou supprimer l'utilisateur. Les rôles sont relus à chaque ouverture de session IRIS ; une session déjà ouverte garde les anciens rôles jusqu'à sa fermeture.
+
+### Interface web optionnelle : phpLDAPadmin
+
+Le serveur n'a pas d'interface web par défaut. Le service `phpldapadmin` (image `osixia/phpldapadmin`) est **optionnel** : il appartient au profil Compose `ldap-admin` et ne démarre que sur demande.
+Son port n'est lié qu'à `127.0.0.1` : il n'est jamais joignable depuis le réseau.
+
+```bash
+docker compose -p iris-health-training --profile ldap-admin up -d --no-deps phpldapadmin
+```
+
+Ouvrez <http://127.0.0.1:6480/>, cliquez sur **login** et saisissez :
+
+| Champ | Valeur |
+|---|---|
+| Login DN | `cn=admin,dc=example,dc=org` |
+| Mot de passe | `LDAP_ADMIN_PASSWORD` de `ldap/secrets.env` |
+
+Vous pouvez alors créer un utilisateur, l'ajouter à un groupe `intersystems-Role-…` (attribut `uniqueMember`), changer un mot de passe ou supprimer une entrée. Pour l'arrêter :
+
+```bash
+docker compose -p iris-health-training --profile ldap-admin stop phpldapadmin
+```
+
+Vérifié en local : la page s'affiche, la connexion avec le mot de passe administrateur réussit et un mauvais mot de passe est refusé. L'interface graphique elle-même n'a pas été parcourue dans un navigateur.
+Il n'est **pas** prévu sur AWS : il n'est défini que dans le `docker-compose.yml` local, pas dans `docker-compose.aws-keycloak.yml`. Sur AWS, l'annuaire s'administre avec les outils en ligne de commande décrits ci-dessus.
 
 Plusieurs rôles : plusieurs groupes. Un utilisateur d'un groupe `intersystems-Role-X` dont le rôle `X` n'existe pas dans IRIS n'obtient rien.
 
@@ -171,8 +196,11 @@ Connexion : <http://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com/iris-he
 
 - **Instance `prod` d'AWS** : non configurée (comme pour Keycloak).
 - **Pas de TLS.** L'échange IRIS ↔ LDAP circule en clair sur le réseau Docker interne (démo). Pour un vrai annuaire : LDAPS (drapeau `TLSConnection` et certificat de l'autorité).
-- **Pas dans l'image.** `iris.script` n'appelle pas `adm.ldap` : le mot de passe du compte de recherche est un secret, qui ne doit pas être figé dans l'image. Après une reconstruction de l'image ou sur un volume neuf,
-  relancer `./configure-ldap.sh`.
+- **Dans l'image, sans le secret.** `iris.script` appelle `adm.ldap.Configure("")` à la fin du build : la **structure** est posée (configuration LDAP, domaine par défaut, méthode LDAP sur le service et sur le
+  portail), mais **sans le mot de passe du compte de recherche**, qui est un secret et qui apparaîtrait dans les couches de l'image s'il y était (argument de build). Tant que ce mot de passe n'est pas envoyé,
+  les connexions LDAP échouent (les connexions par mot de passe IRIS ne sont pas touchées) : après un build ou sur un volume neuf, lancer `./configure-ldap.sh`. Un appel suivant avec un mot de passe vide
+  **conserve** le mot de passe déjà stocké. Un volume IRIS existant garde sa configuration : le build ne la modifie pas, `configure-ldap.sh` oui. La reconstruction complète de l'image n'a **pas** été exécutée ;
+  les lignes d'`iris.script` ont été jouées telles quelles sur l'instance locale.
 - **Domaine par défaut.** La configuration fait d'`example.org` le domaine de sécurité par défaut de l'instance (`DefaultSecurityDomain`, auparavant `unknowndomain.com`). Les comptes IRIS locaux
   (`testuser`, `_SYSTEM`…) continuent de se connecter, vérifié ; un identifiant sans domaine peut maintenant aussi être cherché dans l'annuaire.
 - **Applications concernées.** La méthode LDAP n'est activée que sur le portail (`/csp/sys*`). Pas sur les applications de l'interopérabilité (`/csp/healthshare/<espace>`) ni sur l'API HL7 : pour les
@@ -186,6 +214,7 @@ Connexion : <http://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com/iris-he
 | Fichier | Rôle |
 |---|---|
 | `docker-compose.yml` (service `ldap`) | serveur OpenLDAP de démonstration (`osixia/openldap:1.5.0`, `arm64` et `amd64`), sans port publié |
+| `docker-compose.yml` (service `phpldapadmin`) | interface web d'administration, optionnelle (profil `ldap-admin`), liée à `127.0.0.1:6480` |
 | `ldap/init-secrets.sh` | génère `ldap/secrets.env`, `ldap/.env` et le LDIF de démo (utilisateurs et groupes) |
 | `iris/src/adm/ldap.cls` | configuration IRIS idempotente : configuration LDAP, domaine par défaut, méthode LDAP sur le service et les applications |
 | `configure-ldap.sh` | exécute cette configuration sur un conteneur existant (`--apps none` puis `--apps default`) |

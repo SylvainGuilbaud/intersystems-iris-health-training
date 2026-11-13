@@ -193,6 +193,24 @@ services:
     networks:
       - default
 
+  phpldapadmin: # OPTIONAL web admin of the demo LDAP. Profile "ldap-admin": started only on request. Loopback only.
+    image: osixia/phpldapadmin:0.9.0
+    container_name: ${IRIS_INSTANCE_NAME}-phpldapadmin
+    hostname: phpldapadmin
+    profiles: ["ldap-admin"]
+    depends_on:
+      - ldap
+    environment:
+      # The demo LDAP has no TLS: tell phpLDAPadmin not to try StartTLS on it.
+      PHPLDAPADMIN_LDAP_HOSTS: "#PYTHON2BASH:[{'ldap': [{'server': [{'tls': False}]}]}]"
+      PHPLDAPADMIN_HTTPS: "false"            # local use through 127.0.0.1 only (on AWS: SSH tunnel)
+      TZ: Europe/Paris
+    ports:
+      - "127.0.0.1:6480:80"                  # loopback only: never reachable from the network
+    restart: unless-stopped
+    networks:
+      - default
+
   postgres:
     container_name: training-postgres
     hostname: training-postgres
