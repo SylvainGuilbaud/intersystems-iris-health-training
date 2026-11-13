@@ -169,6 +169,30 @@ services:
     networks:
       - default
 
+  ldap: # Demo OpenLDAP for the native IRIS LDAP authentication. Reachable only on the Docker network (no published port).
+    image: osixia/openldap:1.5.0
+    container_name: ${IRIS_INSTANCE_NAME}-ldap
+    hostname: ldap
+    command: --copy-service                 # loads ldap/bootstrap/*.ldif at the first start (empty data directory)
+    env_file:
+      - path: ./ldap/secrets.env            # LDAP_ADMIN_PASSWORD, LDAP_CONFIG_PASSWORD, LDAP_READONLY_USER_PASSWORD (git-ignored)
+        required: false
+    environment:
+      LDAP_ORGANISATION: IRIS Health Training
+      LDAP_DOMAIN: example.org
+      LDAP_BASE_DN: dc=example,dc=org
+      LDAP_TLS: "false"                     # demo on the internal Docker network; use LDAPS for anything real
+      LDAP_READONLY_USER: "true"            # account used by IRIS to search users and groups
+      LDAP_READONLY_USER_USERNAME: readonly
+      TZ: Europe/Paris
+    volumes:
+      - ./ldap/bootstrap:/container/service/slapd/assets/config/bootstrap/ldif/custom:ro
+      - ./ldap/data:/var/lib/ldap
+      - ./ldap/slapd.d:/etc/ldap/slapd.d
+    restart: unless-stopped
+    networks:
+      - default
+
   postgres:
     container_name: training-postgres
     hostname: training-postgres

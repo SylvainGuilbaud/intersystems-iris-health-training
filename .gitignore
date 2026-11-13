@@ -18,3 +18,10 @@ keycloak/.env
 
 # Local secrets read by REST Client ({{$dotenv}}) from http/test.http
 http/.env
+
+# Demo OpenLDAP: secrets, generated LDIF (hashed passwords) and server data
+ldap/secrets.env
+ldap/bootstrap/
+ldap/data/
+ldap/slapd.d/
+ldap/.env

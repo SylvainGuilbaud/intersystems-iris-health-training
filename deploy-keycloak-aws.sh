@@ -13,6 +13,8 @@
 #   cert     recreate nginx for the ACME challenge, get a Let's Encrypt certificate (fallback: self-signed)
 #   up       start Keycloak + its database, enable TLS on nginx, start oauth2-proxy
 #   iris     configure IRIS (adm.oidc) on aws-dev with the public issuer and the internal back-channel URL
+#   ldap     demo OpenLDAP + native IRIS LDAP authentication (docs/LDAP-IRIS-Security.md); the break-glass access is checked
+#            before the LDAP method is enabled on the portal applications
 #   verify   checks from this machine (HTTPS, Keycloak, token, API, portal redirect)
 #
 # Secrets never leave the host: keycloak/secrets.env is generated there. Let's Encrypt is registered without e-mail
@@ -26,12 +28,12 @@ while [ $# -gt 0 ]; do
         --dry-run) DRYRUN=1; shift ;;
         --cert)    CERT="${2:-}"; shift 2 ;;
         -h|--help) sed -n '2,/^set /p' "$0" | sed 's/^# \{0,1\}//' | head -n -1; exit 0 ;;
-        prepare|cert|up|iris|verify) STAGES+=("$1"); shift ;;
+        prepare|cert|up|iris|ldap|verify) STAGES+=("$1"); shift ;;
         *) echo "Unknown argument: $1" >&2; exit 1 ;;
     esac
 done
 case "$CERT" in letsencrypt|selfsigned) ;; *) echo "ERROR: --cert letsencrypt|selfsigned" >&2; exit 1 ;; esac
-[ ${#STAGES[@]} -gt 0 ] || STAGES=(prepare cert up iris verify)
+[ ${#STAGES[@]} -gt 0 ] || STAGES=(prepare cert up iris ldap verify)
 
 # shellcheck disable=SC1091
 source cloudenv
@@ -60,7 +62,7 @@ stage_prepare() {
     echo "== prepare"
     on_host "directories" <<'EOF'
 set -e
-mkdir -p keycloak nginx/letsencrypt nginx/certbot-www keycloak/db-data iris/src/adm
+mkdir -p keycloak ldap nginx/letsencrypt nginx/certbot-www keycloak/db-data iris/src/adm
 EOF
     put docker-compose.aws-keycloak.yml docker-compose.aws-keycloak.yml
     put nginx/tls.aws.conf              nginx/tls.aws.conf
@@ -68,9 +70,11 @@ EOF
     put keycloak/realm-iris.json        keycloak/realm-iris.json
     put keycloak/init-secrets.sh        keycloak/init-secrets.sh
     put iris/src/adm/oidc.cls           iris/src/adm/oidc.cls
+    put iris/src/adm/ldap.cls           iris/src/adm/ldap.cls
+    put ldap/init-secrets.sh            ldap/init-secrets.sh
     on_host "nginx.conf: add the ACME challenge location (backup first), generate secrets, validate compose" <<EOF
 set -e
-chmod +x keycloak/init-secrets.sh
+chmod +x keycloak/init-secrets.sh ldap/init-secrets.sh
 if ! grep -q 'acme-challenge' nginx/nginx.conf; then
     cp -p nginx/nginx.conf nginx/nginx.conf.bak-\$(date +%Y%m%d-%H%M%S)
     python3 - <<'PY'
@@ -81,6 +85,8 @@ s=s.replace('    listen 80;\n','    listen 80;\n\n'+blk,1); open(p,'w').write(s)
 PY
 else echo "acme location already present"; fi
 ./keycloak/init-secrets.sh >/dev/null && echo "secrets ready (keycloak/secrets.env, mode 600, not printed)"
+# the override references ldap/secrets.env (env_file): it must exist before any docker compose command
+./ldap/init-secrets.sh >/dev/null && echo "secrets ready (ldap/secrets.env and demo LDIF, mode 600, not printed)"
 $DC config --quiet && echo "compose files valid"
 EOF
 }
@@ -145,6 +151,37 @@ stage_iris() {
     echo "  -> configure-oidc.sh --target aws with the public issuer and the internal back-channel"
     if [ "$DRYRUN" = 1 ]; then ./configure-oidc.sh --target aws --instance dev --issuer "$ISSUER" --backchannel "$BACK" --dry-run
     else ./configure-oidc.sh --target aws --instance dev --issuer "$ISSUER" --backchannel "$BACK"; fi
+}
+
+stage_ldap() {
+    echo "== ldap"
+    on_host "demo LDAP server: secrets and LDIF generated on the host, then start" <<EOF
+set -e
+./ldap/init-secrets.sh | sed 's/^/  /' | grep -v 'Read the demo password'
+$DC up -d --no-deps ldap
+for i in \$(seq 1 20); do
+    n=\$(set -a; . ldap/secrets.env; set +a; docker exec ${PROJECT}-ldap ldapsearch -x -H ldap://localhost -D cn=readonly,dc=example,dc=org -w "\$LDAP_READONLY_USER_PASSWORD" -b dc=example,dc=org '(objectClass=inetOrgPerson)' uid 2>/dev/null | grep -c '^uid:' || true)
+    [ "\$n" = 4 ] && { echo "  LDAP server answers: 4 users loaded"; exit 0; }
+    sleep 3
+done
+echo "  WARNING: the LDAP server did not answer with its 4 users: docker logs ${PROJECT}-ldap"; exit 1
+EOF
+    echo "  -> IRIS: LDAP configuration and default domain, no web application touched yet"
+    if [ "$DRYRUN" = 1 ]; then ./configure-ldap.sh --target aws --instance dev --apps none --dry-run; ./configure-ldap.sh --target aws --instance dev --apps default --dry-run; return 0; fi
+    ./configure-ldap.sh --target aws --instance dev --apps none | grep -vE '^(Load|Loading|Compiling)'
+    # break-glass check BEFORE enabling LDAP on the portal: the password access must still work (IRIS_AWS_* of http/.env)
+    if [ -f http/.env ]; then
+        # shellcheck disable=SC1091
+        set -a; . http/.env; set +a
+        local t; t="$(curl -s -m 30 -u "$IRIS_AWS_USER:$IRIS_AWS_PASSWORD" "http://$HOST/iris-health-training-dev/csp/sys/UtilHome.csp" | python3 -c "import sys,re;m=re.search(r'<title>(.*?)</title>',sys.stdin.read(),re.S|re.I);print(m.group(1).strip() if m else '-')")"
+        unset IRIS_AWS_PASSWORD IRIS_LOCAL_PASSWORD IRIS_COMMUNITY_PASSWORD
+        echo "  break-glass (password access, port 80): $t"
+        [ "$t" = "IRIS - Home" ] || { echo "  ERROR: the password access no longer works: LDAP is NOT enabled on the applications" >&2; return 1; }
+    else
+        echo "  WARNING: http/.env missing: the break-glass access was not checked"
+    fi
+    echo "  -> IRIS: LDAP method on the service and on the portal applications"
+    ./configure-ldap.sh --target aws --instance dev --apps default | grep -vE '^(Load|Loading|Compiling)'
 }
 
 stage_verify() {

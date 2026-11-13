@@ -2,7 +2,7 @@
 # (it is not replaced):
 #   PUBLIC_HOST=<public dns> NGINX_TLS_CONF=tls.aws.conf \
 #   docker compose -p iris-health-training -f docker-compose.yml -f docker-compose.aws-keycloak.yml up -d --no-deps <service>
-# Driven by ./deploy-keycloak-aws.sh. Keycloak is served by nginx on https://<PUBLIC_HOST>/auth (only port 443 is open
+# Driven by ./deploy-keycloak-aws.sh (stages up/iris for Keycloak, stage ldap for the demo LDAP server). Keycloak is served by nginx on https://<PUBLIC_HOST>/auth (only port 443 is open
 # from the Internet) and runs in production mode on its own Postgres: the Postgres of the training stack is not used.
 services:
   keycloak-db:
@@ -89,6 +89,30 @@ services:
       OAUTH2_PROXY_SESSION_STORE_TYPE: cookie
       OAUTH2_PROXY_COOKIE_NAME: _iris_oauth2
       TZ: Europe/Paris
+    restart: unless-stopped
+    networks:
+      - default
+
+  # Demo OpenLDAP for the native IRIS LDAP authentication (docs/LDAP-IRIS-Security.md). Docker network only: no published port.
+  ldap:
+    image: osixia/openldap:1.5.0
+    container_name: ${IRIS_INSTANCE_NAME}-ldap
+    hostname: ldap
+    command: --copy-service                 # loads ldap/bootstrap/*.ldif at the first start (empty data directory)
+    env_file:
+      - ./ldap/secrets.env                  # generated ON THE HOST by ldap/init-secrets.sh
+    environment:
+      LDAP_ORGANISATION: IRIS Health Training
+      LDAP_DOMAIN: example.org
+      LDAP_BASE_DN: dc=example,dc=org
+      LDAP_TLS: "false"                     # internal Docker network only
+      LDAP_READONLY_USER: "true"
+      LDAP_READONLY_USER_USERNAME: readonly
+      TZ: Europe/Paris
+    volumes:
+      - ./ldap/bootstrap:/container/service/slapd/assets/config/bootstrap/ldif/custom:ro
+      - ./ldap/data:/var/lib/ldap
+      - ./ldap/slapd.d:/etc/ldap/slapd.d
     restart: unless-stopped
     networks:
       - default

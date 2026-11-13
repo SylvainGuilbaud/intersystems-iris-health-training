@@ -1,0 +1,49 @@
+# Tests of the native LDAP authentication/authorization of IRIS - run them from VS Code with the REST Client extension
+# (humao.rest-client): click "Send Request" above each request. No terminal needed.
+# The demo password is read from ldap/.env (a link to ldap/secrets.env, created by ./ldap/init-secrets.sh): LDAP_DEMO_USER_PASSWORD.
+# REST Client builds the Basic header from "Basic <user> <password>".
+# Prerequisites: the containers are started, ./configure-ldap.sh was run (see docs/LDAP-IRIS-Security.md).
+#
+# These requests go to port 80: the HTTPS portal sits behind the Keycloak login (oauth2-proxy), the LDAP login is the one of the
+# IRIS portal itself. LDAP users are authenticated by the directory and get their IRIS roles from their LDAP groups
+# (intersystems-Role-iris-admin -> role iris-admin, same roles as the Keycloak users).
+# Every request carries "# @no-cookie-jar": otherwise REST Client sends back the session cookie of the previous request.
+
+@iris = http://localhost
+@portal = {{iris}}/iris-health-training-dev/csp/sys
+
+### 1. ldap.admin: the portal home page
+# Expected: 200 and a page titled "IRIS - Home" for the user ldap.admin (authenticated by the LDAP server)
+# @no-cookie-jar
+GET {{portal}}/UtilHome.csp
+Authorization: Basic ldap.admin {{$dotenv LDAP_DEMO_USER_PASSWORD}}
+
+### 2. ldap.admin: a security administration page (role iris-admin, from the LDAP group intersystems-Role-iris-admin)
+# Expected: 200 and a page titled "Users"
+# @no-cookie-jar
+GET {{portal}}/sec/%25CSP.UI.Portal.Users.zen
+Authorization: Basic ldap.admin {{$dotenv LDAP_DEMO_USER_PASSWORD}}
+
+### 3. ldap.viewer: the same page (role iris-viewer only)
+# Expected: 403 - authenticated by LDAP but not authorized: the role comes from the LDAP groups
+# @no-cookie-jar
+GET {{portal}}/sec/%25CSP.UI.Portal.Users.zen
+Authorization: Basic ldap.viewer {{$dotenv LDAP_DEMO_USER_PASSWORD}}
+
+### 4. ldap.developer: the same page (role iris-developer only)
+# Expected: 403
+# @no-cookie-jar
+GET {{portal}}/sec/%25CSP.UI.Portal.Users.zen
+Authorization: Basic ldap.developer {{$dotenv LDAP_DEMO_USER_PASSWORD}}
+
+### 5. ldap.admin with a WRONG password
+# Expected: 200 but an HTML "Login IRIS" page (the LDAP server refuses the bind)
+# @no-cookie-jar
+GET {{portal}}/UtilHome.csp
+Authorization: Basic ldap.admin not-the-password
+
+### 6. A user that does not exist in the directory
+# Expected: 200 but an HTML "Login IRIS" page
+# @no-cookie-jar
+GET {{portal}}/UtilHome.csp
+Authorization: Basic nobody.here {{$dotenv LDAP_DEMO_USER_PASSWORD}}

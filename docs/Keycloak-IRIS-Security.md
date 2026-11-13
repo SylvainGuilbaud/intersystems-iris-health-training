@@ -17,6 +17,9 @@ Le déploiement sur **AWS** a son propre chapitre ([§ AWS](#aws--déploiement-k
 - [9. Avant AWS / production](#9-avant-aws--production)
 - [10. Fichiers du dépôt](#10-fichiers-du-dépôt)
 
+
+> **Authentification LDAP.** Une authentification LDAP native d'IRIS (sans Keycloak) existe aussi, avec les mêmes rôles : voir [LDAP-IRIS-Security.md](LDAP-IRIS-Security.md).
+
 ---
 
 ## 1. Ce que l'on met en place
