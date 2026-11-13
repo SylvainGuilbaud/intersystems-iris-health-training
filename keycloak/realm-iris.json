@@ -1,0 +1,200 @@
+{
+  "realm": "iris",
+  "displayName": "IRIS Health Training",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "maxFailureWaitSeconds": 900,
+  "passwordPolicy": "length(12) and notUsername and passwordHistory(3)",
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "roles": {
+    "realm": [
+      {
+        "name": "iris-admin",
+        "description": "IRIS administrators (maps to a restricted admin role, not %All)"
+      },
+      {
+        "name": "iris-developer",
+        "description": "Developers: read/write on the training namespaces"
+      },
+      {
+        "name": "iris-operator",
+        "description": "Interoperability operators: production monitoring and message resend"
+      },
+      {
+        "name": "iris-viewer",
+        "description": "Read-only access to the portal and message traces"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "iris-portal",
+      "name": "IRIS Management Portal (via oauth2-proxy)",
+      "description": "Confidential client used by oauth2-proxy for the browser login to the portal",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "${IRIS_PORTAL_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "https://localhost/oauth2/callback",
+        "https://localhost:8443/oauth2/callback"
+      ],
+      "webOrigins": [
+        "https://localhost",
+        "https://localhost:8443"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "https://localhost/*"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "profile",
+        "email",
+        "roles"
+      ],
+      "protocolMappers": [
+        {
+          "name": "iris-realm-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "claim.name": "roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "access.token.claim": "true",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "iris-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "iris-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "iris-api",
+      "name": "IRIS HTTP APIs (resource server)",
+      "description": "Audience of the access tokens accepted by the IRIS web applications (HL7 HTTP, FHIR, REST)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "bearerOnly": true
+    },
+    {
+      "clientId": "iris-service",
+      "name": "IRIS machine-to-machine client",
+      "description": "Client credentials for senders (test tools, integrations) calling the IRIS HTTP APIs",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "${IRIS_SERVICE_CLIENT_SECRET}",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "defaultClientScopes": [
+        "profile",
+        "roles"
+      ],
+      "protocolMappers": [
+        {
+          "name": "iris-realm-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "claim.name": "roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false"
+          }
+        },
+        {
+          "name": "iris-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "iris-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "iris.admin",
+      "email": "iris.admin@example.org",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "IRIS",
+      "lastName": "Admin",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${IRIS_DEMO_USER_PASSWORD}",
+          "temporary": true
+        }
+      ],
+      "realmRoles": [
+        "iris-admin"
+      ]
+    },
+    {
+      "username": "iris.operator",
+      "email": "iris.operator@example.org",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "IRIS",
+      "lastName": "Operator",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${IRIS_DEMO_USER_PASSWORD}",
+          "temporary": true
+        }
+      ],
+      "realmRoles": [
+        "iris-operator"
+      ]
+    },
+    {
+      "username": "iris.viewer",
+      "email": "iris.viewer@example.org",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "IRIS",
+      "lastName": "Viewer",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${IRIS_DEMO_USER_PASSWORD}",
+          "temporary": true
+        }
+      ],
+      "realmRoles": [
+        "iris-viewer"
+      ]
+    }
+  ]
+}

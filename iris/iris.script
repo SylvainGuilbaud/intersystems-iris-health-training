@@ -127,4 +127,11 @@
         set sc = patient.%Save()
     }
 
+    // Keycloak (OIDC / OAuth 2.0) integration: roles, server definition, resource server, web apps.
+    // Idempotent (also replayable on an existing container with configure-oidc.sh) and independent of
+    // Keycloak being up: its endpoints are declared explicitly. See src/adm/oidc.cls.
+    zn "COMMON"
+    do $SYSTEM.OBJ.Import("/home/irisowner/dev/src/adm/oidc.cls", "ck")
+    do ##class(adm.oidc).Configure()
+
     halt

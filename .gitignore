@@ -10,3 +10,7 @@
 reports
 # InterSystems license keys (never commit)
 **/*.ISCkey
+
+# Local Keycloak secrets and local TLS material
+keycloak/secrets.env
+nginx/certs/
