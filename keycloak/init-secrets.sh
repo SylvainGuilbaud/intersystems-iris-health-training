@@ -21,6 +21,10 @@ add IRIS_PORTAL_CLIENT_SECRET "$(rnd 40)"
 add IRIS_SERVICE_CLIENT_SECRET "$(rnd 40)"
 # Initial password of the demo users (Keycloak forces a change at first login)
 add IRIS_DEMO_USER_PASSWORD "$(rnd 16)"
+# Dedicated Keycloak database (AWS: docker-compose.aws-keycloak.yml); the postgres image reads POSTGRES_PASSWORD
+DBPW="$(get KC_DB_PASSWORD)"; [ -n "$DBPW" ] || DBPW="$(rnd 32)"
+add KC_DB_PASSWORD "$DBPW"
+add POSTGRES_PASSWORD "$DBPW"
 # oauth2-proxy reads OAUTH2_PROXY_* variables: same client secret as iris-portal, plus its cookie key (32 bytes)
 add OAUTH2_PROXY_COOKIE_SECRET "$(rnd 32)"
 if [ -z "$(get OAUTH2_PROXY_CLIENT_SECRET)" ]; then printf 'OAUTH2_PROXY_CLIENT_SECRET=%s\n' "$(get IRIS_PORTAL_CLIENT_SECRET)" >> "$OUT"; echo "added OAUTH2_PROXY_CLIENT_SECRET"; fi

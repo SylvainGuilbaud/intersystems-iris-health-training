@@ -1,6 +1,9 @@
 # Tests of the Keycloak-protected IRIS APIs - run them from VS Code with the REST Client extension
 # (humao.rest-client): click "Send Request" above each request. No terminal needed.
 # Secrets are read from keycloak/.env (a link to keycloak/secrets.env, created by ./keycloak/init-secrets.sh).
+# Two targets in this file: LOCAL (sections 0 to 5, Docker on this machine) and AWS (sections A0 to A5, below).
+# AWS needs AWS_IRIS_SERVICE_CLIENT_SECRET in keycloak/secrets.env (client secret of iris-service on the AWS Keycloak:
+# ssh to the host and read IRIS_SERVICE_CLIENT_SECRET in intersystems-iris-health-training/keycloak/secrets.env).
 # Every IRIS request carries "# @no-cookie-jar": REST Client would otherwise send back the IRIS session cookie opened by
 # request 2, and request 4 ("without credential") would silently be authenticated.
 # Prerequisites: the "keycloak" name in /etc/hosts (127.0.0.1 keycloak) and the containers started.
@@ -48,8 +51,9 @@ MSH|^~\&|ANALYZER|LAB|LIS|LAB|20261113190000||QBP^Q11^QBP_Q11|QBP1|P|2.5.1|||NE|
 QPD|WOS^Work Order Step^IHE_LABTF|Q1|CT99
 RCP|I||R
 
-### 3. The same request with a TAMPERED token (last character changed)
-# Expected: 200 but an HTML "Login IRIS" page, no RSP^K11: the signature is rejected
+### 3. The same request with a TAMPERED token (a character is appended to the signature)
+# Expected: 200 but an HTML "Login IRIS" page, no RSP^K11: the signature is rejected.
+# (Do not "tamper" by replacing the last character: it carries only 2 useful bits, so some replacements give the same signature.)
 # @no-cookie-jar
 POST {{iris}}/iris-health-training-dev/csp/healthshare/{{namespace}}/EnsLib.HL7.Service.HTTPService.cls?CfgItem=LAW%20LAB-27%20Query%20for%20AWOS%20-%20HTTP
 Authorization: Bearer {{token}}x
@@ -76,3 +80,77 @@ RCP|I||R
 # @no-cookie-jar
 GET {{iris}}/iris-health-training-dev/csp/sys/sec/%25CSP.UI.Portal.Users.zen
 Authorization: Bearer {{token}}
+
+################################################################################
+### AWS  (https://<public dns> : Keycloak under /auth, nginx on 443)
+################################################################################
+# The AWS certificate is self-signed (Let's Encrypt refuses EC2 names): REST Client must accept it, for example with the
+# VS Code setting "http.proxyStrictSSL": false. The AWS Keycloak admin console is NOT public (404): SSH tunnel, see the docs.
+
+@awsHost = ec2-63-177-72-122.eu-central-1.compute.amazonaws.com
+@awsKeycloak = https://{{awsHost}}/auth
+@awsIris = https://{{awsHost}}
+
+### A0.a AWS Keycloak is up and the realm "iris" exists
+# Expected: 200 and "issuer":"https://<public dns>/auth/realms/iris" (the public URL, also found in the tokens)
+GET {{awsKeycloak}}/realms/iris/.well-known/openid-configuration
+
+### A0.b The Keycloak admin console is NOT public
+# Expected: 404 (the admin console and the master realm are only reachable through an SSH tunnel)
+GET {{awsKeycloak}}/admin/master/console/
+
+### A0.c The portal, without session, redirects to the Keycloak login
+# Expected: 302 with a Location header "https://<public dns>/auth/realms/iris/protocol/openid-connect/auth?...code_challenge_method=S256..."
+# @no-redirect
+GET {{awsIris}}/iris-health-training-dev/csp/sys/UtilHome.csp
+
+### A1. Get an access token from the AWS Keycloak (client_credentials, client iris-service)
+# Expected: 200 and a JSON body with "access_token"; the token's issuer is https://<public dns>/auth/realms/iris
+# @name awsLogin
+POST {{awsKeycloak}}/realms/iris/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&client_id=iris-service&client_secret={{$dotenv AWS_IRIS_SERVICE_CLIENT_SECRET}}
+
+###
+@awsToken = {{awsLogin.response.body.$.access_token}}
+
+### A2. HL7 LAB-27 on AWS with a VALID token
+# Expected: 200 and an RSP^K11 answer (MSA|AA, QAK|Q1|OK)
+# @no-cookie-jar
+POST {{awsIris}}/iris-health-training-dev/csp/healthshare/{{namespace}}/EnsLib.HL7.Service.HTTPService.cls?CfgItem=LAW%20LAB-27%20Query%20for%20AWOS%20-%20HTTP
+Authorization: Bearer {{awsToken}}
+Content-Type: text/plain
+
+MSH|^~\&|ANALYZER|LAB|LIS|LAB|20261113190000||QBP^Q11^QBP_Q11|QBP1|P|2.5.1|||NE|AL||UNICODE UTF-8|||LAB-27^IHE
+QPD|WOS^Work Order Step^IHE_LABTF|Q1|CT99
+RCP|I||R
+
+### A3. The same request on AWS with a TAMPERED token (a character is appended to the signature)
+# Expected: 200 but an HTML "Login IRIS" page, no RSP^K11
+# @no-cookie-jar
+POST {{awsIris}}/iris-health-training-dev/csp/healthshare/{{namespace}}/EnsLib.HL7.Service.HTTPService.cls?CfgItem=LAW%20LAB-27%20Query%20for%20AWOS%20-%20HTTP
+Authorization: Bearer {{awsToken}}x
+Content-Type: text/plain
+
+MSH|^~\&|ANALYZER|LAB|LIS|LAB|20261113190000||QBP^Q11^QBP_Q11|QBP1|P|2.5.1|||NE|AL||UNICODE UTF-8|||LAB-27^IHE
+QPD|WOS^Work Order Step^IHE_LABTF|Q1|CT99
+RCP|I||R
+
+### A4. The same request on AWS WITHOUT any credential
+# Expected: 200 but an HTML "Login IRIS" page, no RSP^K11
+# @no-cookie-jar
+POST {{awsIris}}/iris-health-training-dev/csp/healthshare/{{namespace}}/EnsLib.HL7.Service.HTTPService.cls?CfgItem=LAW%20LAB-27%20Query%20for%20AWOS%20-%20HTTP
+Content-Type: text/plain
+
+MSH|^~\&|ANALYZER|LAB|LIS|LAB|20261113190000||QBP^Q11^QBP_Q11|QBP1|P|2.5.1|||NE|AL||UNICODE UTF-8|||LAB-27^IHE
+QPD|WOS^Work Order Step^IHE_LABTF|Q1|CT99
+RCP|I||R
+
+### A5. The portal on AWS with a machine token alone
+# Expected: 302 (to the Keycloak login). On AWS the portal sits behind oauth2-proxy: a bearer token does not replace the
+# browser login (unlike the local port 80, where the same request answers 403 for an account without role).
+# @no-redirect
+# @no-cookie-jar
+GET {{awsIris}}/iris-health-training-dev/csp/sys/sec/%25CSP.UI.Portal.Users.zen
+Authorization: Bearer {{awsToken}}

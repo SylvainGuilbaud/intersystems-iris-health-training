@@ -49,22 +49,37 @@ scp -r -i "$ACCESS_KEY_FILENAME" \
     "$DIST"/* \
     "$CLOUD_USERNAME@$PUBLIC_DNS:$REMOTE_DIST/"
 
-echo "==> Copying updated docker-compose.yml, CSP.conf and nginx config..."
+# If Keycloak/HTTPS were deployed with ./deploy-keycloak-aws.sh, the host runs docker-compose.yml + docker-compose.aws-keycloak.yml
+# and a nginx.conf/tls.aws.conf of its own: the local docker-compose.yml and nginx.conf must NOT overwrite them
+# (they know neither port 443 nor the ACME location, and mount files that do not exist on the host).
+KC_ON_HOST=$(ssh -i "$ACCESS_KEY_FILENAME" "$CLOUD_USERNAME@$PUBLIC_DNS" \
+    "[ -f $REMOTE_BASE/docker-compose.aws-keycloak.yml ] && echo yes || echo no")
+
+echo "==> Copying updated CSP.conf (and docker-compose.yml, nginx config unless the Keycloak/HTTPS deployment is present)..."
 scp -i "$ACCESS_KEY_FILENAME" \
     "$REPO_DIR/webgateway/CSP.conf" \
     "$CLOUD_USERNAME@$PUBLIC_DNS:$REMOTE_BASE/webgateway/CSP.conf"
-scp -i "$ACCESS_KEY_FILENAME" \
-    "$REPO_DIR/docker-compose.yml" \
-    "$CLOUD_USERNAME@$PUBLIC_DNS:$REMOTE_BASE/docker-compose.yml"
-ssh -i "$ACCESS_KEY_FILENAME" "$CLOUD_USERNAME@$PUBLIC_DNS" \
-    "mkdir -p $REMOTE_BASE/nginx"
-scp -i "$ACCESS_KEY_FILENAME" \
-    "$REPO_DIR/nginx/nginx.conf" \
-    "$CLOUD_USERNAME@$PUBLIC_DNS:$REMOTE_BASE/nginx/nginx.conf"
+if [ "$KC_ON_HOST" = yes ]; then
+    echo "    Keycloak/HTTPS deployment detected on the host: docker-compose.yml and nginx.conf are NOT overwritten."
+else
+    scp -i "$ACCESS_KEY_FILENAME" \
+        "$REPO_DIR/docker-compose.yml" \
+        "$CLOUD_USERNAME@$PUBLIC_DNS:$REMOTE_BASE/docker-compose.yml"
+    ssh -i "$ACCESS_KEY_FILENAME" "$CLOUD_USERNAME@$PUBLIC_DNS" \
+        "mkdir -p $REMOTE_BASE/nginx"
+    scp -i "$ACCESS_KEY_FILENAME" \
+        "$REPO_DIR/nginx/nginx.conf" \
+        "$CLOUD_USERNAME@$PUBLIC_DNS:$REMOTE_BASE/nginx/nginx.conf"
+fi
 
 echo "==> Starting nginx container on $PUBLIC_DNS..."
-ssh -i "$ACCESS_KEY_FILENAME" "$CLOUD_USERNAME@$PUBLIC_DNS" \
-    "cd $REMOTE_BASE && IRIS_INSTANCE_NAME=\$(grep '^IRIS_INSTANCE_NAME=' .env | cut -d= -f2) && sudo docker compose -p \"\$IRIS_INSTANCE_NAME\" up -d --no-deps nginx 2>&1"
+if [ "$KC_ON_HOST" = yes ]; then
+    ssh -i "$ACCESS_KEY_FILENAME" "$CLOUD_USERNAME@$PUBLIC_DNS" \
+        "cd $REMOTE_BASE && IRIS_INSTANCE_NAME=\$(grep '^IRIS_INSTANCE_NAME=' .env | cut -d= -f2) && sudo env PUBLIC_HOST=$PUBLIC_DNS NGINX_TLS_CONF=tls.aws.conf docker compose -p \"\$IRIS_INSTANCE_NAME\" -f docker-compose.yml -f docker-compose.aws-keycloak.yml up -d --no-deps nginx 2>&1"
+else
+    ssh -i "$ACCESS_KEY_FILENAME" "$CLOUD_USERNAME@$PUBLIC_DNS" \
+        "cd $REMOTE_BASE && IRIS_INSTANCE_NAME=\$(grep '^IRIS_INSTANCE_NAME=' .env | cut -d= -f2) && sudo docker compose -p \"\$IRIS_INSTANCE_NAME\" up -d --no-deps nginx 2>&1"
+fi
 
 echo "==> Refreshing webgateway if present..."
 ssh -i "$ACCESS_KEY_FILENAME" "$CLOUD_USERNAME@$PUBLIC_DNS" \

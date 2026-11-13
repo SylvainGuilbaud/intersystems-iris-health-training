@@ -1,8 +1,8 @@
 # Sécuriser le portail et les API IRIS avec Keycloak
 
 Procédure pas à pas, dans l'ordre. Chaque étape indique **comment vérifier** qu'elle a réussi.
-Tout ce qui est décrit ici a été exécuté et testé **en local** (conteneur `iris-health-training-dev`,
-IRIS for Health 2026.1), sauf mention « non testé ».
+Les étapes 1 à 7 ci-dessous ont été exécutées et testées **en local** (conteneur `iris-health-training-dev`, IRIS for Health 2026.1).
+Le déploiement sur **AWS** a son propre chapitre ([§ AWS](#aws--déploiement-keycloak--https)) ; sauf mention « non testé », ce qui est décrit a été exécuté.
 
 - [1. Ce que l'on met en place](#1-ce-que-lon-met-en-place)
 - [2. Prérequis](#2-prérequis)
@@ -13,6 +13,7 @@ IRIS for Health 2026.1), sauf mention « non testé ».
 - [6. Accès de secours](#6-accès-de-secours-break-glass)
 - [7. Reconstruire l'image IRIS](#7-reconstruire-limage-iris)
 - [8. Dépannage](#8-dépannage)
+- [AWS : déploiement Keycloak + HTTPS](#aws--déploiement-keycloak--https)
 - [9. Avant AWS / production](#9-avant-aws--production)
 - [10. Fichiers du dépôt](#10-fichiers-du-dépôt)
 
@@ -332,7 +333,7 @@ Le script affiche `OK` ou `ECHEC` pour chacun des trois cas (jeton valide, jeton
 
 Objectif : montrer **qui est l'utilisateur** (authentification par Keycloak) et **ce qu'il a le droit de faire** (autorisation par les rôles).
 Prérequis : étapes 1 à 7 faites, `127.0.0.1 keycloak` dans `/etc/hosts`. Les mots de passe sont dans `keycloak/secrets.env`
-(`IRIS_DEMO_USER_PASSWORD`, commun aux trois comptes de démo ; aucun changement de mot de passe n'est exigé à la première connexion).
+(`IRIS_DEMO_USER_PASSWORD`, commun aux comptes de démo ; aucun changement de mot de passe n'est exigé à la première connexion).
 
 | # | Action | Ce que l'on montre |
 |---|---|---|
@@ -413,6 +414,7 @@ Pour reconstruire : `docker compose -p iris-health-training build iris-dev` puis
 | `nginx -t` : `host not found in upstream "oauth2-proxy"` | `oauth2-proxy` pas encore démarré | démarrer `oauth2-proxy` avant de recharger nginx |
 | Le jeton valide donne la page de connexion IRIS | mapping du resource server absent (créé par script, pas par le portail) | `adm.oidc.EnsureResourceServer` crée le mapping `%Service_WebGateway` / `*` |
 | Le portail s'ouvre, mais une page d'administration (Users, Roles…) renvoie la page de connexion | OAuth2 non activé sur **toutes** les applications du portail (`/csp/sys/sec`, `/op`, `/mgr`, `/exp`) | `adm.oidc.WEBAPPS` les contient maintenant ; relancer `./configure-oidc.sh` |
+| **400 Bad Request** de nginx juste après la connexion Keycloak, alors que les cookies de session sont bien posés (un second clic sur l'URL ouvre le portail) ; journal nginx : `client sent invalid request while reading client request headers` | la redirection après connexion `/oauth2/start?rd=<URL>` **décode une fois de trop** l'URL d'origine : `…/csp/sys/%25CSP.Portal.Home.zen` (la page d'accueil par défaut du portail, qui s'appelle `%CSP.Portal.Home.zen`) revient en `…/%CSP.Portal.Home.zen`, une URL invalide. `UtilHome.csp`, sans `%`, passait | l'URL d'origine est transmise dans l'en-tête `X-Auth-Request-Redirect`, repris tel quel par `oauth2-proxy`, par l'emplacement interne `/_oauth2_signin` de `nginx/tls.conf` et `tls.aws.conf` : déjà fait |
 | Jeton rejeté, `iss` inattendu | l'émetteur du jeton ≠ `http://keycloak:8180/realms/iris` | utiliser le **même nom** `keycloak:8180` partout (navigateur, conteneurs, outils ; `--resolve` avec curl) |
 | Le sélecteur d'espaces ne propose que `%SYS`, `HSLIB`, `USER` ; *Interoperability* est grisé | session IRIS ouverte avant un changement de rôles, ou espace courant `%SYS` (le menu n'est actif que dans un espace interopérable) | **Logout**, se reconnecter, puis choisir `DGLAB` ou `TRAINING` |
 | Une page d'interopérabilité (`EnsPortal.*`) redemande un mot de passe IRIS | cette page n'est pas derrière `oauth2-proxy` | l'emplacement nginx doit couvrir `csp/healthshare/<espace>/EnsPortal.` (déjà fait dans `nginx/tls.conf`) |
@@ -425,25 +427,84 @@ Journaux utiles : `docker logs iris-health-training-keycloak`, `docker logs iris
 
 ---
 
+## AWS : déploiement Keycloak + HTTPS
+
+Déployé par `./deploy-keycloak-aws.sh` (idempotent, étapes `prepare`, `cert`, `up`, `iris`, `verify`, option `--dry-run`).
+Il **ajoute** `docker-compose.aws-keycloak.yml` au `docker-compose.yml` déjà présent sur l'hôte, qu'il ne remplace pas.
+
+| Élément | Valeur sur AWS |
+|---|---|
+| Adresse publique | `https://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com` |
+| Keycloak | `https://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com/auth/realms/iris` (mode **production**, base Postgres **dédiée** `…-keycloak-db`, volume `keycloak/db-data`) |
+| Portail IRIS | `https://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com/iris-health-training-dev/csp/sys/UtilHome.csp` (connexion Keycloak via `oauth2-proxy`) |
+| Pages d'interopérabilité | `…/csp/healthshare/<espace>/EnsPortal.*` : même connexion Keycloak |
+| API HTTP | jeton Bearer, par exemple LAB-27 (`…/csp/healthshare/dglab/EnsLib.HL7.Service.HTTPService.cls?CfgItem=…`) |
+| Console d'administration Keycloak | **non publique** (404) : tunnel SSH, voir ci-dessous |
+| Configuration IRIS | instance `iris-health-training-dev` seulement (`prod` non configurée) |
+
+Seuls les ports 22, 80 et 443 sont joignables depuis Internet : Keycloak est donc servi par nginx sous `/auth`, jamais sur son port.
+
+**Certificat.** Let's Encrypt a **refusé** le nom `ec2-….compute.amazonaws.com` (politique de l'autorité : « forbidden by policy »). Le déploiement a basculé
+sur un certificat **auto-signé** valable 365 jours : les connexions sont chiffrées, mais le navigateur affiche un avertissement à accepter. Pour un vrai
+certificat il faut un **nom de domaine** qui vous appartient, pointé vers l'hôte ; relancer alors `./deploy-keycloak-aws.sh cert` après avoir remplacé
+`PUBLIC_HOST` et les URL (voir §9). Le renouvellement n'est pas automatisé. Un compte Let's Encrypt a été créé, sans adresse e-mail.
+
+**Mots de passe.** Les secrets sont générés **sur l'hôte** dans `keycloak/secrets.env` (mode 600) et n'ont jamais quitté la machine. Pour lire celui des comptes
+de démo (`iris.admin`, `iris.developer`, `iris.operator`, `iris.viewer`) :
+
+```bash
+source cloudenv
+ssh -i "$ACCESS_KEY_FILENAME" "$CLOUD_USERNAME@$PUBLIC_DNS" "grep IRIS_DEMO_USER_PASSWORD intersystems-iris-health-training/keycloak/secrets.env"
+```
+
+**Console d'administration de Keycloak** (royaume `master`, compte `admin`, mot de passe `KC_BOOTSTRAP_ADMIN_PASSWORD` du même fichier) : ouvrir un tunnel
+puis aller sur <http://localhost:8180/auth/admin/>.
+
+```bash
+source cloudenv
+ssh -i "$ACCESS_KEY_FILENAME" -L 8180:localhost:8180 "$CLOUD_USERNAME@$PUBLIC_DNS"
+```
+
+**Tests REST Client sur AWS** : la deuxième moitié de [`keycloak/test-api.http`](../keycloak/test-api.http) (sections `A0` à `A5`) vise AWS : Keycloak joignable et issuer public, console non publique (404),
+redirection du portail, jeton, API avec jeton valide, falsifié et absent. Elle lit le secret du client `iris-service` d'AWS dans `keycloak/secrets.env` sous le nom `AWS_IRIS_SERVICE_CLIENT_SECRET`
+(valeur de `IRIS_SERVICE_CLIENT_SECRET` dans le `keycloak/secrets.env` de l'hôte). Le certificat étant auto-signé, REST Client doit l'accepter (réglage VS Code `"http.proxyStrictSSL": false`, **non vérifié** chez vous).
+Différence avec le local : la requête `A5` (portail avec un jeton machine seul) répond **302** vers la connexion Keycloak, pas 403 : sur AWS le portail est derrière `oauth2-proxy`, qu'un jeton Bearer ne remplace pas.
+
+**Vérifié sur AWS** : l'émetteur des jetons est l'URL publique HTTPS ; `/auth/admin` et `/auth/realms/master` répondent 404 ; le portail redirige vers Keycloak ;
+un jeton valide donne `RSP^K11`, un jeton falsifié ou l'absence de jeton la page « Login IRIS » ; un utilisateur de test jetable avec le rôle `iris-admin` se connecte
+au portail et ouvre « Production Configuration » (DGLAB) et « Users » (supprimé ensuite). **Non vérifié** : un vrai navigateur sur AWS, le comportement avec un certificat de confiance.
+
+**À savoir pour l'exploitation**
+
+- Toute commande `docker compose` sur l'hôte doit inclure **les deux fichiers** et les variables, sinon nginx perd son port 443 :
+  `PUBLIC_HOST=<hôte> NGINX_TLS_CONF=tls.aws.conf docker compose -p iris-health-training -f docker-compose.yml -f docker-compose.aws-keycloak.yml …`
+- `build-cloud-angular.sh` détecte ce déploiement et n'écrase alors ni `docker-compose.yml` ni `nginx.conf` (modifié, **non exécuté**).
+- Le port 80 reste ouvert et sert encore le portail avec un mot de passe IRIS : choix volontaire, voir §6.
+- IRIS appelle Keycloak par l'adresse interne `http://keycloak:8080/auth/realms/iris` (`--backchannel`) tandis que l'émetteur des jetons est l'URL publique (`--issuer`) :
+  `./configure-oidc.sh --target aws --instance dev --issuer https://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com/auth/realms/iris --backchannel http://keycloak:8080/auth/realms/iris`.
+- « Autoriser OAuth2 » au niveau de l'**instance** est activé par `adm.oidc` (il manquait sur AWS et rendait les cases des applications sans effet).
+
+---
+
 ## 9. Avant AWS / production
 
+> **AWS est déployé** (voir la section précédente) ; ce qui suit est ce qu'il resterait à faire pour un usage réel.
+>
 > **Hors périmètre de la démonstration** : les points 4 (port 80) et 5 (comptes `%All`, mots de passe) ci-dessous sont laissés tels quels
 > à votre demande. Cette section décrit ce qu'il faudrait faire pour un usage réel.
 
-**Rien de ce document n'a été appliqué sur AWS.** Ne pas pousser `docker-compose.yml` tel quel sur AWS : nginx y monte
-`nginx/tls.conf` et `nginx/certs/`, absents là-bas. Liste de ce qui reste à faire :
+Sur AWS, ne jamais remplacer le `docker-compose.yml` de l'hôte par le fichier local : nginx y monterait `nginx/tls.conf` et `nginx/certs/`, absents là-bas. Liste de ce qui reste à faire :
 
-1. **Vrai certificat TLS** (par exemple Let's Encrypt) à la place du certificat auto-signé, et **HSTS** activé.
+1. **Vrai certificat TLS** à la place du certificat auto-signé, avec un nom de domaine à vous (Let's Encrypt refuse les noms EC2), et **HSTS** activé.
 2. **Nom public de Keycloak** en HTTPS (par exemple `https://auth.exemple.org`) : `KC_HOSTNAME`, `OAUTH2_PROXY_OIDC_ISSUER_URL`,
    `adm.oidc.ISSUER`, `OAUTH2_PROXY_REDIRECT_URL` et les `redirectUris` du client `iris-portal` doivent tous utiliser ce nom.
-3. **Keycloak de production** : `start` (pas `start-dev`), base PostgreSQL (le conteneur `training-postgres` existe), `KC_PROXY_HEADERS`,
-   import du royaume sans mot de passe temporaire connu, sauvegarde du royaume.
+3. **Keycloak de production** : fait sur AWS (`start`, Postgres dédié, `KC_PROXY_HEADERS`). Reste : sauvegarde de la base et du royaume, comptes de démo remplacés par les vrais utilisateurs.
 4. **Fermer ou rediriger le port 80** vers HTTPS : aujourd'hui IRIS accepte aussi le jeton en clair sur le port 80, parce qu'il ne voit
    pas le TLS terminé par nginx.
 5. **Comptes IRIS** : retirer `%All` des comptes de démonstration, changer les mots de passe (le mot de passe `_SYSTEM` d'AWS a été
    partagé dans une conversation : à changer), désactiver les comptes inutiles, retirer l'authentification *non authentifiée*
    (bit `Unauthenticated`) des applications `/csp/sys*` si elle n'est pas voulue. **Non traité ici.**
-6. **Rejouer la configuration IRIS** sur AWS : `./configure-oidc.sh --target aws --instance dev` (option `--target aws` **non testée**).
+6. **Configuration IRIS sur AWS** : faite pour `iris-health-training-dev`. Reste `prod` : `./configure-oidc.sh --target aws --instance prod --issuer … --backchannel …`.
 7. **Protéger aussi** les services HTTP exposés au public (HL7, FHIR) par jetons, et révoquer les secrets de démonstration.
 8. Mettre à jour la licence avant son expiration (30/11/2026) : `./deploy-key.sh`.
 

@@ -1,0 +1,103 @@
+# Keycloak + oauth2-proxy + HTTPS for the AWS host. Used IN ADDITION to the docker-compose.yml already on the host
+# (it is not replaced):
+#   PUBLIC_HOST=<public dns> NGINX_TLS_CONF=tls.aws.conf \
+#   docker compose -p iris-health-training -f docker-compose.yml -f docker-compose.aws-keycloak.yml up -d --no-deps <service>
+# Driven by ./deploy-keycloak-aws.sh. Keycloak is served by nginx on https://<PUBLIC_HOST>/auth (only port 443 is open
+# from the Internet) and runs in production mode on its own Postgres: the Postgres of the training stack is not used.
+services:
+  keycloak-db:
+    image: postgres:17
+    container_name: ${IRIS_INSTANCE_NAME}-keycloak-db
+    env_file:
+      - ./keycloak/secrets.env            # POSTGRES_PASSWORD
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+    volumes:
+      - ./keycloak/db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - default                           # no published port
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4
+    container_name: ${IRIS_INSTANCE_NAME}-keycloak
+    hostname: keycloak
+    command: start --import-realm
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    env_file:
+      - ./keycloak/secrets.env            # KC_BOOTSTRAP_ADMIN_*, KC_DB_PASSWORD, client secrets, demo password
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_HTTP_RELATIVE_PATH: /auth
+      KC_HOSTNAME: https://${PUBLIC_HOST:?set PUBLIC_HOST}/auth     # public URL = issuer of the tokens
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"                        # containers may use http://keycloak:8080/auth
+      KC_HOSTNAME_ADMIN: http://localhost:8180/auth                  # admin console only through an SSH tunnel
+      KC_HTTP_ENABLED: "true"                                        # TLS is terminated by nginx
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"
+      TZ: Europe/Paris
+    ports:
+      - "127.0.0.1:8180:8080"             # loopback only: ssh -L 8180:localhost:8180 for the admin console
+    volumes:
+      - ./keycloak/realm-iris.json:/opt/keycloak/data/import/realm-iris.json:ro
+    restart: unless-stopped
+    networks:
+      - default
+
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.12.0
+    container_name: ${IRIS_INSTANCE_NAME}-oauth2-proxy
+    hostname: oauth2-proxy
+    depends_on:
+      - keycloak
+    env_file:
+      - ./keycloak/secrets.env            # OAUTH2_PROXY_CLIENT_SECRET, OAUTH2_PROXY_COOKIE_SECRET
+    environment:
+      OAUTH2_PROXY_PROVIDER: keycloak-oidc
+      # Discovery is skipped: the browser uses the public https URL, the proxy itself calls Keycloak on the Docker network.
+      OAUTH2_PROXY_SKIP_OIDC_DISCOVERY: "true"
+      OAUTH2_PROXY_OIDC_ISSUER_URL: https://${PUBLIC_HOST:?set PUBLIC_HOST}/auth/realms/iris
+      OAUTH2_PROXY_LOGIN_URL: https://${PUBLIC_HOST}/auth/realms/iris/protocol/openid-connect/auth
+      OAUTH2_PROXY_REDEEM_URL: http://keycloak:8080/auth/realms/iris/protocol/openid-connect/token
+      OAUTH2_PROXY_OIDC_JWKS_URL: http://keycloak:8080/auth/realms/iris/protocol/openid-connect/certs
+      OAUTH2_PROXY_PROFILE_URL: http://keycloak:8080/auth/realms/iris/protocol/openid-connect/userinfo
+      OAUTH2_PROXY_CLIENT_ID: iris-portal
+      OAUTH2_PROXY_REDIRECT_URL: https://${PUBLIC_HOST}/oauth2/callback
+      OAUTH2_PROXY_SCOPE: openid profile email roles
+      OAUTH2_PROXY_CODE_CHALLENGE_METHOD: S256
+      OAUTH2_PROXY_EMAIL_DOMAINS: "*"
+      OAUTH2_PROXY_HTTP_ADDRESS: 0.0.0.0:4180
+      OAUTH2_PROXY_REVERSE_PROXY: "true"
+      OAUTH2_PROXY_UPSTREAMS: static://202
+      OAUTH2_PROXY_SET_XAUTHREQUEST: "true"
+      OAUTH2_PROXY_PASS_ACCESS_TOKEN: "true"
+      OAUTH2_PROXY_SKIP_PROVIDER_BUTTON: "true"
+      OAUTH2_PROXY_COOKIE_SECURE: "true"
+      OAUTH2_PROXY_COOKIE_SAMESITE: lax
+      OAUTH2_PROXY_COOKIE_EXPIRE: 8h
+      OAUTH2_PROXY_COOKIE_REFRESH: 4m
+      OAUTH2_PROXY_SESSION_STORE_TYPE: cookie
+      OAUTH2_PROXY_COOKIE_NAME: _iris_oauth2
+      TZ: Europe/Paris
+    restart: unless-stopped
+    networks:
+      - default
+
+  # Only what changes on the existing nginx service: HTTPS port, certificates, ACME webroot, TLS server block.
+  nginx:
+    ports:
+      - "443:443"
+    volumes:
+      - ./nginx/${NGINX_TLS_CONF:-tls.disabled.conf}:/etc/nginx/conf.d/tls.conf:ro
+      - ./nginx/letsencrypt:/etc/letsencrypt:ro
+      - ./nginx/certbot-www:/var/www/certbot:ro

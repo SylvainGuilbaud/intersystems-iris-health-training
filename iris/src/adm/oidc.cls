@@ -30,13 +30,33 @@ Parameter RESOURCESERVER = "keycloak-iris-api";
 /// otherwise a page served by /csp/sys/sec (users, roles...) falls back to the login page.
 Parameter WEBAPPS = "/csp/healthshare/dglab,/csp/healthshare/training,/csp/sys,/csp/sys/exp,/csp/sys/mgr,/csp/sys/op,/csp/sys/sec";
 
+/// Issuer of the Keycloak realm in use: the one given to Configure() (kept in ^adm.oidc), else the ISSUER parameter.
+ClassMethod Issuer() As %String
+{
+	Quit $Get(^adm.oidc("Issuer"), ..#ISSUER)
+}
+
+/// Base URL (realm URL) used by IRIS itself to call Keycloak: token, introspection, userinfo, revocation, JWKS.
+/// It can differ from the issuer when the public URL is not reachable from the container (AWS: public https issuer,
+/// internal http://keycloak:8080/auth/realms/iris). Defaults to the issuer.
+ClassMethod Backchannel() As %String
+{
+	Quit $Get(^adm.oidc("Backchannel"), ..Issuer())
+}
+
 /// Applies the whole configuration. pWebApps overrides the default list of web applications.
-ClassMethod Configure(pWebApps As %String = {..#WEBAPPS}, pVerbose As %Boolean = 1) As %Status
+/// pIssuer / pBackchannel (optional) set the issuer and the back-channel realm URL; they are remembered.
+ClassMethod Configure(pWebApps As %String = {..#WEBAPPS}, pVerbose As %Boolean = 1, pIssuer As %String = "", pBackchannel As %String = "") As %Status
 {
 	New $Namespace
 	Set $Namespace = "%SYS"
 	Set tSC = $$$OK
 	Try {
+		Set:pIssuer'="" ^adm.oidc("Issuer") = pIssuer
+		Set:pBackchannel'="" ^adm.oidc("Backchannel") = pBackchannel
+		Write:pVerbose "  issuer: ", ..Issuer(), " | back-channel: ", ..Backchannel(), !
+		Set tSC = ..EnsureInstanceOAuth2(pVerbose)
+		Quit:$$$ISERR(tSC)
 		Set tSC = ..EnsureRoles(pVerbose)
 		Quit:$$$ISERR(tSC)
 		Set tSC = ..EnsureServerDefinition(pVerbose)
@@ -48,6 +68,24 @@ ClassMethod Configure(pWebApps As %String = {..#WEBAPPS}, pVerbose As %Boolean =
 		Set tSC = ex.AsStatus()
 	}
 	Write:pVerbose "adm.oidc.Configure: ", $Select($$$ISOK(tSC):"OK", 1:$System.Status.GetErrorText(tSC)), !
+	Quit tSC
+}
+
+/// "Allow OAuth2 authentication" at the instance level (System Administration > Security > System Security >
+/// Authentication/Web Session Options). Without it the OAuth2 box of a web application has no effect. The other
+/// authentication methods of the instance are kept.
+ClassMethod EnsureInstanceOAuth2(pVerbose As %Boolean = 1) As %Status
+{
+	Set tOAuth2 = ##class(%SYSTEM.Security.Datatype.Authentication).DisplayToLogical("OAuth2")
+	Set tSC = ##class(Security.System).Get("SYSTEM", .tProps)
+	Quit:$$$ISERR(tSC) tSC
+	If $ZBoolean(+tProps("AutheEnabled"), tOAuth2, 1) {
+		Write:pVerbose "  instance: OAuth2 authentication already allowed", !
+		Quit $$$OK
+	}
+	Set tProps("AutheEnabled") = $ZBoolean(+tProps("AutheEnabled"), tOAuth2, 7)
+	Set tSC = ##class(Security.System).Modify("SYSTEM", .tProps)
+	Write:pVerbose "  instance: ", $Select($$$ISOK(tSC):"OAuth2 authentication allowed", 1:$System.Status.GetErrorText(tSC)), !
 	Quit tSC
 }
 
@@ -105,8 +143,9 @@ ClassMethod FindServerDefinition(pIssuer As %String) As %String [ Private ]
 /// OAuth 2.0 server definition of the Keycloak realm, with explicit endpoints (no discovery)
 ClassMethod EnsureServerDefinition(pVerbose As %Boolean = 1) As %Status
 {
-	Set tIssuer = ..#ISSUER
+	Set tIssuer = ..Issuer()
 	Set tOIDC = tIssuer _ "/protocol/openid-connect"
+	Set tBack = ..Backchannel() _ "/protocol/openid-connect"
 	Set tId = ..FindServerDefinition(tIssuer)
 	Set tServer = $Select(tId'="":##class(OAuth2.ServerDefinition).%OpenId(tId), 1:"")
 	Set tNew = '$IsObject(tServer)
@@ -114,10 +153,10 @@ ClassMethod EnsureServerDefinition(pVerbose As %Boolean = 1) As %Status
 	Set tServer.IssuerEndpoint = tIssuer
 	Set tServer.IsDiscovery = 0
 	Set tServer.AuthorizationEndpoint = tOIDC _ "/auth"
-	Set tServer.TokenEndpoint = tOIDC _ "/token"
-	Set tServer.UserinfoEndpoint = tOIDC _ "/userinfo"
-	Set tServer.IntrospectionEndpoint = tOIDC _ "/token/introspect"
-	Set tServer.RevocationEndpoint = tOIDC _ "/revoke"
+	Set tServer.TokenEndpoint = tBack _ "/token"
+	Set tServer.UserinfoEndpoint = tBack _ "/userinfo"
+	Set tServer.IntrospectionEndpoint = tBack _ "/token/introspect"
+	Set tServer.RevocationEndpoint = tBack _ "/revoke"
 	Set tMeta = ##class(OAuth2.Server.Metadata).%New()
 	Set tMeta.issuer = tIssuer
 	Set tMeta."authorization_endpoint" = tServer.AuthorizationEndpoint
@@ -125,7 +164,7 @@ ClassMethod EnsureServerDefinition(pVerbose As %Boolean = 1) As %Status
 	Set tMeta."userinfo_endpoint" = tServer.UserinfoEndpoint
 	Set tMeta."introspection_endpoint" = tServer.IntrospectionEndpoint
 	Set tMeta."revocation_endpoint" = tServer.RevocationEndpoint
-	Set tMeta."jwks_uri" = tOIDC _ "/certs"
+	Set tMeta."jwks_uri" = tBack _ "/certs"
 	Set tServer.Metadata = tMeta
 	Set tSC = tServer.%Save()
 	Write:pVerbose "  server definition ", tIssuer, ": ", $Select($$$ISOK(tSC):$Select(tNew:"created", 1:"updated"), 1:$System.Status.GetErrorText(tSC)), !
@@ -136,9 +175,9 @@ ClassMethod EnsureServerDefinition(pVerbose As %Boolean = 1) As %Status
 ClassMethod EnsureResourceServer(pVerbose As %Boolean = 1) As %Status
 {
 	Set tName = ..#RESOURCESERVER
-	Set tId = ..FindServerDefinition(..#ISSUER)
+	Set tId = ..FindServerDefinition(..Issuer())
 	Set tServer = $Select(tId'="":##class(OAuth2.ServerDefinition).%OpenId(tId), 1:"")
-	If '$IsObject(tServer) Quit $$$ERROR($$$GeneralError, "Server definition " _ ..#ISSUER _ " is missing")
+	If '$IsObject(tServer) Quit $$$ERROR($$$GeneralError, "Server definition " _ ..Issuer() _ " is missing")
 	Set tRS = ##class(OAuth2.ResourceServer).%OpenId(tName)
 	Set tNew = '$IsObject(tRS)
 	Set:tNew tRS = ##class(OAuth2.ResourceServer).%New()

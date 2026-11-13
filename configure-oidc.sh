@@ -6,17 +6,21 @@
 # durable %SYS volumes keep the configuration of their first start, so a rebuild alone does not reach them.
 # Idempotent: safe to run as many times as you like.
 #
-# Usage: ./configure-oidc.sh [--target local|aws] [--instance dev|prod|both] [--dry-run]
+# Usage: ./configure-oidc.sh [--target local|aws] [--instance dev|prod|both] [--issuer URL] [--backchannel URL] [--dry-run]
+#   --issuer / --backchannel: realm URL put in the tokens / realm URL IRIS itself calls (default: the values of adm.oidc);
+#   they are remembered by the instance. AWS: --issuer https://<host>/auth/realms/iris --backchannel http://keycloak:8080/auth/realms/iris
 #   local: prompts for an IRIS user/password (or set IRIS_LOGIN_USER and IRIS_LOGIN_PASSWORD)
 #   aws:   runs over ssh (cloudenv); the console of the AWS containers needed no login so far
 set -euo pipefail
 cd "$(dirname "$0")"
 
-TARGET=local; INSTANCE=dev; DRYRUN=0
+TARGET=local; INSTANCE=dev; DRYRUN=0; ISSUER=""; BACKCHANNEL=""
 while [ $# -gt 0 ]; do
     case "$1" in
         --target)   TARGET="${2:-}"; shift 2 ;;
         --instance) INSTANCE="${2:-}"; shift 2 ;;
+        --issuer)   ISSUER="${2:-}"; shift 2 ;;
+        --backchannel) BACKCHANNEL="${2:-}"; shift 2 ;;
         --dry-run)  DRYRUN=1; shift ;;
         -h|--help)  sed -n '2,/^set /p' "$0" | sed 's/^# \{0,1\}//' | head -n -1; exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
@@ -31,7 +35,7 @@ source .env
 OS_B64="$(printf '%s\n' \
     'zn "COMMON"' \
     'set sc=$SYSTEM.OBJ.Load("/code/adm/oidc.cls","ck")' \
-    'set sc=##class(adm.oidc).Configure()' \
+    "set sc=##class(adm.oidc).Configure(,1,\"$ISSUER\",\"$BACKCHANNEL\")" \
     'halt' | base64 | tr -d '\n')"
 
 LOGIN=""

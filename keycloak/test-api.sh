@@ -33,5 +33,12 @@ show() { # label, expected, then curl args
 }
 
 show "jeton valide"        "RSP^K11"    -H "Authorization: Bearer $TOKEN"
-show "jeton falsifié"      "Login IRIS" -H "Authorization: Bearer ${TOKEN%?}x"
+# Tamper with the MIDDLE of the signature. Replacing the last character is not reliable: it only carries 2 useful bits, so
+# 16 of the 64 possible characters decode to the very same signature and the "tampered" token would sometimes be valid.
+BAD="$(python3 -c "
+import sys
+h, p, s = sys.argv[1].split('.')
+i = 40
+print('.'.join([h, p, s[:i] + ('B' if s[i] == 'A' else 'A') + s[i+1:]]))" "$TOKEN")"
+show "jeton falsifié"      "Login IRIS" -H "Authorization: Bearer $BAD"
 show "sans jeton"          "Login IRIS"

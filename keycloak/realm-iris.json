@@ -49,15 +49,17 @@
       "serviceAccountsEnabled": false,
       "redirectUris": [
         "https://localhost/oauth2/callback",
-        "https://localhost:8443/oauth2/callback"
+        "https://localhost:8443/oauth2/callback",
+        "https://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com/oauth2/callback"
       ],
       "webOrigins": [
         "https://localhost",
-        "https://localhost:8443"
+        "https://localhost:8443",
+        "https://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "https://localhost/*"
+        "post.logout.redirect.uris": "https://localhost/*##https://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com/*"
       },
       "defaultClientScopes": [
         "web-origins",
@@ -158,6 +160,24 @@
       ],
       "realmRoles": [
         "iris-admin"
+      ]
+    },
+    {
+      "username": "iris.developer",
+      "email": "iris.developer@example.org",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "IRIS",
+      "lastName": "Developer",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${IRIS_DEMO_USER_PASSWORD}",
+          "temporary": true
+        }
+      ],
+      "realmRoles": [
+        "iris-developer"
       ]
     },
     {
