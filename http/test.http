@@ -1,38 +1,44 @@
+# Credentials are NOT in this file: {{$dotenv ...}} reads them from http/.env (git-ignored).
+# Copy http/.env.example to http/.env and fill in the passwords. REST Client builds the Basic header from "Basic <user> <password>".
+#   IRIS_LOCAL_*      local containers (http://localhost)
+#   IRIS_COMMUNITY_*  community containers (http://localhost:881)
+#   IRIS_AWS_*        the AWS instance
+
 
 ### Create REST API
 
 POST http://localhost/iris-health-training-dev/api/mgmnt/v2/TRAINING/fhirfoch
 Accept: application/json
 Content-Type: application/json
-Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+Authorization: Basic {{$dotenv IRIS_LOCAL_USER}} {{$dotenv IRIS_LOCAL_PASSWORD}}
 
-< ./swagger/fhir.json
+< ../swagger/fhir.json
 
 ### DEV LOCAL - ORU
 POST http://localhost/iris-health-training-dev/csp/healthshare/dglab/EnsLib.HL7.Service.HTTPService.cls?CfgItem=LAB RESULT from DGLAB - HTTP HTTP/1.1
 Content-Type: text/plain; charset=utf-8
-Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+Authorization: Basic {{$dotenv IRIS_LOCAL_USER}} {{$dotenv IRIS_LOCAL_PASSWORD}}
 
-< ./docs/20260610_144322985_DEF_6100130_000043.HL7
+< ../docs/20260610_144322985_DEF_6100130_000043.HL7
 
 
 ### DEV LOCAL - ADT
 POST http://localhost/iris-health-training-dev/csp/healthshare/dglab/EnsLib.HL7.Service.HTTPService.cls?CfgItem=Patient Information from IHE PAM - HTTP HTTP/1.1
 Content-Type: text/plain; charset=utf-8
-Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+Authorization: Basic {{$dotenv IRIS_LOCAL_USER}} {{$dotenv IRIS_LOCAL_PASSWORD}}
 
-< ./docs/1-ADT.hl7
+< ../docs/1-ADT.hl7
 
 
 ### IRIS instance details and timestamp
 GET http://localhost/iris-health-training-dev/foch/version HTTP/1.1
 Accept: application/json
-Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+Authorization: Basic {{$dotenv IRIS_LOCAL_USER}} {{$dotenv IRIS_LOCAL_PASSWORD}}
 
 @specFirstFochBaseUrl = http://localhost/iris-health-training-dev/specfirst/foch
 @specFirstFochPatientIPP = H3178
 @specFirstFochTarget = fhir
-@specFirstFochAuthorization = Basic X3N5c3RlbTpJUklTNEdvb2Qv
+@specFirstFochAuthorization = Basic {{$dotenv IRIS_LOCAL_USER}} {{$dotenv IRIS_LOCAL_PASSWORD}}
 
 ### SPEC FIRST FOCH - IRIS instance details
 GET {{specFirstFochBaseUrl}}/version HTTP/1.1
@@ -179,23 +185,23 @@ Authorization: {{specFirstFochAuthorization}}
 ### IRIS instance details and timestamp
 GET http://localhost/iris-health-training-dev/fhir/version HTTP/1.1
 Accept: application/json
-Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+Authorization: Basic {{$dotenv IRIS_LOCAL_USER}} {{$dotenv IRIS_LOCAL_PASSWORD}}
 
 ### IRIS instance details and timestamp - Embedded Python
 GET http://localhost/iris-health-training-dev/fhir/versionpy HTTP/1.1
 Accept: application/json
-Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+Authorization: Basic {{$dotenv IRIS_LOCAL_USER}} {{$dotenv IRIS_LOCAL_PASSWORD}}
 
 ### FHIR facade - project data.patient ID 1 without persisting it
 GET http://localhost/iris-health-training-dev/fhir/Patient/1 HTTP/1.1
 Accept: application/fhir+json
-Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+Authorization: Basic {{$dotenv IRIS_LOCAL_USER}} {{$dotenv IRIS_LOCAL_PASSWORD}}
 
 ### FHIR synchronization - POST when IPP is absent, PUT when it already exists
 POST http://localhost/iris-health-training-dev/fhir/Patient/1 HTTP/1.1
 Accept: application/fhir+json
 Content-Type: application/fhir+json
-Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+Authorization: Basic {{$dotenv IRIS_LOCAL_USER}} {{$dotenv IRIS_LOCAL_PASSWORD}}
 
 {
 	"resourceType": "Patient",
@@ -212,7 +218,7 @@ Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
 PUT http://localhost/iris-health-training-dev/fhir/Patient/1 HTTP/1.1
 Accept: application/fhir+json
 Content-Type: application/fhir+json
-Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+Authorization: Basic {{$dotenv IRIS_LOCAL_USER}} {{$dotenv IRIS_LOCAL_PASSWORD}}
 
 {
 	"resourceType": "Patient",
@@ -239,29 +245,29 @@ Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
 ### DEV COMMUNITY - ORU
 POST http://localhost:881/iris-health-training-dev/csp/healthshare/dglab/EnsLib.HL7.Service.HTTPService.cls?CfgItem=LAB RESULT from DGLAB - HTTP HTTP/1.1
 Content-Type: text/plain; charset=utf-8
-Authorization: Basic X3N5c3RlbTpTWVM=
+Authorization: Basic {{$dotenv IRIS_COMMUNITY_USER}} {{$dotenv IRIS_COMMUNITY_PASSWORD}}
 
-< ./docs/20260610_144322985_DEF_6100130_000043.HL7
+< ../docs/20260610_144322985_DEF_6100130_000043.HL7
 
 
 ### DEV COMMUNITY - ADT
 POST http://localhost:881/iris-health-training-dev/csp/healthshare/dglab/EnsLib.HL7.Service.HTTPService.cls?CfgItem=Patient Information from IHE PAM - HTTP HTTP/1.1
 Content-Type: text/plain; charset=utf-8
-Authorization: Basic X3N5c3RlbTpTWVM=
+Authorization: Basic {{$dotenv IRIS_COMMUNITY_USER}} {{$dotenv IRIS_COMMUNITY_PASSWORD}}
 
-< ./docs/1-ADT.hl7
+< ../docs/1-ADT.hl7
 
 ### DEV AWS - ORU
 POST http://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com/iris-health-training-dev/csp/healthshare/dglab/EnsLib.HL7.Service.HTTPService.cls?CfgItem=aaa HTTP/1.1
 Content-Type: text/plain; charset=utf-8
-Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+Authorization: Basic {{$dotenv IRIS_AWS_USER}} {{$dotenv IRIS_AWS_PASSWORD}}
 
-< ./docs/20260610_144322985_DEF_6100130_000043.HL7
+< ../docs/20260610_144322985_DEF_6100130_000043.HL7
 
 
 ### DEV AWS - ADT
 POST http://ec2-63-177-72-122.eu-central-1.compute.amazonaws.com/iris-health-training-dev/csp/healthshare/dglab/EnsLib.HL7.Service.HTTPService.cls?CfgItem=aaa HTTP/1.1
 Content-Type: text/plain; charset=utf-8
-Authorization: Basic X3N5c3RlbTpJUklTNEdvb2Qv
+Authorization: Basic {{$dotenv IRIS_AWS_USER}} {{$dotenv IRIS_AWS_PASSWORD}}
 
-< ./docs/1-ADT.hl7
+< ../docs/1-ADT.hl7

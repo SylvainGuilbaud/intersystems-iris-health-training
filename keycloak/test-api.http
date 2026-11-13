@@ -1,0 +1,78 @@
+# Tests of the Keycloak-protected IRIS APIs - run them from VS Code with the REST Client extension
+# (humao.rest-client): click "Send Request" above each request. No terminal needed.
+# Secrets are read from keycloak/.env (a link to keycloak/secrets.env, created by ./keycloak/init-secrets.sh).
+# Every IRIS request carries "# @no-cookie-jar": REST Client would otherwise send back the IRIS session cookie opened by
+# request 2, and request 4 ("without credential") would silently be authenticated.
+# Prerequisites: the "keycloak" name in /etc/hosts (127.0.0.1 keycloak) and the containers started.
+# See docs/Keycloak-IRIS-Security.md, sections 4.1 and 4.2.
+
+@keycloak = http://keycloak:8180
+# Port 80 keeps these tests free of the self-signed certificate. For HTTPS use https://localhost
+# (REST Client must then accept the local certificate: setting "http.proxyStrictSSL": false).
+@iris = http://localhost
+@namespace = dglab
+
+### 0.a Keycloak is up and the realm "iris" exists
+# Expected: 200, "issuer":"http://keycloak:8180/realms/iris", and S256 in code_challenge_methods_supported
+GET {{keycloak}}/realms/iris/.well-known/openid-configuration
+
+### 0.b nginx serves the web application
+# Expected: 200
+GET http://localhost/app/
+
+### 0.c The portal over HTTPS, without session, redirects to the Keycloak login
+# Expected: 302 with a Location header "http://keycloak:8180/realms/iris/protocol/openid-connect/auth?...code_challenge_method=S256..."
+# Needs HTTPS: if REST Client refuses the local self-signed certificate, set "http.proxyStrictSSL": false in the VS Code settings.
+# @no-redirect
+GET https://localhost/iris-health-training-dev/csp/sys/UtilHome.csp
+
+### 1. Get an access token (client_credentials, client iris-service)
+# Expected: 200 and a JSON body with "access_token"; the token's issuer is http://keycloak:8180/realms/iris
+# @name login
+POST {{keycloak}}/realms/iris/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&client_id=iris-service&client_secret={{$dotenv IRIS_SERVICE_CLIENT_SECRET}}
+
+###
+@token = {{login.response.body.$.access_token}}
+
+### 2. HL7 LAB-27 with a VALID token
+# Expected: 200 and an RSP^K11 answer (MSA|AA, QAK|Q1|OK): the request is authenticated by the Keycloak token
+# @no-cookie-jar
+POST {{iris}}/iris-health-training-dev/csp/healthshare/{{namespace}}/EnsLib.HL7.Service.HTTPService.cls?CfgItem=LAW%20LAB-27%20Query%20for%20AWOS%20-%20HTTP
+Authorization: Bearer {{token}}
+Content-Type: text/plain
+
+MSH|^~\&|ANALYZER|LAB|LIS|LAB|20261113190000||QBP^Q11^QBP_Q11|QBP1|P|2.5.1|||NE|AL||UNICODE UTF-8|||LAB-27^IHE
+QPD|WOS^Work Order Step^IHE_LABTF|Q1|CT99
+RCP|I||R
+
+### 3. The same request with a TAMPERED token (last character changed)
+# Expected: 200 but an HTML "Login IRIS" page, no RSP^K11: the signature is rejected
+# @no-cookie-jar
+POST {{iris}}/iris-health-training-dev/csp/healthshare/{{namespace}}/EnsLib.HL7.Service.HTTPService.cls?CfgItem=LAW%20LAB-27%20Query%20for%20AWOS%20-%20HTTP
+Authorization: Bearer {{token}}x
+Content-Type: text/plain
+
+MSH|^~\&|ANALYZER|LAB|LIS|LAB|20261113190000||QBP^Q11^QBP_Q11|QBP1|P|2.5.1|||NE|AL||UNICODE UTF-8|||LAB-27^IHE
+QPD|WOS^Work Order Step^IHE_LABTF|Q1|CT99
+RCP|I||R
+
+### 4. The same request WITHOUT any credential
+# Expected: 200 but an HTML "Login IRIS" page, no RSP^K11
+# @no-cookie-jar
+POST {{iris}}/iris-health-training-dev/csp/healthshare/{{namespace}}/EnsLib.HL7.Service.HTTPService.cls?CfgItem=LAW%20LAB-27%20Query%20for%20AWOS%20-%20HTTP
+Content-Type: text/plain
+
+MSH|^~\&|ANALYZER|LAB|LIS|LAB|20261113190000||QBP^Q11^QBP_Q11|QBP1|P|2.5.1|||NE|AL||UNICODE UTF-8|||LAB-27^IHE
+QPD|WOS^Work Order Step^IHE_LABTF|Q1|CT99
+RCP|I||R
+
+### 5. Portal page with the machine token (this account holds no Keycloak role, so no IRIS role)
+# Expected: 403 "An error occurred with the web application": the account is authenticated, but not authorized.
+# To see the authorization at work, grant a realm role (for example iris-admin) to the service account of the client
+# iris-service in Keycloak, get a new token (request 1) and send this request again: the page then opens.
+# @no-cookie-jar
+GET {{iris}}/iris-health-training-dev/csp/sys/sec/%25CSP.UI.Portal.Users.zen
+Authorization: Bearer {{token}}

@@ -14,3 +14,7 @@ reports
 # Local Keycloak secrets and local TLS material
 keycloak/secrets.env
 nginx/certs/
+keycloak/.env
+
+# Local secrets read by REST Client ({{$dotenv}}) from http/test.http
+http/.env

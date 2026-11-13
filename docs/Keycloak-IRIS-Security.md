@@ -86,6 +86,12 @@ jamais connecté n'existe pas encore dans IRIS (*Sécurité > Utilisateurs*). C'
 
 ## 3. Mise en place, étape par étape
 
+> **Exécuter sans terminal** — Les blocs ```` ```http ```` de ce document sont des requêtes pour l'extension **REST Client** de VS Code
+> (`humao.rest-client`). Cliquez sur **Send Request** au-dessus de la requête (ou `Ctrl/Cmd+Alt+R`). Le même contenu est dans
+> [`keycloak/test-api.http`](../keycloak/test-api.http), où le lien est garanti : si **Send Request** n'apparaît pas dans ce fichier `.md`, ouvrez celui-là.
+> Les secrets sont lus dans `keycloak/.env` (lien vers `keycloak/secrets.env`, créé par `./keycloak/init-secrets.sh`) ; aucun mot de passe n'est écrit dans les fichiers.
+
+
 ### Étape 1 — Générer les secrets (une seule fois)
 
 ```bash
@@ -130,12 +136,21 @@ Keycloak est lancé en mode développement (`start-dev`, base H2 intégrée) : *
 
 **Vérifier** (compter ~10 s) :
 
-```bash
-curl -s --resolve keycloak:8180:127.0.0.1 http://keycloak:8180/realms/iris/.well-known/openid-configuration | head -c 200
-# doit afficher "issuer":"http://keycloak:8180/realms/iris"
-docker exec iris-health-training-dev python3 -c "import urllib.request;print(urllib.request.urlopen('http://keycloak:8180/realms/iris/.well-known/openid-configuration').status)"
-# doit afficher 200 : le conteneur IRIS joint Keycloak
+```http
+@keycloak = http://keycloak:8180
+
+GET {{keycloak}}/realms/iris/.well-known/openid-configuration
 ```
+
+Résultat attendu : **200**, avec `"issuer":"http://keycloak:8180/realms/iris"` et `S256` dans `code_challenge_methods_supported`.
+
+Pour vérifier aussi que le **conteneur IRIS** joint Keycloak (terminal, optionnel) :
+
+```bash
+docker exec iris-health-training-dev python3 -c "import urllib.request;print(urllib.request.urlopen('http://keycloak:8180/realms/iris/.well-known/openid-configuration').status)"
+```
+
+Résultat attendu : `200`.
 
 Console d'administration : <http://keycloak:8180/> — utilisateur `admin`, mot de passe = `KC_BOOTSTRAP_ADMIN_PASSWORD` de `keycloak/secrets.env`.
 
@@ -151,9 +166,10 @@ La classe `adm.oidc` (fichier `iris/src/adm/oidc.cls`) crée, de façon **idempo
 Sur un conteneur **existant** :
 
 ```bash
-./configure-oidc.sh --target local --instance dev        # demande un utilisateur/mot de passe IRIS
-# ou sans invite :  IRIS_LOGIN_USER=... IRIS_LOGIN_PASSWORD=... ./configure-oidc.sh --target local --instance dev
+./configure-oidc.sh --target local --instance dev
 ```
+
+Le script demande un utilisateur et un mot de passe IRIS. Pour l'exécuter sans invite, définir `IRIS_LOGIN_USER` et `IRIS_LOGIN_PASSWORD` avant la commande.
 
 **Vérifier** : la sortie se termine par `adm.oidc.Configure: OK`. Relancer la commande ne doit rien recréer
 (`already exists` / `already enabled`).
@@ -171,10 +187,17 @@ docker compose -p iris-health-training up -d --no-deps nginx
 
 **Vérifier** :
 
-```bash
-curl -sk -o /dev/null -w "%{http_code}\n" https://localhost/app/       # 200
-echo | openssl s_client -connect localhost:443 2>/dev/null | grep Protocol   # TLSv1.3
+```http
+GET http://localhost/app/
 ```
+
+Résultat attendu : **200**. Pour contrôler aussi la version de TLS (terminal, optionnel) :
+
+```bash
+echo | openssl s_client -connect localhost:443 2>/dev/null | grep Protocol
+```
+
+Résultat attendu : `Protocol : TLSv1.3`.
 
 ### Étape 7 — Démarrer oauth2-proxy
 
@@ -187,11 +210,13 @@ docker exec iris-health-training-nginx nginx -t && docker exec iris-health-train
 
 **Vérifier** : un accès au portail sans session redirige vers Keycloak.
 
-```bash
-curl -sk -o /dev/null -w "%{http_code}  %header{location}\n" \
-  https://localhost/iris-health-training-dev/csp/sys/UtilHome.csp | cut -c1-140
-# 302  http://keycloak:8180/realms/iris/protocol/openid-connect/auth?...code_challenge_method=S256...
+```http
+# @no-redirect
+GET https://localhost/iris-health-training-dev/csp/sys/UtilHome.csp
 ```
+
+Résultat attendu : **302** avec un en-tête `Location: http://keycloak:8180/realms/iris/protocol/openid-connect/auth?…code_challenge_method=S256…`.
+Si REST Client refuse le certificat auto-signé local, ajouter `"http.proxyStrictSSL": false` dans les réglages de VS Code.
 
 ---
 
@@ -217,20 +242,85 @@ Résultats observés en test (utilisateurs jetables, supprimés ensuite) :
 
 ### 4.2 Une API protégée par jeton
 
-```bash
-set -a; . keycloak/secrets.env; set +a
-TOKEN=$(curl -s --resolve keycloak:8180:127.0.0.1 -X POST http://keycloak:8180/realms/iris/protocol/openid-connect/token \
-  -d grant_type=client_credentials -d client_id=iris-service \
-  --data-urlencode "client_secret=$IRIS_SERVICE_CLIENT_SECRET" | python3 -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
+Ces requêtes s'enchaînent : la première obtient un jeton auprès de Keycloak, les suivantes l'utilisent
+(`{{token}}`). Cliquez sur **Send Request** dans l'ordre. Le message HL7 est une requête LAB-27 (QBP^Q11).
 
-# Message HL7 de démonstration (LAB-27)
-MSG=$(printf 'MSH|^~\\&|ANALYZER|LAB|LIS|LAB|20261113190000||QBP^Q11^QBP_Q11|QBP1|P|2.5.1|||NE|AL||UNICODE UTF-8|||LAB-27^IHE\rQPD|WOS^Work Order Step^IHE_LABTF|Q1|CT99\rRCP|I||R')
-URL="https://localhost/iris-health-training-dev/csp/healthshare/dglab/EnsLib.HL7.Service.HTTPService.cls?CfgItem=LAW%20LAB-27%20Query%20for%20AWOS%20-%20HTTP"
+```http
+@keycloak = http://keycloak:8180
+@iris = http://localhost
+@namespace = dglab
 
-curl -sk -H "Authorization: Bearer $TOKEN"        --data-binary "$MSG" "$URL"   # → RSP^K11 (authentifié)
-curl -sk -H "Authorization: Bearer ${TOKEN%?}x"   --data-binary "$MSG" "$URL"   # → page de connexion (signature invalide)
-curl -sk                                          --data-binary "$MSG" "$URL"   # → page de connexion (sans jeton)
+# @name login
+POST {{keycloak}}/realms/iris/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&client_id=iris-service&client_secret={{$dotenv IRIS_SERVICE_CLIENT_SECRET}}
+
+###
+@token = {{login.response.body.$.access_token}}
+
+### Jeton valide
+# @no-cookie-jar
+POST {{iris}}/iris-health-training-dev/csp/healthshare/{{namespace}}/EnsLib.HL7.Service.HTTPService.cls?CfgItem=LAW%20LAB-27%20Query%20for%20AWOS%20-%20HTTP
+Authorization: Bearer {{token}}
+Content-Type: text/plain
+
+MSH|^~\&|ANALYZER|LAB|LIS|LAB|20261113190000||QBP^Q11^QBP_Q11|QBP1|P|2.5.1|||NE|AL||UNICODE UTF-8|||LAB-27^IHE
+QPD|WOS^Work Order Step^IHE_LABTF|Q1|CT99
+RCP|I||R
+
+### Jeton falsifié
+# @no-cookie-jar
+POST {{iris}}/iris-health-training-dev/csp/healthshare/{{namespace}}/EnsLib.HL7.Service.HTTPService.cls?CfgItem=LAW%20LAB-27%20Query%20for%20AWOS%20-%20HTTP
+Authorization: Bearer {{token}}x
+Content-Type: text/plain
+
+MSH|^~\&|ANALYZER|LAB|LIS|LAB|20261113190000||QBP^Q11^QBP_Q11|QBP1|P|2.5.1|||NE|AL||UNICODE UTF-8|||LAB-27^IHE
+QPD|WOS^Work Order Step^IHE_LABTF|Q1|CT99
+RCP|I||R
+
+### Sans identifiant
+# @no-cookie-jar
+POST {{iris}}/iris-health-training-dev/csp/healthshare/{{namespace}}/EnsLib.HL7.Service.HTTPService.cls?CfgItem=LAW%20LAB-27%20Query%20for%20AWOS%20-%20HTTP
+Content-Type: text/plain
+
+MSH|^~\&|ANALYZER|LAB|LIS|LAB|20261113190000||QBP^Q11^QBP_Q11|QBP1|P|2.5.1|||NE|AL||UNICODE UTF-8|||LAB-27^IHE
+QPD|WOS^Work Order Step^IHE_LABTF|Q1|CT99
+RCP|I||R
+
+### Page d'administration avec le compte machine (aucun rôle Keycloak)
+# @no-cookie-jar
+GET {{iris}}/iris-health-training-dev/csp/sys/sec/%25CSP.UI.Portal.Users.zen
+Authorization: Bearer {{token}}
 ```
+
+Résultats attendus (observés sur `http://localhost`, port 80, qui accepte aussi le jeton en clair ; voir [§9](#9-avant-aws--production)) :
+
+| Requête | Résultat attendu | Ce que cela montre |
+|---|---|---|
+| jeton (`login`) | **200**, un `access_token` | Keycloak authentifie le client `iris-service` |
+| Jeton valide | **200**, message `RSP^K11` (`MSA\|AA`, `QAK\|Q1\|OK`) | IRIS accepte le jeton : authentification |
+| Jeton falsifié | **200**, page HTML « Login IRIS », pas de `RSP^K11` | la signature invalide est rejetée |
+| Sans identifiant | **200**, page HTML « Login IRIS », pas de `RSP^K11` | l'API n'est plus ouverte à tous |
+| Page d'administration, compte machine | **403** | authentifié mais non autorisé : aucun rôle IRIS |
+
+**Pourquoi `# @no-cookie-jar` ?** REST Client conserve les cookies d'une requête à l'autre. La requête « jeton valide » fait ouvrir une session
+IRIS, dont le cookie serait renvoyé aux suivantes : « sans identifiant » ne serait alors plus sans identifiant et recevrait elle aussi le `RSP^K11`
+(constaté). Cette métadonnée désactive les cookies pour la requête ; ne la retirez pas.
+
+Le statut `200` des deux requêtes rejetées est normal : IRIS répond par sa page de connexion et pas par un `401`. C'est le contenu de la
+réponse (« Login IRIS », pas de `RSP^K11`) qui prouve le rejet.
+
+Pour voir l'autorisation à l'œuvre, donnez le rôle `iris-admin` au *service account* du client `iris-service` dans Keycloak, relancez la
+requête `login` pour obtenir un nouveau jeton, puis la dernière requête : la page s'ouvre. Retirez ensuite ce rôle.
+
+**Version terminal** (même test, en une commande, avec contrôle automatique du résultat) :
+
+```bash
+./keycloak/test-api.sh
+```
+
+Le script affiche `OK` ou `ECHEC` pour chacun des trois cas (jeton valide, jeton falsifié, sans jeton).
 
 > Un compte **machine** (`service-account-iris-service`) n'a aucun rôle Keycloak par défaut : il est authentifié mais n'a
 > pas de rôle IRIS. Pour lui donner des droits, ajouter un rôle au *service account* du client `iris-service`

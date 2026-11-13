@@ -25,4 +25,6 @@ add IRIS_DEMO_USER_PASSWORD "$(rnd 16)"
 add OAUTH2_PROXY_COOKIE_SECRET "$(rnd 32)"
 if [ -z "$(get OAUTH2_PROXY_CLIENT_SECRET)" ]; then printf 'OAUTH2_PROXY_CLIENT_SECRET=%s\n' "$(get IRIS_PORTAL_CLIENT_SECRET)" >> "$OUT"; echo "added OAUTH2_PROXY_CLIENT_SECRET"; fi
 chmod 600 "$OUT"
+# REST Client ({{$dotenv VAR}}) reads a file named .env in the folder of the .http file: link it to secrets.env
+ln -sf "$OUT" .env
 echo "$PWD/$OUT is complete (mode 600). Read the admin and demo passwords in that file."
